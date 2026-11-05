@@ -279,7 +279,7 @@ export class MapService implements IMapService {
     const baseAssetsExist = await this.ensureBaseAssets()
     if (!baseAssetsExist) {
       throw new Error(
-        'Base map assets are missing and could not be downloaded. Please check your connection and try again.'
+        t('server.mapsController.baseMapAssetsAreMissing')
       )
     }
 
@@ -673,7 +673,7 @@ export class MapService implements IMapService {
     const baseAssetsExist = await this.ensureBaseAssets()
     if (!baseAssetsExist) {
       throw new Error(
-        'Base map assets are missing and could not be downloaded. Please check your connection and try again.'
+        t('server.mapsController.baseMapAssetsAreMissing')
       )
     }
 
@@ -775,7 +775,7 @@ export class MapService implements IMapService {
     ])
     if (!baseAssetsExist) {
       throw new Error(
-        'Base map assets are missing and could not be downloaded. Please check your connection and try again.'
+        t('server.mapsController.baseMapAssetsAreMissing')
       )
     }
 

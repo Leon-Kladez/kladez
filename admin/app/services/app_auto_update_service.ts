@@ -249,14 +249,14 @@ export class AppAutoUpdateService {
       return { updated: 0, reason: t('server.appAutoUpdateService.appAutoUpdateIsDisabled') }
     }
     if (!isWithinWindow(config.windowStart, config.windowEnd, now)) {
-      const reason = `Outside update window (${config.windowStart}-${config.windowEnd})`
+      const reason = t('server.autoUpdateService.outsideUpdateWindow', { windowStart: config.windowStart, windowEnd: config.windowEnd })
       await this.recordRun(reason)
       return { updated: 0, reason }
     }
 
     const eligible = await this.getEligibleApps(config, now)
     if (eligible.length === 0) {
-      const reason = 'No eligible app updates (all current, in cool-off, or major-only)'
+      const reason = t('serverAuto.noAppUpdates')
       await this.recordRun(reason)
       return { updated: 0, reason }
     }

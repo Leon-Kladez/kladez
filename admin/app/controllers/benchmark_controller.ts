@@ -192,10 +192,10 @@ export default class BenchmarkController {
       // validation message) and fall back to a safe generic only when we have none.
       let errorMessage: string
       if (statusCode === 429) {
-        errorMessage = 'You can only submit one benchmark per hour. Please wait a bit and try again.'
+        errorMessage = t('serverBench.rateLimit')
       } else {
         errorMessage =
-          (error as any).detail || (error as any).message || 'Failed to submit benchmark results.'
+          (error as any).detail || (error as any).message || t('benchmark.submitFailed')
       }
 
       return response.status(statusCode).send({

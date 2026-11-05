@@ -9,6 +9,7 @@ import DynamicIcon, { DynamicIconName } from './DynamicIcon'
 import { IconTrash } from '@tabler/icons-react'
 import { tx } from '~/lib/tx'
 import { t } from '../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 interface PortMapping {
   container: string
@@ -271,11 +272,11 @@ export default function CustomAppModal({
         if (result?.message?.toLowerCase().includes('port') || result?.message?.toLowerCase().includes('conflict')) {
           showError(result.message)
         } else {
-          showError(result?.message || t('customApp.createFailed'))
+          showError(errorText(result, t('customApp.createFailed')))
         }
       }
     } catch (err: any) {
-      showError(err?.message || t('customApp.createUnexpected'))
+      showError(errorText(err, t('customApp.createUnexpected')))
     } finally {
       setSubmitting(false)
     }

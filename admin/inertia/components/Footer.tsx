@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { usePage } from '@inertiajs/react'
+import { Link, usePage } from '@inertiajs/react'
 import { UsePageProps } from '../../types/system'
 import ThemeToggle from '~/components/ThemeToggle'
 import { IconBug } from '@tabler/icons-react'
@@ -17,7 +17,9 @@ export default function Footer() {
           {t('common.footer.version', { version: appVersion })}
         </p>
         <span className="text-gray-300">|</span>
-        <p className="text-sm/6 text-text-secondary">{t('common.footer.basedOn')}</p>
+        <Link href="/about" className="text-sm/6 text-text-secondary hover:text-desert-green hover:underline">
+          {t('common.footer.basedOn')}
+        </Link>
         <span className="text-gray-300">|</span>
         <button
           onClick={() => setDebugModalOpen(true)}

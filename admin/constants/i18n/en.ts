@@ -112,6 +112,13 @@ import { serverBenchmarkStageEn } from './en/serverBenchmarkStage.js'
 import { serverBenchmarkMsgEn } from './en/serverBenchmarkMsg.js'
 import { serverPreflightEn } from './en/serverPreflight.js'
 import { serverCustomAppGuardEn } from './en/serverCustomAppGuard.js'
+import { serverValidateEn } from './en/serverValidate.js'
+import { serverDockerEn } from './en/serverDocker.js'
+import { serverOllamaEn } from './en/serverOllama.js'
+import { serverBenchEn } from './en/serverBench.js'
+import { serverZimEn } from './en/serverZim.js'
+import { serverUpdateEn } from './en/serverUpdate.js'
+import { serverAutoEn } from './en/serverAuto.js'
 
 export const en = {
   ...testEn,
@@ -226,6 +233,13 @@ export const en = {
   ...serverBenchmarkMsgEn,
   ...serverPreflightEn,
   ...serverCustomAppGuardEn,
+  ...serverValidateEn,
+  ...serverDockerEn,
+  ...serverOllamaEn,
+  ...serverBenchEn,
+  ...serverZimEn,
+  ...serverUpdateEn,
+  ...serverAutoEn,
 } as const
 
 export type MessageKey = keyof typeof en

@@ -26,6 +26,7 @@ import { useSystemInfo } from '~/hooks/useSystemInfo'
 import GpuPassthroughAlert from '~/components/GpuPassthroughAlert'
 import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 const RELEVANCE_LABELS: Record<string, string> = {
   'Off — use every passage retrieved': t('models.relevance.off'),
@@ -88,7 +89,7 @@ export default function ModelsPage(props: {
         router.reload()
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.message || error?.message || t('easySetup.remoteOllamaFailed')
+      const msg = errorText(error, t('easySetup.remoteOllamaFailed'))
       setRemoteOllamaError(msg)
     } finally {
       setRemoteOllamaSaving(false)
@@ -106,7 +107,7 @@ export default function ModelsPage(props: {
         router.reload()
       }
     } catch (error: any) {
-      setRemoteOllamaError(error?.message || t('models.remoteClearFailed'))
+      setRemoteOllamaError(errorText(error, t('models.remoteClearFailed')))
     } finally {
       setRemoteOllamaSaving(false)
     }

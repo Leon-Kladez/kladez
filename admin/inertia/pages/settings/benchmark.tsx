@@ -27,6 +27,7 @@ import BenchmarkRunView from '~/components/benchmark/BenchmarkRunView'
 import ScoreReveal from '~/components/benchmark/ScoreReveal'
 import { getScoreDisplay } from '~/lib/benchmarkScore'
 import { t, formatDate, formatDateTime, formatNumber, formatDecimal } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 function benchmarkTypeLabel(type: string): string {
   if (type === 'full') return t('bench.type.full')
@@ -115,7 +116,7 @@ export default function BenchmarkPage(props: {
     },
     onError: (error) => {
       setIsRunning(false)
-      setErrorMsg(error.message || t('bench.startFailed'))
+      setErrorMsg(errorText(error, t('bench.startFailed')))
     },
   })
 

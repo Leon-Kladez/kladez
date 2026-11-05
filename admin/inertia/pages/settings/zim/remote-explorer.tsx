@@ -43,6 +43,7 @@ import { SERVICE_NAMES } from '../../../../constants/service_names'
 import { ZimFileWithMetadata } from '../../../../types/zim'
 import { tx } from '~/lib/tx'
 import { t, formatDate, formatNumber, languageName } from '../../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 const CURATED_CATEGORIES_KEY = 'curated-categories'
 const WIKIPEDIA_STATE_KEY = 'wikipedia-state'
@@ -436,7 +437,7 @@ export default function ZimRemoteExplorer() {
         setSelectedWikipedia(null)
       } else {
         addNotification({
-          message: result?.message || t('explorer.wikipediaFailed'),
+          message: errorText(result, t('explorer.wikipediaFailed')),
           type: 'error',
         })
       }

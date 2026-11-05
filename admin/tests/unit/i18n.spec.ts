@@ -84,3 +84,16 @@ test('файлы словаря небольшие (не больше 24 КБ)',
   }
   assert.deepEqual(big, [])
 })
+
+// Знак «|» в переводе — разделитель форм множественного числа: в ru их 3, в en 2.
+// Иначе строка с count обрежется (так случилось с «Материалов: … | Размер: …»).
+test('строки с «|» — правильное число форм множественного числа', () => {
+  const bad: string[] = []
+  for (const [key, value] of Object.entries(ru)) {
+    if (value.includes('|') && value.split('|').length !== 3) bad.push(`ru ${key}`)
+  }
+  for (const [key, value] of Object.entries(en)) {
+    if (value.includes('|') && value.split('|').length !== 2) bad.push(`en ${key}`)
+  }
+  assert.deepEqual(bad, [])
+})

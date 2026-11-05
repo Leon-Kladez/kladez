@@ -7,6 +7,7 @@ import { useModals } from '~/context/ModalContext'
 import api from '~/lib/api'
 import type { GpuHealthStatus } from '../../types/system'
 import { t } from '../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 const DISMISS_KEY = 'nomad:gpu-banner-dismissed'
 const HSA_OVERRIDE_PATTERN = /^\d{1,2}\.\d{1,2}\.\d{1,2}$/
@@ -55,7 +56,7 @@ export default function GpuPassthroughAlert({
     try {
       const response = await api.forceReinstallService('nomad_ollama')
       if (!response || !response.success) {
-        throw new Error(response?.message || t('gpu.reinstallFailedShort'))
+        throw new Error(errorText(response, t('gpu.reinstallFailedShort')))
       }
       addNotification({
         message: t('gpu.reinstalling', { name: assistantName }),

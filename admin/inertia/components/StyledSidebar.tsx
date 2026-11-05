@@ -90,7 +90,9 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
         </nav>
         <div className="mb-4 flex flex-col items-center gap-1 text-sm text-text-secondary text-center">
           <p>{t('common.footer.version', { version: appVersion })}</p>
-          <p className="text-xs">{t('common.footer.basedOn')}</p>
+          <Link href="/about" className="text-xs hover:text-desert-green hover:underline">
+            {t('common.footer.basedOn')}
+          </Link>
           <button
             onClick={() => setDebugModalOpen(true)}
             className="text-gray-500 hover:text-desert-green inline-flex items-center gap-1 cursor-pointer"

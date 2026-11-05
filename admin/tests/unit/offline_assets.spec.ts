@@ -53,3 +53,10 @@ test('стили подключают шрифты логотипа из /fonts/
   assert.match(css, /url\(['"]?\/fonts\/Ponomar-Regular\.woff2/)
   assert.match(css, /url\(['"]?\/fonts\/OldStandardTT-Regular\.woff2/)
 })
+
+test('в подвале есть ссылка на страницу «О программе» с упоминанием Project NOMAD', () => {
+  for (const file of ['Footer.tsx', 'StyledSidebar.tsx']) {
+    const src = readFileSync(join(ADMIN, 'inertia', 'components', file), 'utf8')
+    assert.match(src, /href="\/about"/, `нет ссылки на /about в ${file}`)
+  }
+})

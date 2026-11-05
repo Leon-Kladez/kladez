@@ -1037,7 +1037,7 @@ export class ZimService {
     const count = await CustomLibrarySource.query().count('* as total')
     const total = Number(count[0].$extras.total)
     if (total >= 10) {
-      throw new Error('Maximum of 10 custom libraries allowed')
+      throw new Error(t('serverZim.maxLibraries'))
     }
 
     // Ensure URL ends with /
@@ -1052,7 +1052,7 @@ export class ZimService {
   async removeCustomLibrary(id: number): Promise<void> {
     const source = await CustomLibrarySource.find(id)
     if (!source) {
-      throw new Error('Custom library not found')
+      throw new Error(t('serverZim.libraryNotFound'))
     }
     if (source.is_default) {
       throw new Error('Cannot remove a built-in mirror')

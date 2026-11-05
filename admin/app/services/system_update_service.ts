@@ -92,13 +92,13 @@ export class SystemUpdateService {
   getUpdateLogs(): string {
     try {
       if (!existsSync(SystemUpdateService.LOG_FILE)) {
-        return 'No update logs available'
+        return t('update.noLogs')
       }
 
       return readFileSync(SystemUpdateService.LOG_FILE, 'utf-8')
     } catch (error) {
       logger.error('[SystemUpdateService]: Failed to read update logs:', error)
-      return `Error reading logs: ${error.message}`
+      return t('serverUpdate.logsError', { error: error.message })
     }
   }
 

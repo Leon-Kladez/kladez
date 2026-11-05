@@ -8,6 +8,7 @@ import ResultsSoFar from './ResultsSoFar'
 import type { BenchmarkRunHook } from '~/hooks/useBenchmarkRun'
 import type { BenchmarkStatus } from '../../../types/benchmark'
 import { t, formatNumber } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 function formatElapsed(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -188,7 +189,7 @@ export default function BenchmarkRunView({ run }: { run: BenchmarkRunHook }) {
         stageIndex={run.stageIndex}
         status={activeStatus}
         progressPercent={run.progressPercent}
-        message={run.message || t('benchRun.running')}
+        message={errorText(run, t('benchRun.running'))}
         elapsedLabel={formatElapsed(Date.now() - startedAt.current)}
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

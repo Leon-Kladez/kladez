@@ -5,6 +5,7 @@ import api from '~/lib/api'
 import StyledButton from '~/components/StyledButton'
 import { useNotifications } from '~/context/NotificationContext'
 import { t, formatNumber } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 /**
  * First-chat onboarding banner (RFC #883 Phase 3 task 12).
@@ -59,7 +60,7 @@ export default function KbPolicyPromptBanner() {
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: error?.message || t('kbPolicy.indexingFailed'),
+        message: errorText(error, t('kbPolicy.indexingFailed')),
       })
     },
   })
@@ -77,7 +78,7 @@ export default function KbPolicyPromptBanner() {
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: error?.message || t('kbPolicy.saveFailed'),
+        message: errorText(error, t('kbPolicy.saveFailed')),
       })
     },
   })

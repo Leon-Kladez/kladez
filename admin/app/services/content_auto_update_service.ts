@@ -260,7 +260,7 @@ export class ContentAutoUpdateService {
       return { started: 0, reason: t('server.contentAutoUpdateService.contentAutoUpdateIsDisabled') }
     }
     if (!isWithinWindow(config.windowStart, config.windowEnd, now)) {
-      const reason = `Outside update window (${config.windowStart}-${config.windowEnd})`
+      const reason = t('server.autoUpdateService.outsideUpdateWindow', { windowStart: config.windowStart, windowEnd: config.windowEnd })
       await this.recordRun(reason)
       return { started: 0, reason }
     }
@@ -294,7 +294,7 @@ export class ContentAutoUpdateService {
       )
       if (eligible.length === 0) {
         await this.recordFeatureSuccess()
-        const reason = 'No eligible content updates'
+        const reason = t('serverAuto.noContentUpdates')
         await this.recordRun(reason)
         return { started: 0, reason }
       }

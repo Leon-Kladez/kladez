@@ -7,6 +7,7 @@ import { useNotifications } from '~/context/NotificationContext'
 import api from '~/lib/api'
 import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 interface NomadMdModalProps {
   aiAssistantName?: string
@@ -65,7 +66,7 @@ export default function NomadMdModal({ aiAssistantName, onClose }: NomadMdModalP
       onClose()
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('nomadMd.saveFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('nomadMd.saveFailed')) })
     },
   })
 

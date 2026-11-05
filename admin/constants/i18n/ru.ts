@@ -112,6 +112,13 @@ import { serverBenchmarkStageRu } from './ru/serverBenchmarkStage.js'
 import { serverBenchmarkMsgRu } from './ru/serverBenchmarkMsg.js'
 import { serverPreflightRu } from './ru/serverPreflight.js'
 import { serverCustomAppGuardRu } from './ru/serverCustomAppGuard.js'
+import { serverValidateRu } from './ru/serverValidate.js'
+import { serverDockerRu } from './ru/serverDocker.js'
+import { serverOllamaRu } from './ru/serverOllama.js'
+import { serverBenchRu } from './ru/serverBench.js'
+import { serverZimRu } from './ru/serverZim.js'
+import { serverUpdateRu } from './ru/serverUpdate.js'
+import { serverAutoRu } from './ru/serverAuto.js'
 
 export const ru: Record<MessageKey, string> = {
   ...testRu,
@@ -226,4 +233,11 @@ export const ru: Record<MessageKey, string> = {
   ...serverBenchmarkMsgRu,
   ...serverPreflightRu,
   ...serverCustomAppGuardRu,
+  ...serverValidateRu,
+  ...serverDockerRu,
+  ...serverOllamaRu,
+  ...serverBenchRu,
+  ...serverZimRu,
+  ...serverUpdateRu,
+  ...serverAutoRu,
 }

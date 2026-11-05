@@ -19,6 +19,7 @@ import type { CreateMapMarkerPayload, MapMarkerResponse, UpdateMapMarkerPayload 
 import type { ChatSource } from '../../types/chat'
 import { chatStreamErrorMessage } from './chat_stream.js'
 import { t } from '../../constants/i18n/index.js'
+import { errorText } from './error_text.js'
 
 type OllamaChatRequestWithImages = OllamaChatRequest & { images?: File[] }
 
@@ -995,7 +996,7 @@ class API {
         throw err
       }
       // For other errors, extract the message and throw
-      const errorMessage = error.response?.data?.error || error.message || t('benchmark.submitFailed')
+      const errorMessage = errorText(error, t('benchmark.submitFailed'))
       throw new Error(errorMessage)
     }
   }

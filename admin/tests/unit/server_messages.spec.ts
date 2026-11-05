@@ -47,3 +47,9 @@ test('humanizeOptional: пустая причина остаётся пусто�
   assert.equal(humanizeOptional(undefined), undefined)
   assert.match(humanizeOptional('getaddrinfo ENOTFOUND x') ?? '', /интернет/)
 })
+
+test('ошибка проверки настройки приходит по-русски', async () => {
+  const { validateSettingValue } = await import('../../app/validators/settings.js')
+  assert.match(validateSettingValue('autoUpdate.windowStart', '25:99') ?? '', /ЧЧ:ММ/)
+  assert.match(validateSettingValue('ai.amdHsaOverride', 'abc') ?? '', /[А-Яа-я]/)
+})

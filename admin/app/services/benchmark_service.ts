@@ -346,9 +346,7 @@ export class BenchmarkService {
         // already marks it installed — so it sent them looking for something
         // they believe they have, and never mentioned the one thing that fixes
         // it.
-        'This NOMAD is set to use a remote AI host, so the AI portion of this benchmark measured that machine, not this one. ' +
-          'Leaderboard results have to be measured entirely on the hardware being submitted. ' +
-          'To share a result, clear the remote host under Settings → Models so AI runs locally, then run a Full Benchmark.'
+        t('serverBench.remoteAi')
       )
     }
 

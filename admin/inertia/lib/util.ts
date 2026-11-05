@@ -4,6 +4,7 @@ import { Notification } from "~/context/NotificationContext"
 let globalNotificationCallback: ((notification: Notification) => void) | null = null
 
 import { formatBytes as formatBytesRu, t } from '../../constants/i18n'
+import { errorText } from './error_text.js'
 
 export function setGlobalNotificationCallback(callback: (notification: Notification) => void) {
   globalNotificationCallback = callback
@@ -77,7 +78,7 @@ export function catchInternal<Fn extends (...args: any[]) => any>(fn: Fn): (...a
       console.error('Internal error caught:', error)
 
       if (globalNotificationCallback) {
-        const errorMessage = t('common.internalError') + ' ' + (error instanceof Error ? String(error.message).slice(0, 50) : '')
+        const errorMessage = errorText(error, t('common.internalError'))
         globalNotificationCallback({
           message: errorMessage,
           type: 'error',

@@ -48,6 +48,7 @@ import { toTitleCase } from '../../app/utils/misc'
 import { SERVICE_NAMES } from '../../constants/service_names'
 import { tx } from '~/lib/tx'
 import { t } from '../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 function extractTag(containerImage: string): string {
   if (!containerImage) return ''
@@ -217,7 +218,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     const result = await api.installService(service.service_name)
     setModal(null)
     setLoading(false)
-    if (!result?.success) showError(result?.message || t('depot.installFailed'))
+    if (!result?.success) showError(errorText(result, t('depot.installFailed')))
   }
 
   async function handleAffect(service: ServiceSlim, action: 'start' | 'stop' | 'restart') {
@@ -226,7 +227,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     setModal(null)
     if (!result?.success) {
       setLoading(false)
-      showError(result?.message || t(`depot.affectFailed.${action}` as const))
+      showError(errorText(result, t(`depot.affectFailed.${action}` as const)))
     } else {
       // Keep loading=true so the overlay covers the page until it reloads.
       setTimeout(() => window.location.reload(), 1500)
@@ -238,7 +239,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     const result = await api.forceReinstallService(service.service_name)
     setModal(null)
     setLoading(false)
-    if (!result?.success) showError(result?.message || t('depot.reinstallFailed'))
+    if (!result?.success) showError(errorText(result, t('depot.reinstallFailed')))
   }
 
   async function handleDelete(service: ServiceSlim) {
@@ -248,7 +249,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     setModal(null)
     if (!result?.success) {
       setLoading(false)
-      showError(result?.message || t('depot.deleteFailed'))
+      showError(errorText(result, t('depot.deleteFailed')))
     } else {
       setTimeout(() => window.location.reload(), 1000)
     }
@@ -261,7 +262,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     setModal(null)
     if (!result?.success) {
       setLoading(false)
-      showError(result?.message || t('depot.uninstallFailed'))
+      showError(errorText(result, t('depot.uninstallFailed')))
     } else {
       setTimeout(() => window.location.reload(), 1000)
     }
@@ -272,7 +273,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     setLoading(true)
     const result = await api.updateCustomAppImage(service.service_name)
     setLoading(false)
-    if (!result?.success) showError(result?.message || t('depot.updateAppFailed'))
+    if (!result?.success) showError(errorText(result, t('depot.updateAppFailed')))
     else setTimeout(() => window.location.reload(), 1500)
   }
 
@@ -288,7 +289,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
       const response = await api.checkServiceUpdates()
       if (!response?.success) throw new Error(response?.message || 'Failed to dispatch update check')
     } catch (error: any) {
-      showError(t('apps.checkFailed', { error: error?.message || t('common.unknownError') }))
+      showError(t('apps.checkFailed', { error: errorText(error, t('common.unknownError')) }))
       setCheckingUpdates(false)
     }
   }
@@ -299,7 +300,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     setLoading(true)
     const result = await api.updateService(service.service_name, targetVersion)
     setLoading(false)
-    if (!result?.success) showError(result?.message || t('depot.updateServiceFailed'))
+    if (!result?.success) showError(errorText(result, t('depot.updateServiceFailed')))
   }
 
   // Toggle per-app automatic updates (opt-in). Optimistically reflects the new
@@ -311,7 +312,7 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
     const result = await api.setServiceAutoUpdate(service.service_name, enabled)
     if (!result?.success) {
       setAutoUpdateOverrides((prev) => ({ ...prev, [service.service_name]: !enabled }))
-      showError(result?.message || t('depot.autoUpdateFailed'))
+      showError(errorText(result, t('depot.autoUpdateFailed')))
       return
     }
     const appName = service.friendly_name || service.service_name

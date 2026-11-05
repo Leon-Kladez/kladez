@@ -51,7 +51,7 @@ const CuratedCollectionCard: React.FC<CuratedCollectionCardProps> = ({ collectio
       </div>
       <p className="text-gray-200 grow">{collection.description}</p>
       <p className="text-gray-200 text-xs mt-2">
-        {t('collection.itemsAndSize', { count: collection.resources?.length ?? 0, size: formatBytes(totalSizeBytes, 0) })}
+        {t('collection.itemsAndSize', { n: collection.resources?.length ?? 0, size: formatBytes(totalSizeBytes, 0) })}
       </p>
     </div>
   )

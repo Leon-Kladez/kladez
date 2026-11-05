@@ -19,6 +19,7 @@ import { IconArrowUp, IconCheck, IconDownload } from '@tabler/icons-react'
 import UpdateServiceModal from '~/components/UpdateServiceModal'
 import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 function extractTag(containerImage: string): string {
   if (!containerImage) return ''
@@ -76,7 +77,7 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
       }
     } catch (error) {
       console.error('Error checking for updates:', error)
-      showError(t('apps.checkFailed', { error: error.message || t('common.unknownError') }))
+      showError(t('apps.checkFailed', { error: errorText(error, t('common.unknownError')) }))
       setCheckingUpdates(false)
     }
   }
@@ -121,7 +122,7 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
       }
     } catch (error) {
       console.error('Error installing service:', error)
-      showError(t('apps.installFailed', { error: error.message || t('common.unknownError') }))
+      showError(t('apps.installFailed', { error: errorText(error, t('common.unknownError')) }))
     } finally {
       setIsInstalling(false)
     }
@@ -146,7 +147,7 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
       }, 3000)
     } catch (error) {
       console.error(`Error affecting service ${record.service_name}:`, error)
-      showError(t(`apps.affectFailed.${action}` as const, { error: error.message || t('common.unknownError') }))
+      showError(t(`apps.affectFailed.${action}` as const, { error: errorText(error, t('common.unknownError')) }))
     }
   }
 
@@ -169,7 +170,7 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
       }, 3000)
     } catch (error) {
       console.error(`Error force reinstalling service ${record.service_name}:`, error)
-      showError(t('apps.reinstallFailed', { error: error.message || t('common.unknownError') }))
+      showError(t('apps.reinstallFailed', { error: errorText(error, t('common.unknownError')) }))
     }
   }
 
@@ -192,13 +193,13 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
           try {
             const response = await api.updateService(record.service_name, targetVersion)
             if (!response?.success) {
-              throw new Error(response?.message || t('apps.updateFailedShort'))
+              throw new Error(errorText(response, t('apps.updateFailedShort')))
             }
             // On success the backend broadcasts `update-complete`, which triggers the reload effect
             // above and refreshes the version + status. Leave the button disabled until then.
           } catch (error) {
             console.error(`Error updating service ${record.service_name}:`, error)
-            showError(t('apps.updateFailed', { error: error.message || t('common.unknownError') }))
+            showError(t('apps.updateFailed', { error: errorText(error, t('common.unknownError')) }))
             setUpdatingServices((prev) => {
               const next = new Set(prev)
               next.delete(record.service_name)

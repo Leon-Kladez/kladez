@@ -17,6 +17,7 @@ import AppAutoUpdateSection from '~/components/updates/AppAutoUpdateSection'
 import ContentAutoUpdateSection from '~/components/updates/ContentAutoUpdateSection'
 import ContentUpdatesSection from '~/components/updates/ContentUpdatesSection'
 import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 type Props = {
   updateAvailable: boolean
@@ -131,7 +132,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
       }
     } catch (err: any) {
       setIsUpdating(false)
-      setError(err.response?.data?.error || err.message || t('update.startFailed'))
+      setError(errorText(err, t('update.startFailed')))
     }
   }
 
@@ -170,7 +171,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
       }
     },
     onError: (error: any) => {
-      const errorMessage = error?.message || t('update.checkFailed')
+      const errorMessage = errorText(error, t('update.checkFailed'))
       setError(errorMessage)
       addNotification({ type: 'error', message: errorMessage })
     },
@@ -220,14 +221,14 @@ export default function SystemUpdatePage(props: { system: Props }) {
       } else {
         addNotification({
           type: 'error',
-          message: t('update.subscribeFailed', { error: data?.message || t('common.unknownError') }),
+          message: t('update.subscribeFailed', { error: errorText(data, t('common.unknownError')) }),
         })
       }
     },
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: t('update.subscribeFailed', { error: error.message || t('common.unknownError') }),
+        message: t('update.subscribeFailed', { error: errorText(error, t('common.unknownError')) }),
       })
     },
   })

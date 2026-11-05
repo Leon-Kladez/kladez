@@ -26,6 +26,7 @@ import {
   resolveModelCapabilities,
 } from '../utils/model_capabilities.js'
 import { t } from '../../constants/i18n/index.js'
+import { humanizeError } from '../utils/user_errors.js'
 
 const NOMAD_MODELS_API_PATH = '/api/v1/ollama/models'
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
@@ -504,7 +505,7 @@ export class OllamaService {
       const installedAfter = await this.getModels(true)
       if (!installedAfter.some((m) => tag(m.name) === tag(model))) {
         throw new Error(
-          'Ollama reported no error but the model is not installed. The download did not complete.'
+          t('serverOllama.notInstalledAfterPull')
         )
       }
 
@@ -539,10 +540,10 @@ export class OllamaService {
         /manifest|not found|does not exist|unauthorized|no such/i.test(errorMessage)
 
       const userMessage = isVersionMismatch
-        ? 'This model requires a newer version of Ollama. Please update AI Assistant from the Apps page.'
+        ? t('serverOllama.newerVersion')
         : isPermanentPullError
-          ? `Ollama could not find this model: ${errorMessage}`
-          : `Failed to download model: ${errorMessage}`
+          ? t('serverOllama.notFound', { error: errorMessage })
+          : t('serverOllama.downloadFailed', { error: humanizeError(errorMessage) })
 
       // Broadcast failure to connected clients so UI can show the error
       this.broadcastDownloadError(model, userMessage)

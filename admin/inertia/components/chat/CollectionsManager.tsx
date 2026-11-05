@@ -5,6 +5,7 @@ import StyledButton from '~/components/StyledButton'
 import { useNotifications } from '~/context/NotificationContext'
 import api from '~/lib/api'
 import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 interface CollectionsManagerProps {
   onClose: () => void
@@ -32,24 +33,24 @@ export default function CollectionsManager({ onClose }: CollectionsManagerProps)
     mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) =>
       api.renameCollection(oldName, newName),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || t('collections.renamed') })
+      addNotification({ type: 'success', message: errorText(data, t('collections.renamed')) })
       setEditingName(null)
       invalidateAll()
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('collections.renameFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('collections.renameFailed')) })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (name: string) => api.deleteCollection(name),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || t('collections.removed') })
+      addNotification({ type: 'success', message: errorText(data, t('collections.removed')) })
       setConfirmDelete(null)
       invalidateAll()
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('collections.removeFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('collections.removeFailed')) })
     },
   })
 

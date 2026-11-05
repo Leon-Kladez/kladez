@@ -510,11 +510,11 @@ export class DockerService {
     const portMatch = raw.match(/(?:Bind for [^:]+:(\d+) failed: port is already allocated|:(\d+): bind: address already in use)/i)
     if (portMatch) {
       const port = portMatch[1] || portMatch[2]
-      const portText = port ? `port ${port}` : 'a required port'
+      const portText = port ? t('serverDocker.port', { port }) : t('serverDocker.somePort')
       if (port === '11434' || serviceName === SERVICE_NAMES.OLLAMA) {
-        return `Couldn't start because ${portText} is already in use on this machine. This usually means Ollama is already installed and running directly on the host (outside NOMAD). Stop and disable the host Ollama service (e.g. "sudo systemctl stop ollama" then "sudo systemctl disable ollama"), then try again.`
+        return t('serverDocker.portBusyOllama', { portText })
       }
-      return `Couldn't start because ${portText} is already in use on this machine. Stop whatever is using ${portText} on the host, then try again.`
+      return t('serverDocker.portBusy', { portText })
     }
     return raw
   }

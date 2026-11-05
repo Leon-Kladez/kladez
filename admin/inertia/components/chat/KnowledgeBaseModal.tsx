@@ -36,6 +36,7 @@ import CollectionCombobox from './CollectionCombobox'
 import Switch from '~/components/inputs/Switch'
 import { tx } from '~/lib/tx'
 import { t, formatDate, formatNumber } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 interface KnowledgeBaseModalProps {
   aiAssistantName?: string
@@ -284,7 +285,7 @@ export default function KnowledgeBaseModal({
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: error?.message || t('kb.policy.failed'),
+        message: errorText(error, t('kb.policy.failed')),
       })
     },
   })
@@ -297,12 +298,12 @@ export default function KnowledgeBaseModal({
     mutationFn: ({ source, collection }: { source: string; collection: string }) =>
       api.updateFileCollection(source, collection || null),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || t('kb.msg.collectionUpdated') })
+      addNotification({ type: 'success', message: errorText(data, t('kb.msg.collectionUpdated')) })
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
       queryClient.invalidateQueries({ queryKey: ['kbCollections'] })
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('kb.msg.collectionUpdateFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('kb.msg.collectionUpdateFailed')) })
     },
   })
 
@@ -310,13 +311,13 @@ export default function KnowledgeBaseModal({
     mutationFn: ({ source, active }: { source: string; active: boolean }) =>
       api.setFileActive(source, active),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || t('kb.msg.activeUpdated') })
+      addNotification({ type: 'success', message: errorText(data, t('kb.msg.activeUpdated')) })
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
     },
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: error?.message || t('kb.msg.activeFailed'),
+        message: errorText(error, t('kb.msg.activeFailed')),
       })
     },
   })
@@ -327,14 +328,14 @@ export default function KnowledgeBaseModal({
     onSuccess: (data) => {
       addNotification({
         type: 'success',
-        message: data?.message || t('kb.msg.collectionActiveUpdated'),
+        message: errorText(data, t('kb.msg.collectionActiveUpdated')),
       })
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
     },
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: error?.message || t('kb.msg.collectionActiveFailed'),
+        message: errorText(error, t('kb.msg.collectionActiveFailed')),
       })
     },
   })
@@ -347,7 +348,7 @@ export default function KnowledgeBaseModal({
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('kb.msg.deleteFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('kb.msg.deleteFailed')) })
       setConfirmDeleteSource(null)
     },
   })
@@ -358,7 +359,7 @@ export default function KnowledgeBaseModal({
     onSuccess: (data) => {
       addNotification({
         type: 'success',
-        message: data?.message || t('kb.msg.queued'),
+        message: errorText(data, t('kb.msg.queued')),
       })
       setConfirmReembed(null)
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
@@ -366,7 +367,7 @@ export default function KnowledgeBaseModal({
       queryClient.invalidateQueries({ queryKey: ['kbFileWarnings'] })
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('kb.msg.queueFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('kb.msg.queueFailed')) })
       setConfirmReembed(null)
     },
   })
@@ -374,11 +375,11 @@ export default function KnowledgeBaseModal({
   const cleanupFailedMutation = useMutation({
     mutationFn: () => api.cleanupFailedEmbedJobs(),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || t('kb.msg.cleaned') })
+      addNotification({ type: 'success', message: errorText(data, t('kb.msg.cleaned')) })
       queryClient.invalidateQueries({ queryKey: ['failedEmbedJobs'] })
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('kb.msg.cleanFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('kb.msg.cleanFailed')) })
     },
   })
 
@@ -387,7 +388,7 @@ export default function KnowledgeBaseModal({
     onSuccess: (data) => {
       addNotification({
         type: 'success',
-        message: data?.message || t('kb.msg.allCancelled'),
+        message: errorText(data, t('kb.msg.allCancelled')),
       })
       queryClient.invalidateQueries({ queryKey: ['embed-jobs'] })
       queryClient.invalidateQueries({ queryKey: ['failedEmbedJobs'] })
@@ -395,7 +396,7 @@ export default function KnowledgeBaseModal({
       queryClient.invalidateQueries({ queryKey: ['kbFileWarnings'] })
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('kb.msg.cancelFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('kb.msg.cancelFailed')) })
     },
   })
 
@@ -406,7 +407,7 @@ export default function KnowledgeBaseModal({
       queryClient.invalidateQueries({ queryKey: ['qdrantHealth'] })
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || t('kb.msg.qdrantFailed') })
+      addNotification({ type: 'error', message: errorText(error, t('kb.msg.qdrantFailed')) })
     },
   })
 
@@ -416,13 +417,13 @@ export default function KnowledgeBaseModal({
       addNotification({
         type: 'success',
         message:
-          data?.message || t('kb.msg.synced'),
+          errorText(data, t('kb.msg.synced')),
       })
     },
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: error?.message || t('kb.msg.syncFailed'),
+        message: errorText(error, t('kb.msg.syncFailed')),
       })
     },
   })
@@ -432,7 +433,7 @@ export default function KnowledgeBaseModal({
     onSuccess: (data) => {
       addNotification({
         type: data?.success ? 'success' : 'error',
-        message: data?.message || t('kb.msg.reembedDone'),
+        message: errorText(data, t('kb.msg.reembedDone')),
       })
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
       queryClient.invalidateQueries({ queryKey: ['embed-jobs'] })
@@ -450,7 +451,7 @@ export default function KnowledgeBaseModal({
     onSuccess: (data) => {
       addNotification({
         type: data?.success ? 'success' : 'error',
-        message: data?.message || t('kb.msg.resetDone'),
+        message: errorText(data, t('kb.msg.resetDone')),
       })
       queryClient.invalidateQueries({ queryKey: ['storedFiles'] })
       queryClient.invalidateQueries({ queryKey: ['embed-jobs'] })
