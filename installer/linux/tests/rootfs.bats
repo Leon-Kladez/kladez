@@ -50,3 +50,50 @@ setup() {
     [[ "$manifest" == *"\"$tag\""* ]] || { echo "missing $key $tag"; false; }
   done < "$LINUX_DIR/images.lock"
 }
+
+# --- build-images-bundle.sh with a fake docker (no network, no daemon) ---
+bundle_stub() {
+  S="$BATS_TEST_TMPDIR/bin"; mkdir -p "$S"
+  export LOG="$BATS_TEST_TMPDIR/docker.log" STATE="$BATS_TEST_TMPDIR/images"; mkdir -p "$STATE"; : > "$LOG"
+  cat > "$S/docker" <<'STUB'
+#!/usr/bin/env bash
+echo "docker $*" >> "$LOG"
+key() { printf '%s' "$1" | tr '/:@' '___'; }
+case "$1" in
+  pull) [[ "$2" == registry-blocked* || "$2" == redis* ]] && exit 1; echo "${2#*@}" > "$STATE/$(key "$2")" ;;
+  image) f="$STATE/$(key "${@: -1}")"; [ -f "$f" ] && cat "$f" || exit 1 ;;
+  tag) f="$STATE/$(key "$2")"; [ -f "$f" ] || exit 1; cp "$f" "$STATE/$(key "$3")" ;;
+  save) echo "saved $*" ;;
+esac
+STUB
+  cat > "$S/zstd" <<'STUB'
+#!/usr/bin/env bash
+for a; do case "$a" in -o) out=1 ;; *) [ -n "${out:-}" ] && { cat > "$a"; out=; } ;; esac; done
+exit 0
+STUB
+  chmod +x "$S/docker" "$S/zstd"
+  export PATH="$S:$PATH" KZ_DIST="$BATS_TEST_TMPDIR/dist"
+}
+
+@test "bundle: locally built admin is used without pulling" {
+  bundle_stub
+  d=sha256:$(printf 'a%.0s' {1..64})
+  echo "$d" > "$STATE/ghcr.io_aiglobdata_kladez_1.0.0"
+  echo "admin ghcr.io/aiglobdata/kladez:1.0.0@$d" > "$BATS_TEST_TMPDIR/lock"
+  run "$LINUX_DIR/build-images-bundle.sh" "$BATS_TEST_TMPDIR/lock"
+  [ "$status" -eq 0 ]
+  run grep 'docker pull' "$LOG"
+  [ "$status" -eq 1 ]
+  grep -q 'docker save ghcr.io/aiglobdata/kladez:1.0.0' "$LOG"
+}
+
+@test "bundle: Docker Hub refusal falls back to a mirror and tags without digest" {
+  bundle_stub
+  d=sha256:$(printf 'b%.0s' {1..64})
+  echo "redis redis:7-alpine@$d" > "$BATS_TEST_TMPDIR/lock"
+  run "$LINUX_DIR/build-images-bundle.sh" "$BATS_TEST_TMPDIR/lock"
+  [ "$status" -eq 0 ]
+  grep -q "docker pull mirror.gcr.io/library/redis@$d" "$LOG"
+  grep -q "docker tag mirror.gcr.io/library/redis@$d redis:7-alpine" "$LOG"
+  grep -q 'docker save redis:7-alpine' "$LOG"
+}

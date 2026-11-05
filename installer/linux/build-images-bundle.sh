@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Build dist/kladez-images.tar.zst: every image from images.lock, pulled by digest and
-# re-tagged without the digest (that is the name compose and the admin look for).
-# Needs docker; runs in CI. Falls back to Docker Hub mirrors if Docker Hub refuses.
+# Build dist/kladez-images.tar.zst: every image from images.lock, re-tagged without the digest
+# (that is the name compose and the admin look for). Needs docker; runs in CI.
+#
+# An image already present locally with exactly the pinned id (the admin image built in the same
+# CI job) is used as is. Others are pulled by digest; Docker Hub images fall back to mirrors.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 dist="${KZ_DIST:-$here/../../dist}"
@@ -9,14 +11,27 @@ lock="${1:-$here/images.lock}"
 mirrors=(mirror.gcr.io dh-mirror.gitverse.ru dockerhub.timeweb.cloud)
 mkdir -p "$dist"
 
-pull_with_fallback() {
-    local ref="$1" name="${1%%@*}" digest="${1#*@}" m
-    docker pull "$ref" && return 0
-    case "$name" in */*.*/*|*.*/*) return 1 ;; esac   # not a Docker Hub image
-    [[ "$name" == */* ]] || name="library/$name"
+is_docker_hub() {
+    local first="${1%%/*}"
+    [[ "$1" != */* ]] || [[ "$first" != *.* && "$first" != *:* && "$first" != localhost ]]
+}
+
+# resolve <ref "name:tag@sha256:…">: make "name:tag" exist locally with that content.
+resolve() {
+    local ref="$1" tag="${1%@sha256:*}" digest="${1#*@}" name repo m
+    if [ "$(docker image inspect -f '{{.Id}}' "$tag" 2>/dev/null || true)" = "$digest" ]; then
+        return 0
+    fi
+    if docker pull "$ref"; then
+        docker tag "$ref" "$tag"
+        return 0
+    fi
+    is_docker_hub "$tag" || return 1
+    name="${tag%:*}"
+    [[ "$name" == */* ]] && repo="$name" || repo="library/$name"
     for m in "${mirrors[@]}"; do
-        if docker pull "$m/${name%:*}@$digest"; then
-            docker tag "$m/${name%:*}@$digest" "$ref" 2>/dev/null || true
+        if docker pull "$m/$repo@$digest"; then
+            docker tag "$m/$repo@$digest" "$tag"
             return 0
         fi
     done
@@ -26,11 +41,8 @@ pull_with_fallback() {
 tags=()
 while read -r key ref; do
     [ -n "$key" ] || continue
-    tag="${ref%@sha256:*}"
-    pull_with_fallback "$ref" || { echo "cannot pull $key ($ref)" >&2; exit 1; }
-    id=$(docker image inspect -f '{{.Id}}' "$ref" 2>/dev/null || docker image inspect -f '{{.Id}}' "${tag%:*}@${ref#*@}")
-    docker tag "$id" "$tag"
-    tags+=("$tag")
+    resolve "$ref" || { echo "cannot get $key ($ref)" >&2; exit 1; }
+    tags+=("${ref%@sha256:*}")
 done < "$lock"
 
 docker save "${tags[@]}" | zstd -19 -T0 -o "$dist/kladez-images.tar.zst" -f
