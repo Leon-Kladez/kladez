@@ -102,7 +102,7 @@ Describe 'ConvertTo-KladezWslPath' {
 }
 
 Describe 'checks.ps1 output file' {
-    It 'writes UTF-8 without BOM, Cyrillic drive label intact' {
+    It 'writes UTF-8 with BOM (Inno Setup LoadStringsFromFile), Cyrillic drive label intact' {
         $out = Join-Path $TestDrive 'checks.txt'
         $facts = [pscustomobject]@{
             Build = 19045; TotalMemoryBytes = [long](16GB)
@@ -112,12 +112,15 @@ Describe 'checks.ps1 output file' {
         }
         & (Join-Path $PSScriptRoot '..\scripts\checks.ps1') -OutFile $out -Facts $facts
         $bytes = [IO.File]::ReadAllBytes($out)
-        ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB) | Should -BeFalse
-        $text = [Text.Encoding]::UTF8.GetString($bytes)
+        ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) | Should -BeTrue
+        $text = [Text.Encoding]::UTF8.GetString($bytes, 3, $bytes.Length - 3)
         $text | Should -Match '(?m)^build\|ok\|modern\|'
         $text | Should -Match '(?m)^memory\|ok\|'
-        $text | Should -Match '(?m)^virt\|ok?$'
-        $text | Should -Match '(?m)^ports\|8080\|8090\|?$'
-        $text | Should -Match '(?m)^drive\|D\|Данные\|412\|aptechka,biblioteka,vse\|default?$'
+        $text | Should -Match '(?m)^virt\|ok
+?$'
+        $text | Should -Match '(?m)^ports\|8080\|8090\|
+?$'
+        $text | Should -Match '(?m)^drive\|D\|Данные\|412\|aptechka,biblioteka,vse\|default
+?$'
     }
 }

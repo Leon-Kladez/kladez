@@ -1,4 +1,4 @@
-﻿# «Кладезъ»: проверки для Inno Setup. Пишет строки «тип|поля…» в UTF-8 без BOM
+﻿# «Кладезъ»: проверки для Inno Setup. Пишет строки «тип|поля…» в UTF-8 с BOM
 # (Pascal в Inno Setup не разбирает JSON). Формат — план, Задача 5.
 param(
     [Parameter(Mandatory)][string]$OutFile,
@@ -21,4 +21,4 @@ foreach ($d in Get-KladezDriveChoices -Drives $Facts.Drives) {
     $label = ([string]$d.Label) -replace '\|', '/'
     $lines.Add("drive|$($d.Letter)|$label|$($d.FreeGB)|$(($d.Fits) -join ',')|$(if ($d.IsDefault) { 'default' } else { '' })")
 }
-[IO.File]::WriteAllText($OutFile, ($lines -join "`r`n") + "`r`n", (New-Object System.Text.UTF8Encoding($false)))
+[IO.File]::WriteAllText($OutFile, ($lines -join "`r`n") + "`r`n", (New-Object System.Text.UTF8Encoding($true)))

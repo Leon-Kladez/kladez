@@ -1,7 +1,10 @@
 ﻿# «Кладезъ»: один шаг установки, вызывается из Inno Setup (план Задача 6).
 # Коды выхода: 0 — готово, 3010 — нужна перезагрузка, 1 — ошибка (текст по-русски в stdout и в журнале).
 param(
-    [Parameter(Mandatory)][ValidateSet('features', 'wsl', 'distro', 'firstrun', 'upgrade')][string]$Step,
+    [Parameter(Mandatory)][ValidateSet('features', 'wsl', 'integrate', 'distro', 'firstrun', 'upgrade')][string]$Step,
+    [string]$LauncherPath,
+    [string]$NetScriptPath,
+    [string]$UserId,
     [string]$WindowsPathKind = 'modern',   # modern | legacy (из checks.ps1)
     [string]$WslMsi,
     [string]$LegacyKernelMsi,
@@ -35,6 +38,14 @@ try {
                 'install-legacy-kernel' { Install-KladezWslPackage -MsiPath $LegacyKernelMsi }
                 'ready' { 'ok' }
             }
+        }
+        'integrate' {
+            # Autostart, the elevated network task and the firewall rule for phones (spec Б6–Б7).
+            Import-Module (Join-Path $PSScriptRoot 'Kladez.Tasks.psm1') -Force
+            if (-not $UserId) { throw 'Не удалось определить пользователя Windows для автозапуска.' }
+            Register-KladezTasks -LauncherPath $LauncherPath -NetScriptPath $NetScriptPath -UserId $UserId
+            New-KladezFirewallRule -Ports @($AdminPort, $KiwixPort)
+            'ok'
         }
         'distro' { New-Item -ItemType Directory -Force -Path $SystemDir | Out-Null; Install-KladezDistro -SystemDir $SystemDir -RootfsPath $RootfsPath }
         'firstrun' {
