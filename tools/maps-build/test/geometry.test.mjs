@@ -39,8 +39,8 @@ test('округа России и спорные территории', (t) => 
   assert.ok(pointInGeometry([34.1, 44.95], geom('ua')), 'Симферополь в Украине')
   assert.ok(pointInGeometry([39.68, 43.55], geom('ru-south')), 'Сочи у берега — запас работает')
   // Анадырь в грубом контуре NE стоит «в воде» лимана, поэтому точки на суше по обе стороны 180°.
-  assert.ok(pointInGeometry([166.44, 68.05], geom('ru-far-east')), 'Чукотка, Билибино')
-  assert.ok(pointInGeometry([-174, 66], geom('ru-far-east')), 'Чукотка восточнее 180°')
+  assert.ok(pointInGeometry([166.44, 68.05], geom('ru-far-east-north')), 'Чукотка, Билибино')
+  assert.ok(pointInGeometry([-174, 66], geom('ru-far-east-north')), 'Чукотка восточнее 180°')
 })
 
 test('схема округов: упрощённые контуры, точки на месте, размер ≤ 300 000 байт', (t) => {
@@ -50,7 +50,7 @@ test('схема округов: упрощённые контуры, точки
   assert.ok(pointInGeometry([37.62, 55.75], byId('ru-central')), 'Москва')
   assert.ok(pointInGeometry([49.11, 55.79], byId('ru-volga')), 'Казань')
   assert.ok(pointInGeometry([82.92, 55.03], byId('ru-siberia')), 'Новосибирск')
-  assert.equal(new Set(fc.features.map((f) => f.properties.id)).size, 8)
+  assert.equal(new Set(fc.features.map((f) => f.properties.id)).size, 9)
   assert.ok(JSON.stringify(fc).length <= 300_000, `размер ${JSON.stringify(fc).length}`)
 })
 

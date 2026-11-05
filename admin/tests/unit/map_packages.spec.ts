@@ -1,7 +1,7 @@
 import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { mapsSpecToListing } from '../../app/utils/map_packages.js'
+import { mapsSpecToListing, downloadableResources } from '../../app/utils/map_packages.js'
 import type { MapsSpec } from '../../types/collections.js'
 
 const spec: MapsSpec = {
@@ -25,4 +25,12 @@ test('mapsSpecToListing: имя файла, адрес и размер из на
 
 test('mapsSpecToListing: нет списка — пусто', () => {
   assert.deepEqual(mapsSpecToListing(null), [])
+})
+
+test('карты с пометкой planned не скачиваются и не считаются обновлением', () => {
+  const r = spec.collections[0].resources[0]
+  const planned = { ...r, id: 'ru-volga', planned: true, url: r.url.replace('ru-central', 'ru-volga') }
+  const s2: MapsSpec = { ...spec, collections: [{ ...spec.collections[0], resources: [r, planned] }] }
+  assert.deepEqual(downloadableResources(s2.collections[0].resources).map((x) => x.id), ['ru-central'])
+  assert.deepEqual(mapsSpecToListing(s2).map((x) => x.name), ['ru-central_2026-11.pmtiles'])
 })

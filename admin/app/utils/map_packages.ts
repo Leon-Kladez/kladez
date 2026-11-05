@@ -1,5 +1,5 @@
 // Чистые функции карт Кладезя (описание: docs/superpowers/specs/2026-11-05-kladez-3-maps-design.md).
-import type { MapsSpec } from '../../types/collections.js'
+import type { MapsSpec, SpecResource } from '../../types/collections.js'
 
 export type BaseAssetsSource = { kind: 'file'; path: string } | { kind: 'url'; url: string }
 
@@ -23,10 +23,15 @@ export type MapListingEntry = { name: string; download_url: string; size: number
 export function mapsSpecToListing(spec: MapsSpec | null): MapListingEntry[] {
   if (!spec) return []
   return spec.collections.flatMap((c) =>
-    c.resources.map((r) => ({
+    downloadableResources(c.resources).map((r) => ({
       name: new URL(r.url).pathname.split('/').pop() ?? '',
       download_url: r.url,
       size: Math.round((r.size_mb ?? 0) * 1_000_000),
     }))
   )
+}
+
+/** Ресурсы, которые можно скачивать: без пометки planned (файла ещё нет). */
+export function downloadableResources(resources: SpecResource[]): SpecResource[] {
+  return resources.filter((r) => !r.planned)
 }

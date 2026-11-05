@@ -182,23 +182,38 @@
    ]
   },
   {
-   "id": "ru-far-east",
-   "title": "Дальневосточный федеральный округ",
+   "id": "ru-far-east-south",
+   "title": "Дальневосточный федеральный округ: юг",
    "group": "russia",
    "country": "RU",
-   "contents": "Приморский, Хабаровский, Камчатский, Забайкальский края, Бурятия, Якутия, Амурская, Магаданская, Сахалинская области, Еврейская АО, Чукотка",
+   "contents": "Приморский, Хабаровский, Забайкальский края, Бурятия, Амурская и Сахалинская области, Еврейская АО",
    "source": {
     "admin1": [
      "RU-BU",
-     "RU-SA",
      "RU-ZAB",
-     "RU-KAM",
      "RU-PRI",
      "RU-KHA",
      "RU-AMU",
-     "RU-MAG",
      "RU-SAK",
-     "RU-YEV",
+     "RU-YEV"
+    ]
+   },
+   "variants": [
+    "full",
+    "overview"
+   ]
+  },
+  {
+   "id": "ru-far-east-north",
+   "title": "Дальневосточный федеральный округ: север",
+   "group": "russia",
+   "country": "RU",
+   "contents": "Якутия, Камчатский край, Магаданская область, Чукотка",
+   "source": {
+    "admin1": [
+     "RU-SA",
+     "RU-KAM",
+     "RU-MAG",
      "RU-CHU"
     ]
    },
@@ -437,21 +452,6 @@
    ]
   },
   {
-   "id": "pl",
-   "title": "Польша",
-   "group": "europe",
-   "country": "PL",
-   "source": {
-    "countries": [
-     "PL"
-    ]
-   },
-   "variants": [
-    "full",
-    "overview"
-   ]
-  },
-  {
    "id": "cz",
    "title": "Чехия",
    "group": "europe",
@@ -580,6 +580,52 @@
      "DE-ST",
      "DE-SN",
      "DE-TH"
+    ]
+   },
+   "variants": [
+    "full",
+    "overview"
+   ]
+  },
+  {
+   "id": "pl-west",
+   "title": "Польша: запад",
+   "group": "europe",
+   "country": "PL",
+   "contents": "Западно-Поморское, Любушское, Великопольское, Нижнесилезское, Опольское, Поморское, Куявско-Поморское воеводства",
+   "source": {
+    "admin1": [
+     "PL-ZP",
+     "PL-LB",
+     "PL-WP",
+     "PL-DS",
+     "PL-OP",
+     "PL-PM",
+     "PL-KP"
+    ]
+   },
+   "variants": [
+    "full",
+    "overview"
+   ]
+  },
+  {
+   "id": "pl-east",
+   "title": "Польша: восток",
+   "group": "europe",
+   "country": "PL",
+   "contents": "Мазовецкое (Варшава), Лодзинское, Свентокшиское, Малопольское, Силезское, Подкарпатское, Люблинское, Подляское, Варминьско-Мазурское воеводства",
+   "source": {
+    "admin1": [
+     "PL-MZ",
+     "PL-LD",
+     "PL-SK",
+     "PL-MA",
+     "PL-SL",
+     "PL-PK",
+     "PL-LU",
+     "PL-PD",
+     "PL-WN"
     ]
    },
    "variants": [

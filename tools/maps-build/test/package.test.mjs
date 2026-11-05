@@ -82,3 +82,22 @@ test('sha256File', async () => {
   writeFileSync(p, 'abc')
   assert.equal(await sha256File(p), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
 })
+
+test('buildMapsManifest: черновик с оценками — пометка planned, без суммы', () => {
+  const draft = results.map((r) => ({ ...r, sha256: undefined }))
+  const spec = buildMapsManifest(draft, { ...opts, planned: true })
+  const [full] = spec.collections[0].resources
+  assert.equal(full.planned, true)
+  assert.ok(!('sha256' in full))
+  assert.match(full.description, /ещё не опубликован/)
+})
+
+test('draftResults: оценки, обзорно — четверть, нет оценки — ошибка', async () => {
+  const { draftResults } = await import('../src/draft.mjs')
+  const r = draftResults([central], { 'ru-central': 1104 }, '2026-11')
+  assert.deepEqual(r.map((x) => [x.filename, x.bytes]), [
+    ['ru-central_2026-11.pmtiles', 1_104_000_000],
+    ['ru-central-overview_2026-11.pmtiles', 276_000_000],
+  ])
+  assert.throws(() => draftResults([central], {}, '2026-11'), /ru-central/)
+})

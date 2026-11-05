@@ -24,6 +24,7 @@ const kladezResource = {
   country: 'RU',
   countries: ['RU'],
   contents: 'Москва и Московская область',
+  planned: true,
 }
 
 function spec(resource: Record<string, unknown>) {

@@ -9,6 +9,8 @@
 //       С --upload каждый файл сразу уходит в релиз (gh) и удаляется с диска: у раннера мало места.
 //   node src/build.mjs merge --out <dir>
 //       → склеивает manifest-*.json в maps.json.
+//   node src/build.mjs draft --out <maps.json> --version ГГГГ-ММ [--repo owner/name]
+//       → черновой список карт по estimates.json (все пакеты planned) — до первой сборки.
 //   node src/build.mjs districts --out <file.geojson> [--ne-dir <dir>]
 //       → упрощённая схема федеральных округов России для окна выбора.
 //
@@ -23,6 +25,7 @@ import { fetchAdmin1, NE_ADMIN0_PATH } from './geodata.mjs'
 import { districtSchema, regionGeometry } from './geometry.mjs'
 import { assertPartSize, extractArgs, fetchLatestBuild, parseDryRunBytes, runPmtiles } from './extract.mjs'
 import { assetUrl, buildMapsManifest, mergeManifests, mktorrentArgs, packageFilename, sha256File } from './package.mjs'
+import { KLADEZ_MAPS_REPO_PLACEHOLDER, draftResults } from './draft.mjs'
 
 const REGIONS_PATH = fileURLToPath(new URL('../regions.json', import.meta.url))
 
@@ -98,6 +101,15 @@ async function districts(o) {
   writeFileSync(o.out, JSON.stringify(districtSchema(loadRegions(REGIONS_PATH), ne0, ne1)) + '\n')
 }
 
+function draft(o) {
+  if (!o.version || !/^\d{4}-\d{2}$/.test(o.version)) throw new Error('нужен --version ГГГГ-ММ')
+  const estimates = JSON.parse(readFileSync(new URL('../estimates.json', import.meta.url), 'utf8')).full_mb
+  const results = draftResults(loadRegions(REGIONS_PATH), estimates, o.version)
+  const repo = o.repo || KLADEZ_MAPS_REPO_PLACEHOLDER
+  const spec = buildMapsManifest(results, { repo, tag: `maps-${o.version}`, version: o.version, builtAt: `${o.version}-01-draft`, planned: true })
+  writeFileSync(o.out, JSON.stringify(spec, null, 1) + '\n')
+}
+
 function merge(o) {
   const parts = readdirSync(o.out)
     .filter((f) => /^manifest-.+\.json$/.test(f))
@@ -119,6 +131,7 @@ const { positionals, values } = parseArgs({
     'yandex-bucket': { type: 'string' },
     'yandex-prefix': { type: 'string' },
     'ne-dir': { type: 'string' },
+    'version': { type: 'string' },
   },
 })
 
@@ -128,7 +141,8 @@ try {
   else if (cmd === 'build') await build(values)
   else if (cmd === 'merge') merge(values)
   else if (cmd === 'districts') await districts(values)
-  else throw new Error('команда: latest | build | merge | districts')
+  else if (cmd === 'draft') draft(values)
+  else throw new Error('команда: latest | build | merge | districts | draft')
 } catch (e) {
   console.error(`Ошибка: ${e.message}`)
   process.exit(1)

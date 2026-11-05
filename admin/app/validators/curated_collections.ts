@@ -33,6 +33,8 @@ export const specResourceValidator = vine.object({
   countries: vine.array(vine.string().regex(/^[A-Z]{2}$/)).optional(),
   // Что входит в пакет, по-русски (например, перечень субъектов округа).
   contents: vine.string().optional(),
+  // Черновик до первой сборки карт: файла ещё нет, программа такой ресурс не скачивает.
+  planned: vine.boolean().optional(),
 })
 
 // ---- ZIM Categories spec (versioned) ----

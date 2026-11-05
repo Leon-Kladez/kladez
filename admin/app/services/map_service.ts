@@ -35,7 +35,7 @@ import {
   buildPmtilesExtractArgs,
   BUNDLED_BASE_ASSETS_PATH,
 } from '../../constants/map_regions.js'
-import { pickBaseAssetsSource } from '../utils/map_packages.js'
+import { downloadableResources, pickBaseAssetsSource } from '../utils/map_packages.js'
 import { copyFile } from 'fs/promises'
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
@@ -147,7 +147,7 @@ export class MapService implements IMapService {
     // Filter out already installed
     const installed = await InstalledResource.query().where('resource_type', 'map')
     const installedIds = new Set(installed.map((r) => r.resource_id))
-    const toDownload = collection.resources.filter((r) => !installedIds.has(r.id))
+    const toDownload = downloadableResources(collection.resources).filter((r) => !installedIds.has(r.id))
 
     if (toDownload.length === 0) return null
 

@@ -39,6 +39,8 @@ export type SpecResource = {
   countries?: string[]
   /** Что входит в пакет, по-русски. */
   contents?: string
+  /** Файл ещё не опубликован (черновик списка карт): не скачивать, не считать обновлением. */
+  planned?: boolean
 }
 
 export type SpecTier = {

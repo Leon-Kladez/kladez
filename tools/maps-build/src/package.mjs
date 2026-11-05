@@ -45,7 +45,8 @@ export function assetUrl(repo, tag, filename) {
 
 /**
  * @param {{ region: import('./regions.mjs').Region, variant: 'full'|'overview', filename: string, bytes: number, sha256: string }[]} results
- * @param {{ repo: string, tag: string, version: string, builtAt: string, yandexBase?: string }} opts
+ * @param {{ repo: string, tag: string, version: string, builtAt: string, yandexBase?: string, planned?: boolean }} opts
+ *   planned — черновик до первой сборки: размеры — оценка, файлов ещё нет, программа их не скачивает.
  */
 export function buildMapsManifest(results, opts) {
   const byGroup = new Map()
@@ -55,10 +56,10 @@ export function buildMapsManifest(results, opts) {
       id: packageId(r.region.id, r.variant),
       version: opts.version,
       title: r.variant === 'overview' ? `${r.region.title} (обзорно)` : r.region.title,
-      description: r.region.contents || `Карта: ${r.region.title}`,
+      description: (r.region.contents || `Карта: ${r.region.title}`) + (opts.planned ? ' (файлы ещё не опубликованы, размер — оценка)' : ''),
       url,
       size_mb: Math.ceil(r.bytes / 1e6),
-      sha256: r.sha256,
+      ...(r.sha256 ? { sha256: r.sha256 } : {}),
       ...(opts.yandexBase ? { mirrors: [opts.yandexBase + r.filename] } : {}),
       torrent: url + '.torrent',
       detail: r.variant,
@@ -66,6 +67,7 @@ export function buildMapsManifest(results, opts) {
       // Все страны пакета: «Израиль и Палестина» находится и по IL, и по PS.
       countries: [...new Set([r.region.country, ...(r.region.source.countries ?? [])])],
       ...(r.region.contents ? { contents: r.region.contents } : {}),
+      ...(opts.planned ? { planned: true } : {}),
     }
     if (!byGroup.has(r.region.group)) byGroup.set(r.region.group, [])
     byGroup.get(r.region.group).push(resource)
