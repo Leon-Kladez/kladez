@@ -24,6 +24,19 @@ export type SpecResource = {
    * another schema change.
    */
   auth?: 'nomad_app_key'
+  // ---- Карты Кладезя: см. specResourceValidator ----
+  /** SHA-256 файла (hex), сверяется после скачивания. */
+  sha256?: string
+  /** Запасные полные адреса того же файла, по порядку после `url`. */
+  mirrors?: string[]
+  /** Адрес .torrent с веб-сидами. */
+  torrent?: string
+  /** full — до домов (масштаб 15), overview — обзорно (масштаб 13). */
+  detail?: 'full' | 'overview'
+  /** Страна пакета, ISO 3166-1 alpha-2. */
+  country?: string
+  /** Что входит в пакет, по-русски. */
+  contents?: string
 }
 
 export type SpecTier = {
