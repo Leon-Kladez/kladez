@@ -816,6 +816,12 @@ export class ZimService {
       return validated.options
     } catch (error) {
       logger.error(`[ZimService] Failed to fetch Wikipedia options:`, error)
+      // Kladez: fall back to the cached / bundled catalog (works offline).
+      const { CollectionManifestService } = await import('./collection_manifest_service.js')
+      const spec = await new CollectionManifestService().getSpecWithFallback<{ options: WikipediaOption[] }>(
+        'wikipedia'
+      )
+      if (spec?.options?.length) return spec.options
       throw new Error('Failed to fetch Wikipedia options')
     }
   }

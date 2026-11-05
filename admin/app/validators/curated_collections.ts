@@ -98,7 +98,46 @@ export const creatorPacksSpecSchema = vine.object({
       poster_url: vine.string().url().optional(),
       logo_url: vine.string().url().optional(),
     })
+  ),  // Kladez: may be empty — Creator Packs are not distributed in Kladez
+})
+
+// ---- Kladez: bundles spec (Аптечка / Библиотека / Всё) ----
+//
+// A bundle is one Wikipedia option plus a list of category tier slugs.
+export const bundlesSpecSchema = vine.object({
+  spec_version: vine.string(),
+  bundles: vine.array(
+    vine.object({
+      id: vine.string(),
+      name: vine.string(),
+      description: vine.string(),
+      wikipedia: vine.string(),
+      tiers: vine.array(vine.string()),
+      size_mb: vine.number().min(0),
+    })
   ).minLength(1),
+})
+
+// ---- Kladez: download mirrors spec ----
+export const mirrorsSpecSchema = vine.object({
+  spec_version: vine.string(),
+  kiwix: vine.object({
+    catalog: vine.string().url(),
+    primary: vine.string().url(),
+    mirrors: vine.array(
+      vine.object({
+        base: vine.string().url(),
+        country: vine.string(),
+        ru_check: vine.enum(['ok', 'unstable', 'timeout']),
+      })
+    ),
+  }),
+  docker_registry_mirrors: vine.array(
+    vine.object({
+      url: vine.string().url(),
+      source: vine.string(),
+    })
+  ),
 })
 
 // ---- Wikipedia validators (used by ZimService) ----

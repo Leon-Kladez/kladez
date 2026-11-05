@@ -8,7 +8,15 @@ import InstalledResource from '#models/installed_resource'
 import WikipediaSelection from '#models/wikipedia_selection'
 import { QueueService } from './queue_service.js'
 import { RunDownloadJob } from '#jobs/run_download_job'
-import { zimCategoriesSpecSchema, mapsSpecSchema, wikipediaSpecSchema, creatorPacksSpecSchema } from '#validators/curated_collections'
+import {
+  zimCategoriesSpecSchema,
+  mapsSpecSchema,
+  wikipediaSpecSchema,
+  creatorPacksSpecSchema,
+  bundlesSpecSchema,
+  mirrorsSpecSchema,
+} from '#validators/curated_collections'
+import { readBundledSpec } from '../utils/bundled_catalog.js'
 import { isGatedResource } from '../utils/hosted_content.js'
 import { catalogUrl, mapsCatalogUrl } from '../utils/catalog_source.js'
 import env from '#start/env'
@@ -44,6 +52,8 @@ const VALIDATORS: Record<ManifestType, any> = {
   maps: mapsSpecSchema,
   wikipedia: wikipediaSpecSchema,
   creator_packs: creatorPacksSpecSchema,
+  bundles: bundlesSpecSchema,
+  mirrors: mirrorsSpecSchema,
 }
 
 export class CollectionManifestService {
@@ -98,7 +108,31 @@ export class CollectionManifestService {
     } catch {
       // Fetch failed, will fall back to cache
     }
-    return this.getCachedSpec<T>(type)
+    const cached = await this.getCachedSpec<T>(type)
+    if (cached) return cached
+    // Kladez: no network and no cache (first start offline) -> the catalog copy
+    // baked into the image, so the wizard is never empty.
+    return this.loadBundledSpec<T>(type)
+  }
+
+  /**
+   * Kladez: validate and cache the bundled collections-ru/ copy. Cached with
+   * fetched_at = epoch so any later successful network fetch replaces it.
+   */
+  async loadBundledSpec<T>(type: ManifestType): Promise<T | null> {
+    const data = await readBundledSpec(type)
+    if (!data) return null
+    try {
+      const validated = await vine.validate({ schema: VALIDATORS[type], data })
+      await CollectionManifest.updateOrCreate(
+        { type },
+        { spec_version: validated.spec_version, spec_data: validated, fetched_at: DateTime.fromMillis(0) }
+      )
+      return validated as T
+    } catch (error) {
+      logger.error(`[CollectionManifestService] Bundled ${type} catalog is invalid:`, error?.message || error)
+      return null
+    }
   }
 
   // ---- Status computation ----

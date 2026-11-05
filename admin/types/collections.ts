@@ -121,7 +121,40 @@ export type CreatorPackWithStatus = CreatorPack & {
   available_update_version?: string
 }
 
-export type ManifestType = 'zim_categories' | 'maps' | 'wikipedia' | 'creator_packs'
+export type ManifestType =
+  | 'zim_categories'
+  | 'maps'
+  | 'wikipedia'
+  | 'creator_packs'
+  // Kladez additions
+  | 'bundles'
+  | 'mirrors'
+
+/** Kladez: a ready-made set — one Wikipedia option plus category tiers. */
+export type Bundle = {
+  id: string
+  name: string
+  description: string
+  wikipedia: string
+  tiers: string[]
+  size_mb: number
+}
+
+export type BundlesSpec = {
+  spec_version: string
+  bundles: Bundle[]
+}
+
+/** Kladez: Kiwix download mirrors (same path after `/zim/` on every mirror). */
+export type MirrorsSpec = {
+  spec_version: string
+  kiwix: {
+    catalog: string
+    primary: string
+    mirrors: { base: string; country: string; ru_check: 'ok' | 'unstable' | 'timeout' }[]
+  }
+  docker_registry_mirrors: { url: string; source: string }[]
+}
 
 export type ResourceStatus = 'installed' | 'not_installed' | 'update_available'
 
