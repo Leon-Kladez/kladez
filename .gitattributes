@@ -3,3 +3,5 @@
 # the container exits immediately. Checkouts on Windows would otherwise convert
 # them, which only shows up when building an image locally rather than in CI.
 *.sh text eol=lf
+# Кладезъ: everything that runs inside the Linux distro keeps LF too.
+installer/linux/** text eol=lf

@@ -1,0 +1,121 @@
+# «Кладезъ» — compose для собственного WSL-дистрибутива Kladez.
+#
+# Основано на install/management_compose.yaml из Project NOMAD (Crosstalk Solutions, Apache-2.0);
+# изменено для «Кладезъ»: все образы уже лежат внутри установщика (pull_policy: never), библиотека —
+# папка Windows (/mnt/<диск>/Kladez/library), адрес панели — localhost (IP меняется, см. спек Б6).
+#
+# Плейсхолдеры (имена в двойных собачках) подставляет kladez-start (kz_render_compose). Имена проекта, контейнеров и
+# пути /opt/project-nomad сохранены как у NOMAD: дистрибутив отдельный, конфликта нет, а код
+# admin и updater на них опирается.
+name: project-nomad
+services:
+  admin:
+    image: @@ADMIN_IMAGE@@
+    pull_policy: never
+    container_name: nomad_admin
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "@@ADMIN_PORT@@:8080"
+    volumes:
+      # Один и тот же путь библиотеки здесь, в NOMAD_STORAGE_PATH и у disk-collector.
+      - "@@LIBRARY_DIR@@:/app/storage"
+      - /var/run/docker.sock:/var/run/docker.sock
+      - nomad-update-shared:/app/update-shared
+    environment:
+      - NODE_ENV=production
+      - "NOMAD_STORAGE_PATH=@@LIBRARY_DIR@@"
+      - PORT=8080
+      - LOG_LEVEL=info
+      - APP_KEY=@@APP_KEY@@
+      - HOST=0.0.0.0
+      - URL=http://localhost:@@ADMIN_PORT@@
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=nomad
+      - DB_USER=nomad_user
+      - DB_PASSWORD=@@DB_PASSWORD@@
+      - DB_NAME=nomad
+      - DB_SSL=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DISABLE_COMPRESSION=false
+      - KLADEZ_IMAGE_REPO=@@IMAGE_REPO@@
+      - KLADEZ_REGISTRY_MIRRORS=@@REGISTRY_MIRRORS@@
+      - KLADEZ_KIWIX_PORT=@@KIWIX_PORT@@
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  dozzle:
+    image: @@DOZZLE_IMAGE@@
+    pull_policy: never
+    container_name: nomad_dozzle
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9999:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOZZLE_ENABLE_ACTIONS=false
+      - DOZZLE_ENABLE_SHELL=false
+  mysql:
+    image: @@MYSQL_IMAGE@@
+    pull_policy: never
+    container_name: nomad_mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=@@DB_ROOT_PASSWORD@@
+      - MYSQL_DATABASE=nomad
+      - MYSQL_USER=nomad_user
+      - MYSQL_PASSWORD=@@DB_PASSWORD@@
+    volumes:
+      # База — внутри ext4.vhdx дистрибутива, не в папке Windows (MySQL на /mnt ненадёжен).
+      - /opt/project-nomad/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  redis:
+    image: @@REDIS_IMAGE@@
+    pull_policy: never
+    container_name: nomad_redis
+    restart: unless-stopped
+    volumes:
+      - /opt/project-nomad/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  updater:
+    image: @@UPDATER_IMAGE@@
+    pull_policy: never
+    container_name: nomad_updater
+    restart: unless-stopped
+    environment:
+      - ADMIN_IMAGE_REPO=@@IMAGE_REPO@@
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/project-nomad:/opt/project-nomad
+      - nomad-update-shared:/shared
+  disk-collector:
+    image: @@DISK_COLLECTOR_IMAGE@@
+    pull_policy: never
+    container_name: nomad_disk_collector
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave
+      - "@@LIBRARY_DIR@@:/storage"
+
+volumes:
+  nomad-update-shared:
+    driver: local
