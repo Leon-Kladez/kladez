@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Как включить виртуализацию — «Кладезъ»</title>
+<style>
+  :root { --ink: #5a3b12; --paper: #f6efe0; --soft: #ead9b8; --accent: #2f6b2f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 20px/1.55 "Segoe UI", Arial, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 22px 60px; }
+  h1 { font-size: 34px; margin: 0 0 6px; }
+  h2 { font-size: 26px; margin: 38px 0 10px; border-top: 2px solid var(--soft); padding-top: 22px; }
+  .lead { font-size: 22px; }
+  .note { background: #fff8e6; border-left: 6px solid #d9a441; padding: 12px 16px; margin: 16px 0; }
+  .good { background: #eef6ea; border-left: 6px solid var(--accent); padding: 12px 16px; margin: 16px 0; }
+  kbd { display: inline-block; min-width: 2.2em; padding: 2px 8px; border: 2px solid var(--ink); border-radius: 6px;
+        background: #fff; font: bold 19px "Segoe UI", Arial, sans-serif; text-align: center; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid var(--soft); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  figure { margin: 16px 0; }
+  figure svg { width: 100%; height: auto; display: block; border: 1px solid var(--soft); background: #fff; }
+  figcaption { font-size: 17px; margin-top: 6px; }
+  ol li { margin-bottom: 8px; }
+  .print { display: inline-block; margin-top: 8px; padding: 10px 18px; font-size: 20px; border: 2px solid var(--ink);
+           background: #fff; color: var(--ink); border-radius: 8px; cursor: pointer; }
+  @page { size: A4; margin: 14mm; }
+  @media print {
+    body { font-size: 14pt; background: #fff; }
+    .print { display: none; }
+    h2 { break-before: auto; }
+    figure { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+<h1>Как включить виртуализацию</h1>
+<p class="lead">«Кладезъ» нужна функция компьютера, которая называется <b>виртуализация</b>. Она есть почти во всех компьютерах последних десяти лет, но иногда выключена. Включается она в <b>BIOS</b> — это настройки самого компьютера, которые открываются ещё до Windows.</p>
+<p>Это безопасно: вы меняете одну настройку, файлы и Windows не затрагиваются. Займёт 5–10 минут.</p>
+<button class="print" onclick="window.print()">Распечатать эту инструкцию</button>
+
+<div class="note"><b>Совет.</b> Распечатайте инструкцию или откройте её на телефоне: когда компьютер перезагрузится в BIOS, эта страница на экране пропадёт.</div>
+
+<h2>Шаг 1. Узнайте клавишу входа в BIOS</h2>
+<p>У каждого производителя своя клавиша. Найдите свой компьютер в таблице. Если его нет — пробуйте по очереди <kbd>Del</kbd> и <kbd>F2</kbd>: они подходят чаще всего.</p>
+<table>
+  <tr><th>Производитель</th><th>Клавиша</th></tr>
+  <tr><td>Большинство настольных компьютеров (платы ASUS, MSI, Gigabyte, ASRock)</td><td><kbd>Del</kbd> или <kbd>F2</kbd></td></tr>
+  <tr><td>Acer, ASUS (ноутбуки), Dell, Samsung, Toshiba</td><td><kbd>F2</kbd></td></tr>
+  <tr><td>HP</td><td><kbd>Esc</kbd>, затем <kbd>F10</kbd></td></tr>
+  <tr><td>Lenovo</td><td><kbd>F1</kbd> или <kbd>F2</kbd> (на некоторых ноутбуках — маленькая кнопка Novo сбоку)</td></tr>
+  <tr><td>Если ничего не подошло</td><td><kbd>Esc</kbd> или <kbd>F12</kbd> — откроется меню, в нём выберите «BIOS Setup» или «Setup»</td></tr>
+</table>
+
+<h2>Шаг 2. Войдите в BIOS</h2>
+<ol>
+  <li>Сохраните открытые документы и закройте программы.</li>
+  <li>Нажмите «Пуск» → «Выключение» → <b>«Перезагрузка»</b>.</li>
+  <li>Как только экран погаснет, <b>часто нажимайте</b> вашу клавишу — примерно два раза в секунду, пока не появится экран BIOS.</li>
+  <li>Если загрузилась Windows — ничего страшного. Перезагрузите компьютер ещё раз и начните нажимать клавишу раньше.</li>
+</ol>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="Схема: сразу после перезагрузки часто нажимайте клавишу Del или F2, пока не откроется BIOS">
+  <rect x="20" y="20" width="300" height="180" rx="10" fill="#222"/>
+  <text x="170" y="105" fill="#ddd" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">Экран погас,</text>
+  <text x="170" y="135" fill="#ddd" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">появился логотип</text>
+  <path d="M340 110 h70" stroke="#5a3b12" stroke-width="6" marker-end="url(#a1)"/>
+  <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5a3b12"/></marker></defs>
+  <g font-family="Segoe UI, Arial" font-weight="bold">
+    <rect x="440" y="60" width="120" height="90" rx="12" fill="#fff" stroke="#5a3b12" stroke-width="5"/>
+    <text x="500" y="120" font-size="40" text-anchor="middle" fill="#5a3b12">Del</text>
+    <rect x="590" y="60" width="120" height="90" rx="12" fill="#fff" stroke="#5a3b12" stroke-width="5"/>
+    <text x="650" y="120" font-size="40" text-anchor="middle" fill="#5a3b12">F2</text>
+  </g>
+  <text x="575" y="190" font-size="22" text-anchor="middle" fill="#5a3b12" font-family="Segoe UI, Arial">нажимайте часто: тук-тук-тук</text>
+</svg>
+<figcaption>Рисунок 1. Начинайте нажимать клавишу сразу после того, как экран погас.</figcaption>
+</figure>
+
+<h2>Шаг 3. Найдите настройку виртуализации</h2>
+<p>BIOS выглядит по-разному, но нужная строка почти всегда в разделе <b>Advanced</b> («Дополнительно»), иногда — в <b>CPU Configuration</b>, <b>Security</b> или <b>System Configuration</b>. Мышь в BIOS часто не работает: перемещайтесь стрелками на клавиатуре, открывайте разделы клавишей <kbd>Enter</kbd>, возвращайтесь назад клавишей <kbd>Esc</kbd>.</p>
+<p>Название строки зависит от процессора:</p>
+<ul>
+  <li><b>Процессор Intel</b>: <b>Intel Virtualization Technology</b>, или <b>VT-x</b>, или <b>Virtualization</b>.</li>
+  <li><b>Процессор AMD</b>: <b>SVM Mode</b>, или <b>AMD-V</b>, или <b>SVM</b>.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 760 330" role="img" aria-label="Схема экрана BIOS для процессора Intel: раздел Advanced, строка Intel Virtualization Technology, значение нужно поменять на Enabled">
+  <rect x="10" y="10" width="740" height="310" fill="#0b2a6b"/>
+  <rect x="10" y="10" width="740" height="44" fill="#ccd6f0"/>
+  <g font-family="Consolas, monospace" font-size="20">
+    <text x="30" y="40" fill="#0b2a6b">Main</text>
+    <rect x="110" y="16" width="120" height="32" fill="#0b2a6b"/><text x="122" y="40" fill="#fff">Advanced</text>
+    <text x="260" y="40" fill="#0b2a6b">Boot</text><text x="340" y="40" fill="#0b2a6b">Security</text><text x="470" y="40" fill="#0b2a6b">Save &amp; Exit</text>
+    <text x="40" y="100" fill="#ccd6f0">CPU Configuration</text>
+    <text x="40" y="140" fill="#ccd6f0">Hyper-Threading</text><text x="520" y="140" fill="#ccd6f0">[Enabled]</text>
+    <rect x="28" y="160" width="704" height="38" fill="#ffd34d"/>
+    <text x="40" y="186" fill="#000" font-weight="bold">Intel Virtualization Technology</text><text x="520" y="186" fill="#000" font-weight="bold">[Disabled]</text>
+    <text x="40" y="232" fill="#ccd6f0">Execute Disable Bit</text><text x="520" y="232" fill="#ccd6f0">[Enabled]</text>
+  </g>
+  <text x="380" y="295" fill="#ffd34d" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">Выберите эту строку и поменяйте Disabled на Enabled</text>
+</svg>
+<figcaption>Рисунок 2. Примерный вид BIOS с процессором Intel. У вас цвета и порядок строк могут отличаться.</figcaption>
+</figure>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Схема экрана BIOS для процессора AMD: строка SVM Mode, значение нужно поменять на Enabled">
+  <rect x="10" y="10" width="740" height="230" fill="#1d1d1d"/>
+  <g font-family="Consolas, monospace" font-size="20">
+    <text x="30" y="46" fill="#ff8a3d">Advanced\CPU Configuration</text>
+    <text x="40" y="92" fill="#ddd">Core Performance Boost</text><text x="520" y="92" fill="#ddd">[Auto]</text>
+    <rect x="28" y="112" width="704" height="38" fill="#ffd34d"/>
+    <text x="40" y="138" fill="#000" font-weight="bold">SVM Mode</text><text x="520" y="138" fill="#000" font-weight="bold">[Disabled]</text>
+    <text x="40" y="184" fill="#ddd">SMT Mode</text><text x="520" y="184" fill="#ddd">[Auto]</text>
+  </g>
+  <text x="380" y="226" fill="#ffd34d" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">У AMD строка называется SVM Mode (или AMD-V)</text>
+</svg>
+<figcaption>Рисунок 3. Примерный вид BIOS с процессором AMD.</figcaption>
+</figure>
+
+<h2>Шаг 4. Включите и сохраните</h2>
+<ol>
+  <li>Выберите строку стрелками и нажмите <kbd>Enter</kbd>.</li>
+  <li>Выберите <b>Enabled</b> («Включено») и снова нажмите <kbd>Enter</kbd>.</li>
+  <li>Нажмите <kbd>F10</kbd> — это «сохранить и выйти». Появится вопрос «Save configuration and exit?» — выберите <b>Yes</b> и нажмите <kbd>Enter</kbd>.</li>
+  <li>Компьютер перезагрузится и загрузит Windows как обычно.</li>
+</ol>
+<figure>
+<svg viewBox="0 0 760 200" role="img" aria-label="Схема: нажмите F10, в окне Save configuration and exit выберите Yes">
+  <rect x="10" y="10" width="740" height="180" fill="#0b2a6b"/>
+  <rect x="170" y="40" width="420" height="120" fill="#ccd6f0" stroke="#fff" stroke-width="3"/>
+  <g font-family="Consolas, monospace" font-size="21">
+    <text x="380" y="80" text-anchor="middle" fill="#0b2a6b">Save configuration and exit?</text>
+    <rect x="250" y="102" width="100" height="38" fill="#ffd34d" stroke="#000"/>
+    <text x="300" y="128" text-anchor="middle" fill="#000" font-weight="bold">Yes</text>
+    <text x="460" y="128" text-anchor="middle" fill="#0b2a6b">No</text>
+  </g>
+</svg>
+<figcaption>Рисунок 4. После <kbd>F10</kbd> выберите «Yes».</figcaption>
+</figure>
+
+<h2>Шаг 5. Запустите установщик ещё раз</h2>
+<div class="good">Когда Windows загрузится, <b>запустите установщик ещё раз</b> — тот же файл «Кладезъ-установка». Он сам проверит, что виртуализация включилась, и продолжит.</div>
+
+<h2>Если что-то не получилось</h2>
+<ul>
+  <li><b>Не нашли нужную строку.</b> Посмотрите во всех разделах: Advanced, CPU Configuration, Security, System Configuration. Если строки нет совсем, попросите помочь знакомого или напишите название вашего компьютера (оно на наклейке снизу ноутбука или сзади системного блока) — по нему можно найти инструкцию.</li>
+  <li><b>BIOS просит пароль.</b> Значит, его установил тот, кто настраивал компьютер. Без пароля настройку не поменять — обратитесь к нему.</li>
+  <li><b>Что-то поменяли случайно.</b> Нажмите <kbd>Esc</kbd> и выберите выход <b>без сохранения</b> («Discard changes and exit»). Ничего не изменится.</li>
+</ul>
+<p style="font-size:16px;margin-top:40px">Рисунки — упрощённые схемы, нарисованные для «Кладезъ»; на вашем компьютере экран BIOS может выглядеть иначе.</p>
+</main>
+</body>
+</html>

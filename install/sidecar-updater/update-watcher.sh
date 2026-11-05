@@ -2,12 +2,24 @@
 
 # Project NOMAD Update Sidecar - Polls for update requests and executes them
 
-SHARED_DIR="/shared"
+SHARED_DIR="${SHARED_DIR:-/shared}"
 REQUEST_FILE="${SHARED_DIR}/update-request"
 STATUS_FILE="${SHARED_DIR}/update-status"
 LOG_FILE="${SHARED_DIR}/update-log"
 COMPOSE_FILE="/opt/project-nomad/compose.yml"
 COMPOSE_PROJECT_NAME="project-nomad"
+# Кладезъ: repository of the admin image (own registry by default).
+ADMIN_IMAGE_REPO="${ADMIN_IMAGE_REPO:-ghcr.io/leon-kladez/kladez}"
+
+# Set the admin image tag in a compose file. Fails if the repo is not found there.
+apply_image_tag() {
+    local compose_file="$1"
+    local tag="$2"
+    local repo_re
+    repo_re=$(printf '%s' "$ADMIN_IMAGE_REPO" | sed 's/\./\\./g')
+    grep -q "image: ${repo_re}:" "$compose_file" || return 1
+    sed -i "s|\(image: ${repo_re}\):.*|\1:${tag}|" "$compose_file"
+}
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -43,7 +55,7 @@ perform_update() {
 
     # Apply target image tag to compose.yml before pulling
     log "Applying image tag '${target_tag}' to compose.yml..."
-    if sed -i "s|\(image: ghcr\.io/crosstalk-solutions/project-nomad\):.*|\1:${target_tag}|" "$COMPOSE_FILE" 2>> "$LOG_FILE"; then
+    if apply_image_tag "$COMPOSE_FILE" "$target_tag" 2>> "$LOG_FILE"; then
         log "Successfully updated compose.yml admin image tag to '${target_tag}'"
     else
         log "ERROR: Failed to update compose.yml image tag"
@@ -211,6 +223,11 @@ cleanup() {
 }
 
 trap cleanup SIGTERM SIGINT
+
+# Tests source this file for apply_image_tag only.
+if [ "${UPDATE_WATCHER_LIB_ONLY:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
 
 # Main watch loop
 log "Update sidecar started - watching for update requests"

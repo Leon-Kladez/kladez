@@ -1,0 +1,7 @@
+# «Кладезъ»: внешние файлы, которые кладутся внутрь установщика. Формат: имя URL sha256:<hex>
+# Пакет WSL от Microsoft (MIT). 3.0.3 — та же версия, что у автора; размер 367 575 040 байт.
+# Хеш взят из описания выпуска на GitHub (поле digest) 2026-11-05.
+wsl.3.0.3.0.x64.msi https://github.com/microsoft/WSL/releases/download/3.0.3/wsl.3.0.3.0.x64.msi sha256:ae977286974255bd26bf925f00f40f5692c6b2084155cbc0563c09aea091f211
+# Ядро WSL2 для Windows 10 2004–21H1 (запасной путь). Хеш закрепляется при первой сборке
+# (build.ps1 -UpdateLock в CI): Microsoft не публикует его отдельно.
+wsl_update_x64.msi https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi sha256:PENDING

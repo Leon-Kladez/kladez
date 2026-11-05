@@ -1,0 +1,11 @@
+{
+  "registry-mirrors": [
+    "https://mirror.gcr.io",
+    "https://dh-mirror.gitverse.ru",
+    "https://dockerhub.timeweb.cloud"
+  ],
+  "log-driver": "local",
+  "log-opts": { "max-size": "10m" },
+  "bip": "10.213.0.1/24",
+  "default-address-pools": [ { "base": "10.214.0.0/16", "size": 24 } ]
+}
