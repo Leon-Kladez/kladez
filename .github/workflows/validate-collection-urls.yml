@@ -3,12 +3,12 @@ name: Validate Collection URLs
 on:
   push:
     paths:
-      - 'collections/**.json'
       - 'collections-ru/**.json'
+      - '.github/workflows/validate-collection-urls.yml'
   pull_request:
     paths:
-      - 'collections/**.json'
       - 'collections-ru/**.json'
+      - '.github/workflows/validate-collection-urls.yml'
   schedule:
     - cron: '17 6 * * 1'
 
@@ -24,13 +24,13 @@ jobs:
           CHECKED=0
           FAILED_URLS=""
 
-          # Recursively extract all non-null string URLs from every JSON file in collections/
-          URLS=$(jq -r '.. | .url? | select(type == "string")' collections/*.json | sort -u)
-          # Kladez: the Russian catalog. Only downloadable resources (objects with
-          # size_mb) — mirror bases and registry mirrors in mirrors.json are
-          # directories, not files.
-          URLS_RU=$(jq -r '.. | objects | select(has("size_mb")) | .url? | select(type == "string")' collections-ru/*.json | sort -u)
-          URLS=$(printf '%s\n%s\n' "$URLS" "$URLS_RU" | sort -u)
+          # Kladez: only the Russian catalog the app actually reads (collections-ru/).
+          # The old English collections/*.json of NOMAD are no longer used by Kladez.
+          # Only downloadable resources (objects with size_mb) are checked — mirror
+          # bases and registry mirrors in mirrors.json are directories, not files —
+          # and entries marked "planned": true (files not published yet, e.g. maps
+          # before their first release) are skipped.
+          URLS=$(jq -r '.. | objects | select(has("size_mb") and (.planned != true)) | .url? | select(type == "string")' collections-ru/*.json | sort -u)
 
           while IFS= read -r url; do
             [ -z "$url" ] && continue
