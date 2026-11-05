@@ -42,6 +42,7 @@ import { assertNotPrivateUrl } from '#validators/common'
 import { resolveZimDownload } from '../utils/zim_download_resolution.js'
 import { catalogUrl } from '../utils/catalog_source.js'
 import { wikipediaOptionToResource } from '../utils/wikipedia_option_resolution.js'
+import { isWikipediaMainFile } from '../utils/wikipedia_file.js'
 import env from '#start/env'
 import { getHostedContentHeaders } from '../utils/hosted_content_auth.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
@@ -84,7 +85,7 @@ export class ZimService {
     start,
     count,
     query,
-    language = 'eng',
+    language = 'rus', // Kladez: Russian first in the Kiwix catalog browser
   }: {
     start: number
     count: number
@@ -441,7 +442,7 @@ export class ZimService {
   async downloadRemoteSuccessCallback(urls: string[], restart = true) {
     // Check if any URL is a Wikipedia download and handle it
     for (const url of urls) {
-      if (url.includes('wikipedia_en_')) {
+      if (isWikipediaMainFile(url)) {
         await this.onWikipediaDownloadComplete(url, true)
       }
     }
@@ -507,7 +508,7 @@ export class ZimService {
     let removedSupersededZim = false
     for (const url of urls) {
       // Skip Wikipedia files (managed separately)
-      if (url.includes('wikipedia_en_')) continue
+      if (isWikipediaMainFile(url)) continue
 
       const filename = url.split('/').pop()
       if (!filename) continue
@@ -669,10 +670,10 @@ export class ZimService {
           }
           logger.info(`[ZimService] Marked Wikipedia option '${matchedOption.id}' as installed from local upload`)
 
-          // Remove any other wikipedia_en_*.zim files, same as the download flow
+          // Remove any other main Wikipedia files (any language), same as the download flow
           const allFiles = await this.list()
           const staleWikipediaFiles = allFiles.files.filter(
-            (f) => f.name.startsWith('wikipedia_en_') && f.name !== filename
+            (f) => isWikipediaMainFile(f.name) && f.name !== filename
           )
           for (const stale of staleWikipediaFiles) {
             try {

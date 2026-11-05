@@ -1,4 +1,5 @@
 import { inject } from '@adonisjs/core'
+import { isWikipediaMainFile } from '../utils/wikipedia_file.js'
 import { QueueService } from './queue_service.js'
 import { RunDownloadJob } from '#jobs/run_download_job'
 import { RunExtractPmtilesJob } from '#jobs/run_extract_pmtiles_job'
@@ -332,7 +333,7 @@ export class DownloadService {
 
     // If this was a Wikipedia download, update selection status to failed
     // (the worker's failed event may not fire if we removed the job first)
-    if (job.data.filetype === 'zim' && job.data.url?.includes('wikipedia_en_')) {
+    if (job.data.filetype === 'zim' && job.data.url && isWikipediaMainFile(job.data.url)) {
       try {
         const { DockerService } = await import('#services/docker_service')
         const { ZimService } = await import('#services/zim_service')
