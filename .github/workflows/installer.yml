@@ -9,25 +9,37 @@ on:
         description: 'Версия установщика (например, 0.1.0)'
         required: true
         default: '0.1.0'
+      update_file:
+        description: 'Собрать и файл обновления без интернета (ещё ~1 ГБ в хранилище артефактов)'
+        type: boolean
+        default: false
   push:
     tags: ['installer-v*']
 
 permissions:
   contents: read
 
-env:
-  VERSION: ${{ github.event.inputs.version || github.ref_name }}
-
 jobs:
   linux:
     name: Linux — дистрибутив и образы
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
+      # Версия вычисляется один раз здесь и передаётся в Windows-задание как output:
+      # PowerShell 5.1 пишет GITHUB_ENV с BOM, и там префикс installer-v не снимался (M6).
       - name: Версия без префикса
-        run: echo "VERSION=${VERSION#installer-v}" >> "$GITHUB_ENV"
+        id: version
+        env:
+          RAW: ${{ github.event.inputs.version || github.ref_name }}
+        run: |
+          v="${RAW#installer-v}"
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Неверная версия: $RAW" >&2; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$v" >> "$GITHUB_ENV"
 
       - name: Тесты bash (bats)
         run: |
@@ -63,28 +75,42 @@ jobs:
             dist/kladez-rootfs.sha256
             dist/kladez-images.tar.zst
             dist/kladez-images.sha256
-          retention-days: 3
+          retention-days: 1
 
   windows:
     name: Windows — тесты и установщик
     needs: linux
     runs-on: windows-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write   # удалить промежуточный артефакт linux-dist после скачивания
+    env:
+      VERSION: ${{ needs.linux.outputs.version }}
     defaults:
       run:
         shell: powershell
     steps:
       - uses: actions/checkout@v4
 
-      - name: Версия без префикса
-        run: |
-          $v = "$env:VERSION" -replace '^installer-v', ''
-          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
       - uses: actions/download-artifact@v4
         with:
           name: linux-dist
           path: dist
+
+      # Хранилище артефактов ограничено (~2 ГБ): linux-dist (~1 ГБ) больше не нужен,
+      # удаляем его сразу, чтобы поместился установщик (~1,5–1,8 ГБ). Без сторонних actions.
+      - name: Удалить промежуточный артефакт linux-dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $api = "$env:GITHUB_API_URL/repos/$env:GITHUB_REPOSITORY/actions"
+          $h = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+          $list = Invoke-RestMethod -Headers $h -Uri "$api/runs/$env:GITHUB_RUN_ID/artifacts?name=linux-dist"
+          foreach ($a in $list.artifacts) {
+            Invoke-RestMethod -Method Delete -Headers $h -Uri "$api/artifacts/$($a.id)"
+            Write-Output "Удалён артефакт $($a.name) ($([math]::Round($a.size_in_bytes / 1MB)) МБ)"
+          }
 
       - name: Тесты Pester
         run: |
@@ -101,20 +127,30 @@ jobs:
       - name: Inno Setup
         run: choco install innosetup --no-progress -y
 
-      - name: Установщик и файл обновления
+      - name: Установщик
         run: |
           installer/build.ps1 -Version $env:VERSION -Download -UpdateLock
-          installer/build.ps1 -Version $env:VERSION -UpdateOnly
           Get-Content installer/windows/vendor.lock
           Get-ChildItem dist | Format-Table Name, Length
 
-      # Внимание: у бесплатного тарифа для приватного репозитория хранилище артефактов — 500 МБ,
-      # а установщик весит ~1,5–1,8 ГБ. Пока репозиторий приватный, этот шаг может упасть по квоте.
+      # Хранилище артефактов ~2 ГБ: по умолчанию выкладываем только установщик (~1,5–1,8 ГБ).
       - uses: actions/upload-artifact@v4
         with:
           name: kladez-installer-${{ env.VERSION }}
           path: |
-            dist/Кладезъ-*.exe
+            dist/Кладезъ-установка-*.exe
             dist/SHA256SUMS.txt
+          retention-days: 3
+          compression-level: 0
+
+      - name: Файл обновления без интернета
+        if: ${{ github.event.inputs.update_file == 'true' }}
+        run: installer/build.ps1 -Version $env:VERSION -UpdateOnly
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event.inputs.update_file == 'true' }}
+        with:
+          name: kladez-update-${{ env.VERSION }}
+          path: dist/Кладезъ-обновление-*.exe
           retention-days: 3
           compression-level: 0

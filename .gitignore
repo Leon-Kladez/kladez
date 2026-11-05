@@ -79,3 +79,6 @@ __pycache__/
 
 # Brainstorm mockups
 .superpowers/
+
+# Кладезъ: образы Windows для проверочных виртуальных машин (большие, не в git)
+vm-images/
