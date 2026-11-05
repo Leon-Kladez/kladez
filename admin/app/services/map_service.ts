@@ -33,7 +33,10 @@ import {
   WORLD_BASEMAP_MAX_ZOOM,
   WORLD_BASEMAP_SOURCE_NAME,
   buildPmtilesExtractArgs,
+  BUNDLED_BASE_ASSETS_PATH,
 } from '../../constants/map_regions.js'
+import { pickBaseAssetsSource } from '../utils/map_packages.js'
+import { copyFile } from 'fs/promises'
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
 import { createHash, randomBytes } from 'crypto'
@@ -97,22 +100,23 @@ export class MapService implements IMapService {
   async downloadBaseAssets(url?: string) {
     const tempTarPath = join(this.baseDirPath, this.baseAssetsTarFile)
 
-    const defaultTarFileURL = new URL(
-      this.baseAssetsTarFile,
-      'https://github.com/Crosstalk-Solutions/project-nomad-maps/raw/refs/heads/master/'
-    )
-
-    const resolvedURL = url ? new URL(url) : defaultTarFileURL
-    await doResumableDownloadWithRetry({
-      url: resolvedURL.toString(),
-      filepath: tempTarPath,
-      timeout: 30000,
-      max_retries: 2,
-      allowedMimeTypes: BASE_ASSETS_MIME_TYPES,
-      onAttemptError(error, attempt) {
-        console.error(`Attempt ${attempt} to download tar file failed: ${error.message}`)
-      },
-    })
+    // Кладезъ: по умолчанию — архив, встроенный в программу (русские подписи, без серверов NOMAD).
+    const bundledPath = join(process.cwd(), BUNDLED_BASE_ASSETS_PATH)
+    const source = pickBaseAssetsSource(url, !!(await getFileStatsIfExists(bundledPath)), bundledPath)
+    if (source.kind === 'file') {
+      await copyFile(source.path, tempTarPath)
+    } else {
+      await doResumableDownloadWithRetry({
+        url: new URL(source.url).toString(),
+        filepath: tempTarPath,
+        timeout: 30000,
+        max_retries: 2,
+        allowedMimeTypes: BASE_ASSETS_MIME_TYPES,
+        onAttemptError(error, attempt) {
+          console.error(`Attempt ${attempt} to download tar file failed: ${error.message}`)
+        },
+      })
+    }
     const tarFileBuffer = await getFileStatsIfExists(tempTarPath)
     if (!tarFileBuffer) {
       throw new Error(`Failed to download tar file`)

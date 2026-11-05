@@ -33,6 +33,9 @@ export function buildPmtilesExtractArgs(opts: PmtilesExtractArgOptions): string[
 
 // ---- Карты Кладезя ----
 
+/** Встроенный архив базовых материалов карты (стиль с русскими подписями, шрифты, значки), от process.cwd(). */
+export const BUNDLED_BASE_ASSETS_PATH = 'resources/maps/base-assets.tar.gz'
+
 /**
  * Открытый репозиторий с готовыми картами (GitHub Releases). Владелец ещё не выбран:
  * автор заведёт новый аккаунт перед выпуском (план части 3, задача 13). До этого адрес
