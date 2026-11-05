@@ -12,6 +12,7 @@ import { EmbedFileJob } from './embed_file_job.js'
 import { basename, join, resolve, sep } from 'node:path'
 import { ZIM_STORAGE_PATH } from '../utils/fs.js'
 import { mirrorCandidates, pickDownloadUrl } from '../utils/mirrors.js'
+import { parseMeta4, sha256File } from '../utils/meta4.js'
 import type { MirrorsSpec } from '../../types/collections.js'
 
 /** Maps live under `<cwd>/storage/maps/pmtiles`; no shared constant exists. */
@@ -37,6 +38,36 @@ function isSafeOldContentPath(
   const resolved = resolve(oldFilePath)
   if (!resolved.startsWith(root + sep)) return false
   return basename(resolved).startsWith(`${resourceId}_`)
+}
+
+/**
+ * Kladez: compare the finished file with `expectedSha256`, or for Kiwix ZIMs with
+ * the SHA-256 from `<url>.meta4`. If the .meta4 cannot be fetched the check is
+ * skipped (logged) rather than failing a good download. On mismatch the file is
+ * deleted so the retry starts clean.
+ */
+async function verifyDownloadedFile(params: {
+  url: string
+  filepath: string
+  filetype: string
+  expectedSha256?: string
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  let expected = params.expectedSha256?.toLowerCase()
+  if (!expected && params.filetype === 'zim' && params.url.includes('/zim/')) {
+    try {
+      const { default: axios } = await import('axios')
+      const res = await axios.get(`${params.url}.meta4`, { timeout: 15000, responseType: 'text' })
+      expected = parseMeta4(String(res.data)).sha256
+    } catch (error: any) {
+      console.warn(`[RunDownloadJob] No .meta4 for ${params.url}, checksum skipped: ${error?.message}`)
+    }
+  }
+  if (!expected) return { ok: true }
+  const actual = await sha256File(params.filepath)
+  if (actual === expected) return { ok: true }
+  const { deleteFileIfExists } = await import('../utils/fs.js')
+  await deleteFileIfExists(params.filepath)
+  return { ok: false, reason: `${basename(params.filepath)} expected ${expected}, got ${actual}` }
 }
 
 export class RunDownloadJob {
@@ -69,8 +100,10 @@ export class RunDownloadJob {
   }
 
   async handle(job: Job) {
-    const { url, filepath, timeout, allowedMimeTypes, forceNew, filetype, resourceMetadata, requestHeaders, fallbackUrls } =
+    const { url, filepath, timeout, allowedMimeTypes, forceNew, filetype, resourceMetadata, requestHeaders, fallbackUrls, expectedSha256 } =
       job.data as RunDownloadJobParams
+    // Kladez: set by onComplete when the finished file fails its checksum.
+    let checksumFailed: string | null = null
     // Kladez: each retry tries the next mirror, resuming the same .tmp. `url`
     // stays the job's identity (InstalledResource, Wikipedia selection, dedupe).
     const servedUrl = pickDownloadUrl(url, fallbackUrls, job.attemptsMade)
@@ -136,6 +169,14 @@ export class RunDownloadJob {
           lastKnownProgress = { downloadedBytes: progress.downloadedBytes, totalBytes: progress.totalBytes }
         },
         async onComplete(_servedUrl) {
+          // Kladez: verify the file before anything registers it. Throwing here
+          // would hang the stream's finish handler, so delete, flag, and let
+          // the code after doResumableDownload throw for a BullMQ retry.
+          const integrity = await verifyDownloadedFile({ url, filepath, filetype, expectedSha256 })
+          if (!integrity.ok) {
+            checksumFailed = integrity.reason
+            return
+          }
           // The previous file recorded for this resource (if any). Hoisted out of
           // the metadata block below so the ZIM branch can decide whether this
           // download is a content UPDATE (replacing a prior file) vs a fresh
@@ -312,6 +353,10 @@ export class RunDownloadJob {
           })
         },
       })
+
+      if (checksumFailed) {
+        throw new Error(`Checksum mismatch, file deleted and will be downloaded again: ${checksumFailed}`)
+      }
 
       return {
         url,
