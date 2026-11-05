@@ -7,6 +7,7 @@ import { SERVICE_NAMES } from '../../constants/service_names'
 import { Link, router } from '@inertiajs/react'
 import { IconArrowLeft } from '@tabler/icons-react'
 import classNames from 'classnames'
+import KladezLogo from '~/components/KladezLogo'
 
 export default function AppLayout({
   children,
@@ -45,18 +46,8 @@ export default function AppLayout({
         )}
         onClick={() => router.visit('/home')}
       >
-        <img
-          src="/nomad-primary.svg"
-          alt="Project NOMAD Logo"
-          className={compact ? 'h-12 w-12 object-contain' : 'h-40 w-40 object-contain'}
-        />
-        <h1
-          className={classNames(
-            'font-bold text-desert-green',
-            compact ? 'text-2xl' : 'text-5xl'
-          )}
-        >
-          Command Center
+        <h1>
+          <KladezLogo compact={compact} />
         </h1>
       </div>
       <hr className={

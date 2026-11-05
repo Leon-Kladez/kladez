@@ -7,6 +7,8 @@ import { UsePageProps } from '../../types/system'
 import { IconMenu2, IconX } from '@tabler/icons-react'
 import ThemeToggle from '~/components/ThemeToggle'
 import DebugInfoModal from './DebugInfoModal'
+import KladezLogo from './KladezLogo'
+import { t } from '../../constants/i18n'
 
 type SidebarItem = {
   name: string
@@ -63,7 +65,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
     return (
       <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-desert-sand px-6 ring-1 ring-white/5 pt-4 shadow-md">
         <div className="flex h-16 shrink-0 items-center">
-          <img src="/nomad-primary.svg" alt="Project NOMAD Logo" className="h-16 w-16 object-contain" />
+          <KladezLogo compact height={32} />
           <h1 className="ml-3 text-xl font-semibold text-text-primary">{title}</h1>
         </div>
         <nav className="flex flex-1 flex-col">
@@ -87,13 +89,14 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
           </ul>
         </nav>
         <div className="mb-4 flex flex-col items-center gap-1 text-sm text-text-secondary text-center">
-          <p>Project NOMAD&trade; Command Center v{appVersion}</p>
+          <p>{t('common.footer.version', { version: appVersion })}</p>
+          <p className="text-xs">{t('common.footer.basedOn')}</p>
           <button
             onClick={() => setDebugModalOpen(true)}
             className="text-gray-500 hover:text-desert-green inline-flex items-center gap-1 cursor-pointer"
           >
             <IconBug className="size-3.5" />
-            Debug Info
+            {t('common.footer.debugInfo')}
           </button>
           <ThemeToggle />
         </div>

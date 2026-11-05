@@ -1,6 +1,32 @@
 @import 'tailwindcss';
 
+/* Шрифты логотипа «Кладезъ» — лежат в admin/public/fonts/, чтобы работать без интернета (лицензия SIL OFL). */
+@font-face {
+  font-family: 'Ponomar';
+  src: url('/fonts/Ponomar-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Old Standard TT';
+  src: url('/fonts/OldStandardTT-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
+  /* Основной шрифт интерфейса — системный: умеет кириллицу и не требует скачивания. */
+  --font-sans: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-kladez: 'Ponomar', 'Old Standard TT', serif;
+  --font-kladez-caption: 'Old Standard TT', serif;
+
+  /* Цвета логотипа «Кладезъ» */
+  --color-kladez-ink: #5a3b12;
+  --color-kladez-parchment: #f6efe0;
+
   --color-desert-white: #f6f6f4;
   --color-desert-sand: #f7eedc;
 
@@ -110,6 +136,7 @@ body {
   --color-surface-elevated: #3d3c2a;
   --color-text-primary: #f7eedc;
   --color-text-secondary: #afafa5;
+  --color-kladez-ink: #e9d6a8;
   --color-text-muted: #8f8f82;
   --color-border-default: #424420;
   --color-border-subtle: #353420;

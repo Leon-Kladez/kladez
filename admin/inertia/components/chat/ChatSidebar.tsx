@@ -6,6 +6,7 @@ import { IconMessage } from '@tabler/icons-react'
 import { useState } from 'react'
 import KnowledgeBaseModal from './KnowledgeBaseModal'
 import NomadMdModal from './NomadMdModal'
+import KladezLogo from '../KladezLogo'
 
 interface ChatSidebarProps {
   sessions: ChatSession[]
@@ -114,7 +115,7 @@ export default function ChatSidebar({
         )}
       </div>
       <div className="p-4 flex flex-col items-center justify-center gap-y-2">
-        <img src="/nomad-primary.svg" alt="Project NOMAD Logo" className="h-28 w-28 mb-6 object-contain" />
+        <KladezLogo height={70} className="mb-6" />
         <StyledButton
           onClick={() => {
             // /chat is served by the admin app itself, so navigate in place rather than
