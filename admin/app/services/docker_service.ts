@@ -27,6 +27,7 @@ import KVStore from '#models/kv_store'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import { KIWIX_LIBRARY_CMD } from '../../constants/kiwix.js'
 import { DEFAULT_OLLAMA_CONTEXT_LENGTH } from '../../constants/ollama.js'
+import { STARTER_ZIM } from '../../constants/kladez.js'
 
 // Written by install_nomad.sh with the host AMD GPU's gfx target.
 const AMD_GFX_MARKER_PATH = '/app/storage/.nomad-amd-gfx'
@@ -1044,41 +1045,57 @@ export class DockerService {
   private async _runPreinstallActions__KiwixServe(): Promise<void> {
     /**
      * At least one .zim file must be available before we can start the kiwix container.
-     * We'll download the lightweight mini Wikipedia Top 100 zim file for this purpose.
+     * Kladez: a tiny Russian ZIM (Vikidia) shipped inside the image is copied;
+     * only if it is missing is it downloaded (our repository, then Kiwix) and
+     * checked against its SHA-256.
      **/
-    const WIKIPEDIA_ZIM_URL =
-      'https://github.com/Crosstalk-Solutions/project-nomad/raw/refs/heads/main/install/wikipedia_en_100_mini_2026-01.zim'
-    const filename = 'wikipedia_en_100_mini_2026-01.zim'
+    const filename = STARTER_ZIM.filename
     const filepath = join(process.cwd(), ZIM_STORAGE_PATH, filename)
-    logger.info(`[DockerService] Kiwix Serve pre-install: Downloading ZIM file to ${filepath}`)
+    logger.info(`[DockerService] Kiwix Serve pre-install: placing starter ZIM at ${filepath}`)
 
     this._broadcast(
       SERVICE_NAMES.KIWIX,
       'preinstall',
       `Running pre-install actions for Kiwix Serve...`
     )
-    this._broadcast(
-      SERVICE_NAMES.KIWIX,
-      'preinstall',
-      `Downloading Wikipedia ZIM file from ${WIKIPEDIA_ZIM_URL}. This may take some time...`
-    )
 
     try {
-      await doResumableDownloadWithRetry({
-        url: WIKIPEDIA_ZIM_URL,
-        filepath,
-        timeout: 60000,
-        allowedMimeTypes: [
-          'application/x-zim',
-          'application/x-openzim',
-          'application/octet-stream',
-        ],
-      })
+      const { copyFile, mkdir } = await import('node:fs/promises')
+      const { dirname } = await import('node:path')
+      const { getFileStatsIfExists } = await import('../utils/fs.js')
+      await mkdir(dirname(filepath), { recursive: true })
+      if (await getFileStatsIfExists(STARTER_ZIM.bundledPath)) {
+        await copyFile(STARTER_ZIM.bundledPath, filepath)
+      } else {
+        let lastError: unknown = null
+        for (const url of STARTER_ZIM.urls) {
+          this._broadcast(SERVICE_NAMES.KIWIX, 'preinstall', `Downloading starter ZIM from ${url}...`)
+          try {
+            await doResumableDownloadWithRetry({
+              url,
+              filepath,
+              timeout: 60000,
+              allowedMimeTypes: ['application/x-zim', 'application/x-openzim', 'application/octet-stream'],
+            })
+            const { sha256File } = await import('../utils/meta4.js')
+            if ((await sha256File(filepath)) !== STARTER_ZIM.sha256) {
+              const { deleteFileIfExists } = await import('../utils/fs.js')
+              await deleteFileIfExists(filepath)
+              throw new Error('starter ZIM checksum mismatch')
+            }
+            lastError = null
+            break
+          } catch (error) {
+            lastError = error
+          }
+        }
+        if (lastError) throw lastError
+      }
 
       this._broadcast(
         SERVICE_NAMES.KIWIX,
         'preinstall',
-        `Downloaded Wikipedia ZIM file to ${filepath}`
+        `Starter ZIM ready at ${filepath}`
       )
 
       // Generate the initial kiwix library XML before the container is created
@@ -1089,7 +1106,7 @@ export class DockerService {
       this._broadcast(
         SERVICE_NAMES.KIWIX,
         'preinstall-error',
-        `Failed to download Wikipedia ZIM file: ${error.message}`
+        `Failed to prepare the starter ZIM file: ${error.message}`
       )
       throw new Error(`Pre-install action failed: ${error.message}`)
     }

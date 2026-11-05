@@ -12,7 +12,6 @@ const FORBIDDEN = [/projectnomad\.us/, /nomad-packs-worker/, /Crosstalk-Solution
 
 const ALLOWED: Array<{ file: string; pattern: RegExp; why: string }> = [
   { file: 'app/services/auto_update_service.ts', pattern: /ghcr\.io\/crosstalk-solutions\/project-nomad/, why: 'Docker image — part 5 (installer)' },
-  { file: 'app/services/docker_service.ts', pattern: /install\/wikipedia_en_100_mini/, why: 'starter ZIM — waits for the author to approve the Russian replacement' },
   { file: 'app/services/kiwix_catalog_service.ts', pattern: /project-nomad-maps/, why: 'maps — part 3' },
   { file: 'app/services/map_service.ts', pattern: /project-nomad-maps|project-nomad\//, why: 'maps — part 3' },
   { file: 'constants/misc.ts', pattern: /api\.projectnomad\.us/, why: 'AI model list (plain GET, no user data) — needs a Kladez-hosted list; open question for the author' },
@@ -52,10 +51,7 @@ test('no string literal points at Project NOMAD servers', () => {
 // Kladez: the main Wikipedia is Russian; English-only checks silently skip it.
 test('no code checks for the English Wikipedia file prefix', () => {
   assert.deepEqual(
-    literalHits(
-      [/wikipedia_en_'?$|^'wikipedia_en_'$/],
-      [{ file: 'app/services/docker_service.ts', pattern: /.*/, why: 'starter ZIM — awaiting author' }]
-    ),
+    literalHits([/wikipedia_en_'?$|^'wikipedia_en_'$|wikipedia_en_100_mini/], []),
     []
   )
 })

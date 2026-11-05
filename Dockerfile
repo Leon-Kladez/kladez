@@ -104,6 +104,8 @@ RUN echo "{\"version\":\"${VERSION}\"}" > /app/version.json
 COPY admin/docs /app/docs
 # Kladez: built-in copy of the Russian catalog (used offline on first start)
 COPY collections-ru/ /app/collections-ru/
+# Kladez: starter ZIM for Kiwix (Vikidia ru, CC BY-SA 3.0) — no download needed
+COPY install/vikidia_ru_all_nopic_2026-09.zim /app/assets/kiwix/vikidia_ru_all_nopic_2026-09.zim
 COPY README.md /app/README.md
 
 # Empty Calibre library, seeded into storage/books on Calibre-Web install
