@@ -11,6 +11,7 @@ import CreatorPackCard from '~/components/CreatorPackCard'
 import TierSelectionModal from '~/components/TierSelectionModal'
 import WikipediaSelector from '~/components/WikipediaSelector'
 import BundlePicker from '~/components/BundlePicker'
+import RussianLanguageBadge from '~/components/RussianLanguageBadge'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import Alert from '~/components/Alert'
 import { IconCheck, IconCpu, IconBooks } from '@tabler/icons-react'
@@ -1166,6 +1167,7 @@ export default function EasySetupWizard(props: {
                     >
                       {model.description}
                     </p>
+                    <RussianLanguageBadge ru={model.ru} className="mb-2" />
                     {model.tags?.[0]?.size && (
                       <div
                         className={classNames(
