@@ -7,13 +7,14 @@ import { ExtractZIMChunkingStrategy, ExtractZIMContentOptions, ZIMContentChunk, 
 import { randomUUID } from 'node:crypto'
 import { access } from 'node:fs/promises'
 import { isValidZimFile } from '../utils/fs.js'
+import { t } from '../../constants/i18n/index.js'
 
 export class ZIMExtractionService {
 
     private extractArchiveMetadata(archive: Archive): ZIMArchiveMetadata {
         try {
             return {
-                title: archive.getMetadata('Title') || archive.getMetadata('Name') || 'Unknown',
+                title: archive.getMetadata('Title') || archive.getMetadata('Name') || t('server.zimExtractionService.unknown'),
                 creator: archive.getMetadata('Creator') || 'Unknown',
                 publisher: archive.getMetadata('Publisher') || 'Unknown',
                 date: archive.getMetadata('Date') || 'Unknown',
@@ -23,7 +24,7 @@ export class ZIMExtractionService {
         } catch (error) {
             logger.warn('[ZIMExtractionService]: Could not extract all metadata, using defaults', error)
             return {
-                title: 'Unknown',
+                title: t('server.zimExtractionService.unknown'),
                 creator: 'Unknown',
                 publisher: 'Unknown',
                 date: 'Unknown',

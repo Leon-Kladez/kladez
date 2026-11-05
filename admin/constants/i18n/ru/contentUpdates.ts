@@ -1,0 +1,25 @@
+import type { contentUpdatesEn } from '../en/contentUpdates.js'
+
+export const contentUpdatesRu: Record<keyof typeof contentUpdatesEn, string> = {
+  'contentUpdates.checkFailed': 'Не удалось проверить обновления материалов',
+  'contentUpdates.started': 'Началось обновление: {id}',
+  'contentUpdates.startFailed': 'Не удалось начать обновление',
+  'contentUpdates.startFailedFor': 'Не удалось начать обновление: {id}',
+  'contentUpdates.startedCount': 'Началось {count} обновление|Началось {count} обновления|Началось {count} обновлений',
+  'contentUpdates.failedCount': 'Не удалось начать {count} обновление|Не удалось начать {count} обновления|Не удалось начать {count} обновлений',
+  'contentUpdates.applyFailed': 'Не удалось обновить',
+  'contentUpdates.title': 'Обновить материалы вручную',
+  'contentUpdates.description': 'Проверьте, есть ли новые версии ваших файлов ZIM и карт.',
+  'contentUpdates.check': 'Проверить обновления',
+  'contentUpdates.issueTitle': 'Проверка не удалась',
+  'contentUpdates.upToDateTitle': 'Всё обновлено',
+  'contentUpdates.upToDateMessage': 'Все ваши материалы — в новейших версиях.',
+  'contentUpdates.available': 'Есть {count} обновление|Есть {count} обновления|Есть {count} обновлений',
+  'contentUpdates.updateAll': 'Обновить всё ({n})',
+  'contentUpdates.col.title': 'Название',
+  'contentUpdates.col.type': 'Тип',
+  'contentUpdates.col.size': 'Размер',
+  'contentUpdates.col.version': 'Версия',
+  'contentUpdates.typeMap': 'Карта',
+  'contentUpdates.lastChecked': 'Последняя проверка: {date}',
+}

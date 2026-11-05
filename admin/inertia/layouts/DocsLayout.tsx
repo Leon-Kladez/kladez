@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import StyledSidebar from '~/components/StyledSidebar'
 import api from '~/lib/api'
+import { t } from '../../constants/i18n'
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = useQuery<Array<{ title: string; slug: string }>>({
@@ -23,7 +24,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen flex flex-row bg-desert-white">
-      <StyledSidebar title="Documentation" items={items} />
+      <StyledSidebar title={t('nav.docs.title')} items={items} />
       {children}
     </div>
   )

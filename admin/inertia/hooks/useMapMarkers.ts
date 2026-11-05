@@ -3,14 +3,15 @@ import { useCallback, useEffect, useState } from 'react'
 
 import api from '~/lib/api'
 import type { MapMarkerResponse } from '../../types/maps'
+import { t } from '../../constants/i18n'
 
 export const PIN_COLORS = [
-  { id: 'orange', label: 'Orange', hex: '#a84a12' },
-  { id: 'red', label: 'Red', hex: '#994444' },
-  { id: 'green', label: 'Green', hex: '#424420' },
-  { id: 'blue', label: 'Blue', hex: '#2563eb' },
-  { id: 'purple', label: 'Purple', hex: '#7c3aed' },
-  { id: 'yellow', label: 'Yellow', hex: '#ca8a04' },
+  { id: 'orange', label: t('maps.pinColor.orange'), hex: '#a84a12' },
+  { id: 'red', label: t('maps.pinColor.red'), hex: '#994444' },
+  { id: 'green', label: t('maps.pinColor.green'), hex: '#424420' },
+  { id: 'blue', label: t('maps.pinColor.blue'), hex: '#2563eb' },
+  { id: 'purple', label: t('maps.pinColor.purple'), hex: '#7c3aed' },
+  { id: 'yellow', label: t('maps.pinColor.yellow'), hex: '#ca8a04' },
 ] as const
 
 export type PinColorId = (typeof PIN_COLORS)[number]['id']

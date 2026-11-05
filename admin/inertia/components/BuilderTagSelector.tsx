@@ -8,6 +8,7 @@ import {
   parseBuilderTag,
   buildBuilderTag,
 } from '~/lib/builderTagWords'
+import { t } from '../../constants/i18n'
 
 interface BuilderTagSelectorProps {
   value: string | null
@@ -116,14 +117,14 @@ export default function BuilderTagSelector({
           onClick={handleRandomize}
           disabled={disabled}
           className="p-2 text-desert-stone-dark hover:text-desert-green hover:bg-desert-stone-lighter rounded-lg transition-colors disabled:opacity-50"
-          title="Randomize"
+          title={t('builderTag.randomize')}
         >
           <IconRefresh className="w-5 h-5" />
         </button>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-desert-stone-dark">Your Builder Tag:</span>
+        <span className="text-sm text-desert-stone-dark">{t('builderTag.yours')}</span>
         <span className="font-mono font-bold text-desert-green">{currentTag}</span>
       </div>
     </div>

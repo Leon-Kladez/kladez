@@ -4,6 +4,7 @@ import { BenchmarkService } from '#services/benchmark_service'
 import type { RunBenchmarkJobParams } from '../../types/benchmark.js'
 import logger from '@adonisjs/core/services/logger'
 import { DockerService } from '#services/docker_service'
+import { t } from '../../constants/i18n/index.js'
 
 export class RunBenchmarkJob {
   static get queue() {
@@ -73,7 +74,7 @@ export class RunBenchmarkJob {
       return {
         job,
         created: true,
-        message: `Benchmark job ${params.benchmark_id} dispatched successfully`,
+        message: t('server.runBenchmarkJob.benchmarkJobDispatchedSuccessfully', { benchmark_id: params.benchmark_id }),
       }
     } catch (error) {
       if (error.message.includes('job already exists')) {
@@ -81,7 +82,7 @@ export class RunBenchmarkJob {
         return {
           job: existing,
           created: false,
-          message: `Benchmark job ${params.benchmark_id} already exists`,
+          message: t('server.runBenchmarkJob.benchmarkJobAlreadyExists', { benchmark_id: params.benchmark_id }),
         }
       }
       throw error

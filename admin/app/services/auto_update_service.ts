@@ -18,6 +18,7 @@ import {
   type Blocker,
   type PreflightResult,
 } from '../utils/image_disk_preflight.js'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * Docker image repository for the admin/core image (tag applied per-release).
@@ -285,14 +286,14 @@ export class AutoUpdateService {
 
     // 1. Sidecar must be present to perform the update.
     if (!this.systemUpdateService.isSidecarAvailable()) {
-      blockers.push({ reason: 'Update sidecar is not available', severity: 'failure' })
+      blockers.push({ reason: t('server.autoUpdateService.updateSidecarIsNotAvailable'), severity: 'failure' })
     }
 
     // 2. No system update already running.
     const updateStatus = this.systemUpdateService.getUpdateStatus()
     if (updateStatus && !['idle', 'complete', 'error'].includes(updateStatus.stage)) {
       blockers.push({
-        reason: `A system update is already in progress (stage: ${updateStatus.stage})`,
+        reason: t('server.autoUpdateService.aSystemUpdateIsAlready', { stage: updateStatus.stage }),
         severity: 'skip',
       })
     }
@@ -305,7 +306,7 @@ export class AutoUpdateService {
       )
       if (active.length > 0) {
         blockers.push({
-          reason: `${active.length} download(s) in progress`,
+          reason: t('server.autoUpdateService.downloadSInProgress', { length: active.length }),
           severity: 'skip',
         })
       }
@@ -318,7 +319,7 @@ export class AutoUpdateService {
       const installing = await Service.query().whereNot('installation_status', 'idle')
       if (installing.length > 0) {
         blockers.push({
-          reason: `${installing.length} app install/update(s) in progress`,
+          reason: t('server.autoUpdateService.appInstallUpdateSIn', { length: installing.length }),
           severity: 'skip',
         })
       }
@@ -390,7 +391,7 @@ export class AutoUpdateService {
     }
 
     if (!config.enabled) {
-      return { ...base, outcome: 'disabled', reason: 'Auto-update is disabled' }
+      return { ...base, outcome: 'disabled', reason: t('server.autoUpdateService.autoUpdateIsDisabled') }
     }
 
     const withinWindow = this.isWithinWindow(config, now)
@@ -398,7 +399,7 @@ export class AutoUpdateService {
       return {
         ...base,
         outcome: 'outside-window',
-        reason: `Outside update window (${config.windowStart}-${config.windowEnd})`,
+        reason: t('server.autoUpdateService.outsideUpdateWindow', { windowStart: config.windowStart, windowEnd: config.windowEnd }),
       }
     }
 
@@ -411,7 +412,7 @@ export class AutoUpdateService {
         ...base,
         withinWindow,
         outcome: 'eligibility-error',
-        reason: `Failed to determine eligible version: ${error.message}`,
+        reason: t('server.autoUpdateService.failedToDetermineEligibleVersion', { error: error.message }),
       }
     }
 
@@ -420,7 +421,7 @@ export class AutoUpdateService {
         ...base,
         withinWindow,
         outcome: 'no-eligible',
-        reason: 'No eligible minor/patch update available (or still in cool-off)',
+        reason: t('server.autoUpdateService.noEligibleMinorPatchUpdate'),
       }
     }
 
@@ -438,7 +439,7 @@ export class AutoUpdateService {
         eligibleTarget,
         preflight,
         outcome: 'blocked',
-        reason: `Pre-flight blocked: ${summary}`,
+        reason: t('server.autoUpdateService.preFlightBlocked', { summary }),
       }
     }
 
@@ -448,7 +449,7 @@ export class AutoUpdateService {
       eligibleTarget,
       preflight,
       outcome: 'ready',
-      reason: `Ready to update to ${eligibleTarget.tag}`,
+      reason: t('server.autoUpdateService.readyToUpdateTo', { tag: eligibleTarget.tag }),
     }
   }
 
@@ -504,7 +505,7 @@ export class AutoUpdateService {
         if (result.success) {
           await this.recordSuccess(target)
           logger.info(`[AutoUpdateService] Auto-update requested: ${target.tag}`)
-          return { updated: true, reason: `Update requested: ${target.tag}` }
+          return { updated: true, reason: t('server.autoUpdateService.updateRequested', { tag: target.tag }) }
         }
 
         await this.recordFailure(`Update request failed: ${result.message}`)
@@ -542,7 +543,7 @@ export class AutoUpdateService {
       await KVStore.setValue('autoUpdate.enabled', false)
       await KVStore.setValue(
         'autoUpdate.autoDisabledReason',
-        `Auto-update disabled after ${failures} consecutive failures. Last error: ${reason}`
+        t('server.autoUpdateService.autoUpdateDisabledAfterConsecutive', { failures, reason })
       )
       logger.error(
         `[AutoUpdateService] Auto-update auto-disabled after ${failures} consecutive failures`

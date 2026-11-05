@@ -1,0 +1,15 @@
+export const serverContentAutoUpdateServiceEn = {
+  'server.contentAutoUpdateService.upToDate': 'Up to date',
+  'server.contentAutoUpdateService.autoUpdateDisabledAfterRepeated': 'Auto-update disabled after repeated failures',
+  'server.contentAutoUpdateService.coolOffPending': 'Cool-off pending',
+  'server.contentAutoUpdateService.inCoolOffHRemaining': 'In cool-off ({rounded}h remaining)',
+  'server.contentAutoUpdateService.eligible': 'Eligible → {available_update_version}',
+  'server.contentAutoUpdateService.downloadSInProgress': '{length} download(s) in progress',
+  'server.contentAutoUpdateService.contentAutoUpdateIsDisabled': 'Content auto-update is disabled',
+  'server.contentAutoUpdateService.failed': 'Failed: {error}',
+  'server.contentAutoUpdateService.outsideUpdateWindow': 'Outside update window ({windowStart}-{windowEnd})',
+  'server.contentAutoUpdateService.drugDataset': 'drug dataset: {reason}',
+  'server.contentAutoUpdateService.drugDatasetCheckFailed': 'drug dataset check failed: {error}',
+  'server.contentAutoUpdateService.exceedsDataCapUpdateManually': 'Exceeds data cap — update manually',
+  'server.contentAutoUpdateService.contentAutoUpdateDisabledAfter': 'Content auto-update disabled after {failures} consecutive failures. Last error: {reason}',
+} as const

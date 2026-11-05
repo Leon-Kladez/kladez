@@ -14,6 +14,7 @@ import { createWriteStream } from 'fs'
 import { rename } from 'fs/promises'
 import { join, resolve, sep } from 'path'
 import { ZIM_STORAGE_PATH, ensureDirectoryExists, sanitizeFilename } from '../utils/fs.js'
+import { t } from '../../constants/i18n/index.js'
 
 @inject()
 export default class ZimController {
@@ -39,7 +40,7 @@ export default class ZimController {
     const { filename, jobId } = await this.zimService.downloadRemote(payload.url, payload.metadata)
 
     return {
-      message: 'Download started successfully',
+      message: t('server.zimController.downloadStartedSuccessfully'),
       filename,
       jobId,
       url: payload.url,
@@ -58,7 +59,7 @@ export default class ZimController {
     )
 
     return {
-      message: 'Download started successfully',
+      message: t('server.zimController.downloadStartedSuccessfully'),
       categorySlug: payload.categorySlug,
       tierSlug: payload.tierSlug,
       resources,
@@ -68,7 +69,7 @@ export default class ZimController {
   async rescanLibrary({}: HttpContext) {
     const result = await this.zimService.rescanLibrary()
     return {
-      message: 'Kiwix library rescanned',
+      message: t('server.zimController.kiwixLibraryRescanned'),
       ...result,
     }
   }
@@ -81,14 +82,14 @@ export default class ZimController {
     } catch (error) {
       if (error.message === 'not_found') {
         return response.status(404).send({
-          message: `ZIM file with key ${payload.params.filename} not found`,
+          message: t('server.zimController.zimFileWithKeyNot', { filename: payload.params.filename }),
         })
       }
       throw error // Re-throw any other errors and let the global error handler catch
     }
 
     return {
-      message: 'ZIM file deleted successfully',
+      message: t('server.zimController.zimFileDeletedSuccessfully'),
     }
   }
 
@@ -144,22 +145,22 @@ export default class ZimController {
       await request.multipart.process()
 
       if (uploadError === 'INVALID_TYPE') {
-        return response.status(422).send({ message: 'Only .zim files are accepted' })
+        return response.status(422).send({ message: t('server.zimController.onlyZimFilesAreAccepted') })
       }
       if (uploadError === 'INVALID_FILENAME') {
-        return response.status(422).send({ message: 'Invalid filename' })
+        return response.status(422).send({ message: t('server.zimController.invalidFilename') })
       }
       if (uploadError === 'DUPLICATE_FILENAME') {
-        return response.status(409).send({ message: 'A ZIM file with that name already exists' })
+        return response.status(409).send({ message: t('server.zimController.aZimFileWithThat') })
       }
       if (!filename) {
-        return response.status(400).send({ message: 'No file received' })
+        return response.status(400).send({ message: t('server.zimController.noFileReceived') })
       }
 
       const { added } = await this.zimService.registerLocalUpload(filename)
 
       return response.status(201).send({
-        message: 'ZIM file uploaded and registered successfully',
+        message: t('server.zimController.zimFileUploadedAndRegistered'),
         filename,
         added,
       })
@@ -169,7 +170,7 @@ export default class ZimController {
         const { unlink } = await import('fs/promises')
         await unlink(tmpPath).catch(() => {})
       }
-      return response.status(500).send({ message: 'Upload failed' })
+      return response.status(500).send({ message: t('server.zimController.uploadFailed') })
     }
   }
 
@@ -195,7 +196,7 @@ export default class ZimController {
     assertNotPrivateUrl(payload.base_url)
     try {
       const source = await this.zimService.addCustomLibrary(payload.name, payload.base_url)
-      return { message: 'Custom library added', library: source }
+      return { message: t('server.zimController.customLibraryAdded'), library: source }
     } catch (error) {
       if (error.message === 'Maximum of 10 custom libraries allowed') {
         return response.status(400).send({ message: error.message })
@@ -208,7 +209,7 @@ export default class ZimController {
     const payload = await request.validateUsing(idParamValidator)
     try {
       await this.zimService.removeCustomLibrary(payload.params.id)
-      return { message: 'Custom library removed' }
+      return { message: t('server.zimController.customLibraryRemoved') }
     } catch (error) {
       if (error.message === 'Custom library not found') {
         return response.status(404).send({ message: error.message })
@@ -226,7 +227,7 @@ export default class ZimController {
         return response.status(400).send({ message: error.message })
       }
       return response.status(502).send({
-        message: 'Could not fetch directory listing from the provided URL',
+        message: t('server.zimController.couldNotFetchDirectoryListing'),
       })
     }
   }

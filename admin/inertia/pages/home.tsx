@@ -27,13 +27,14 @@ import LinkTileModal from '~/components/LinkTileModal'
 import { IconPlus, IconPencil, IconTrash, IconExternalLink } from '@tabler/icons-react'
 import { useState } from 'react'
 import { linkTileColor } from '../../constants/link_tile_colors'
+import { t } from '../../constants/i18n'
 
 // Maps is a Core Capability (display_order: 4)
 const MAPS_ITEM = {
-  label: 'Maps',
+  label: t('home.tiles.maps.title'),
   to: '/maps',
   target: '',
-  description: 'View offline maps',
+  description: t('home.tiles.maps.description'),
   icon: <IconMapRoute size={48} />,
   installed: true,
   displayOrder: 4,
@@ -44,10 +45,10 @@ const MAPS_ITEM = {
 // icon and displayOrder here are a reasonable default; both are open for the
 // maintainer to re-pick to fit the dashboard's ordering conventions.
 const DRUG_REFERENCE_ITEM = {
-  label: 'Drug Reference',
+  label: t('home.tiles.drugReference.title'),
   to: '/drug-reference',
   target: '',
-  description: 'Offline FDA drug labels. Search by drug name or by symptom',
+  description: t('home.tiles.drugReference.description'),
   icon: <IconPill size={48} />,
   installed: true,
   displayOrder: 5,
@@ -57,41 +58,40 @@ const DRUG_REFERENCE_ITEM = {
 // System items shown after all apps
 const SYSTEM_ITEMS = [
   {
-    label: 'Easy Setup',
+    label: t('home.tiles.easySetup.title'),
     to: '/easy-setup',
     target: '',
-    description:
-      'Not sure where to start? Use the setup wizard to quickly configure your NOMAD!',
+    description: t('home.tiles.easySetup.description'),
     icon: <IconBolt size={48} />,
     installed: true,
     displayOrder: 50,
     poweredBy: null,
   },
   {
-    label: 'Supply Depot',
+    label: t('home.tiles.supplyDepot.title'),
     to: '/supply-depot',
     target: '',
-    description: 'Browse and install curated apps, or add your own Docker container',
+    description: t('home.tiles.supplyDepot.description'),
     icon: <IconBox size={48} />,
     installed: true,
     displayOrder: 51,
     poweredBy: null,
   },
   {
-    label: 'Docs',
+    label: t('home.tiles.docs.title'),
     to: '/docs/home',
     target: '',
-    description: 'Read Project NOMAD manuals and guides',
+    description: t('home.tiles.docs.description'),
     icon: <IconHelp size={48} />,
     installed: true,
     displayOrder: 52,
     poweredBy: null,
   },
   {
-    label: 'Settings',
+    label: t('home.tiles.settings.title'),
     to: '/settings/system',
     target: '',
-    description: 'Configure your NOMAD settings',
+    description: t('home.tiles.settings.description'),
     icon: <IconSettings size={48} />,
     installed: true,
     displayOrder: 53,
@@ -141,7 +141,7 @@ export default function Home(props: {
     const result = await api.deleteLinkTile(serviceName)
     setPendingDelete(null)
     if (!result?.success) {
-      setLinkError('Failed to remove this link.')
+      setLinkError(t('home.linkRemoveFailed'))
       return
     }
     refreshServices()
@@ -178,7 +178,7 @@ export default function Home(props: {
         target: '_blank',
         description:
           service.description ||
-          `Access the ${service.friendly_name || service.service_name} application`,
+          t('home.tiles.appAccess', { name: service.friendly_name || service.service_name }),
         icon: service.icon ? (
           <DynamicIcon icon={service.icon as DynamicIconName} className="!size-12" />
         ) : (
@@ -198,7 +198,7 @@ export default function Home(props: {
         label: service.friendly_name || service.service_name,
         to: getServiceLink('', service.custom_url),
         target: '_blank',
-        description: service.description || 'Opens in a new tab',
+        description: service.description || t('home.tiles.opensNewTab'),
         icon: <DynamicIcon icon={service.icon as DynamicIconName} className="!size-12" />,
         installed: true,
         displayOrder: service.display_order ?? 90,
@@ -225,18 +225,18 @@ export default function Home(props: {
 
   return (
     <AppLayout>
-      <Head title="Command Center" />
+      <Head title={t('home.pageTitle')} />
       {
         updateInfo?.updateAvailable && (
           <div className='flex justify-center items-center p-4 w-full'>
             <Alert
-              title="An update is available for Project NOMAD!"
+              title={t('home.updateAvailable')}
               type="info-inverted"
               variant="solid"
               className="w-full"
               buttonProps={{
                 variant: 'primary',
-                children: 'Go to Settings',
+                children: t('home.goToSettings'),
                 icon: 'IconSettings',
                 onClick: () => router.visit('/settings/update'),
               }}
@@ -249,8 +249,8 @@ export default function Home(props: {
         rerunBanner?.show && (
           <div className='flex justify-center items-center px-4 pt-4 w-full'>
             <Alert
-              title="Your benchmark can be re-scored with Score v2"
-              message="We've upgraded the benchmark scoring system. Re-run your benchmark to get an updated Score v2 result on the community leaderboard."
+              title={t('home.rerun.title')}
+              message={t('home.rerun.message')}
               type="info-inverted"
               variant="solid"
               className="w-full"
@@ -258,7 +258,7 @@ export default function Home(props: {
               onDismiss={handleDismissRerunBanner}
               buttonProps={{
                 variant: 'primary',
-                children: 'Re-run benchmark',
+                children: t('home.rerun.button'),
                 icon: 'IconRefresh',
                 onClick: () => router.visit('/settings/benchmark'),
               }}
@@ -268,7 +268,7 @@ export default function Home(props: {
       }
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {items.map((item) => {
-          const isEasySetup = item.label === 'Easy Setup'
+          const isEasySetup = item.to === '/easy-setup'
           const shouldHighlight = isEasySetup && shouldHighlightEasySetup
 
           const isLinkTile = Boolean(item.linkTile)
@@ -291,7 +291,7 @@ export default function Home(props: {
               {isLinkTile && (
                 <span
                   className={`absolute top-2 left-2 ${tileColor.marker}`}
-                  title="A shortcut you added. NOMAD does not manage this."
+                  title={t('home.linkTileHint')}
                 >
                   <IconExternalLink size={16} />
                 </span>
@@ -303,13 +303,13 @@ export default function Home(props: {
                     style={{ animationDuration: '1.5s' }}
                   ></span>
                   <span className="relative inline-flex items-center rounded-full px-2.5 py-1 bg-desert-orange-light text-xs font-semibold text-white shadow-sm">
-                    Start here!
+                    {t('home.startHere')}
                   </span>
                 </span>
               )}
               <div className="flex items-center justify-center mb-2">{item.icon}</div>
-              <h3 className="font-bold text-2xl">{item.label}</h3>
-              {item.poweredBy && <p className="text-sm opacity-80">Powered by {item.poweredBy}</p>}
+              <h3 className="font-bold text-2xl break-words hyphens-auto max-w-full">{item.label}</h3>
+              {item.poweredBy && <p className="text-sm opacity-80">{t('home.poweredBy', { name: item.poweredBy })}</p>}
               <p className="xl:text-lg mt-2">{item.description}</p>
             </div>
           )
@@ -331,14 +331,14 @@ export default function Home(props: {
                       onClick={() => handleDeleteTile(tile.service_name)}
                       className="rounded bg-desert-red px-2 py-1 text-xs font-medium text-white hover:brightness-110"
                     >
-                      Remove
+                      {t('common.remove')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setPendingDelete(null)}
                       className="rounded border border-border-default bg-surface-primary px-2 py-1 text-xs text-text-secondary hover:bg-surface-secondary"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 ) : (
@@ -349,8 +349,8 @@ export default function Home(props: {
                         setEditingTile(tile)
                         setLinkModalOpen(true)
                       }}
-                      title="Edit this link"
-                      aria-label="Edit this link"
+                      title={t('home.editLink')}
+                      aria-label={t('home.editLink')}
                       className="rounded p-1 text-text-muted hover:bg-surface-secondary hover:text-text-primary"
                     >
                       <IconPencil size={16} />
@@ -358,8 +358,8 @@ export default function Home(props: {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(tile.service_name)}
-                      title="Remove this link"
-                      aria-label="Remove this link"
+                      title={t('home.removeLink')}
+                      aria-label={t('home.removeLink')}
                       className="rounded p-1 text-text-muted hover:bg-surface-secondary hover:text-desert-red"
                     >
                       <IconTrash size={16} />
@@ -391,8 +391,8 @@ export default function Home(props: {
           className="rounded border-2 border-dashed border-border-default bg-transparent text-text-muted hover:border-desert-green hover:text-text-primary transition-colors h-48 flex flex-col items-center justify-center cursor-pointer text-center px-4"
         >
           <IconPlus size={40} />
-          <h3 className="font-bold text-xl mt-2">Add a Link</h3>
-          <p className="text-sm mt-1">A shortcut to something else on your network</p>
+          <h3 className="font-bold text-xl mt-2">{t('linkTile.addTitle')}</h3>
+          <p className="text-sm mt-1">{t('home.addLinkHint')}</p>
         </button>
       </div>
 

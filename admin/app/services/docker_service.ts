@@ -28,6 +28,7 @@ import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import { KIWIX_LIBRARY_CMD } from '../../constants/kiwix.js'
 import { DEFAULT_OLLAMA_CONTEXT_LENGTH } from '../../constants/ollama.js'
 import { STARTER_ZIM } from '../../constants/kladez.js'
+import { t } from '../../constants/i18n/index.js'
 
 // Written by install_nomad.sh with the host AMD GPU's gfx target.
 const AMD_GFX_MARKER_PATH = '/app/storage/.nomad-amd-gfx'
@@ -96,7 +97,7 @@ export class DockerService {
       if (!service || !service.installed) {
         return {
           success: false,
-          message: `Service ${serviceName} not found or not installed`,
+          message: t('server.dockerService.serviceNotFoundOrNot', { serviceName }),
         }
       }
 
@@ -105,7 +106,7 @@ export class DockerService {
       if (!container) {
         return {
           success: false,
-          message: `Container for service ${serviceName} not found`,
+          message: t('server.dockerService.containerForServiceNotFound', { serviceName }),
         }
       }
 
@@ -115,7 +116,7 @@ export class DockerService {
         this.invalidateServicesStatusCache()
         return {
           success: true,
-          message: `Service ${serviceName} stopped successfully`,
+          message: t('server.dockerService.serviceStoppedSuccessfully', { serviceName }),
         }
       }
 
@@ -126,7 +127,7 @@ export class DockerService {
             logger.info('[DockerService] Kiwix on legacy glob config — running migration instead of restart.')
             await this.migrateKiwixToLibraryMode()
             this.invalidateServicesStatusCache()
-            return { success: true, message: 'Kiwix migrated to library mode successfully.' }
+            return { success: true, message: t('server.dockerService.kiwixMigratedToLibraryMode') }
           }
         }
 
@@ -135,7 +136,7 @@ export class DockerService {
 
         return {
           success: true,
-          message: `Service ${serviceName} restarted successfully`,
+          message: t('server.dockerService.serviceRestartedSuccessfully', { serviceName }),
         }
       }
 
@@ -143,7 +144,7 @@ export class DockerService {
         if (container.State === 'running') {
           return {
             success: true,
-            message: `Service ${serviceName} is already running`,
+            message: t('server.dockerService.serviceIsAlreadyRunning', { serviceName }),
           }
         }
 
@@ -152,19 +153,19 @@ export class DockerService {
 
         return {
           success: true,
-          message: `Service ${serviceName} started successfully`,
+          message: t('server.dockerService.serviceStartedSuccessfully', { serviceName }),
         }
       }
 
       return {
         success: false,
-        message: `Invalid action: ${action}. Use 'start', 'stop', or 'restart'.`,
+        message: t('server.dockerService.invalidActionUseStartStop', { action }),
       }
     } catch (error: any) {
       logger.error({ err: error }, `[DockerService] Error controlling service ${serviceName}`)
       return {
         success: false,
-        message: `Failed to ${action} service ${serviceName}. Check server logs for details.`,
+        message: t('server.dockerService.failedToServiceCheckServer', { action, serviceName }),
       }
     }
   }
@@ -287,14 +288,14 @@ export class DockerService {
     if (!service) {
       return {
         success: false,
-        message: `Service ${serviceName} not found`,
+        message: t('server.dockerService.serviceNotFound', { serviceName }),
       }
     }
 
     if (service.installed) {
       return {
         success: false,
-        message: `Service ${serviceName} is already installed`,
+        message: t('server.dockerService.serviceIsAlreadyInstalled', { serviceName }),
       }
     }
 
@@ -302,7 +303,7 @@ export class DockerService {
     if (service.installation_status === 'installing') {
       return {
         success: false,
-        message: `Service ${serviceName} installation is already in progress`,
+        message: t('server.dockerService.serviceInstallationIsAlreadyIn', { serviceName }),
       }
     }
 
@@ -310,7 +311,7 @@ export class DockerService {
     if (this.activeInstallations.has(serviceName)) {
       return {
         success: false,
-        message: `Service ${serviceName} installation is already in progress`,
+        message: t('server.dockerService.serviceInstallationIsAlreadyIn', { serviceName }),
       }
     }
 
@@ -342,7 +343,7 @@ export class DockerService {
 
     return {
       success: true,
-      message: `Service ${serviceName} installation initiated successfully. You can receive updates via server-sent events.`,
+      message: t('server.dockerService.serviceInstallationInitiatedSuccessfullyYou', { serviceName }),
     }
   }
 
@@ -361,7 +362,7 @@ export class DockerService {
       if (!service) {
         return {
           success: false,
-          message: `Service ${serviceName} not found`,
+          message: t('server.dockerService.serviceNotFound', { serviceName }),
         }
       }
 
@@ -369,7 +370,7 @@ export class DockerService {
       if (this.activeInstallations.has(serviceName)) {
         return {
           success: false,
-          message: `Service ${serviceName} installation is already in progress`,
+          message: t('server.dockerService.serviceInstallationIsAlreadyIn', { serviceName }),
         }
       }
 
@@ -381,7 +382,7 @@ export class DockerService {
       this._broadcast(
         serviceName,
         'reinstall-starting',
-        `Starting force reinstall for ${serviceName}...`
+        t('server.dockerService.startingForceReinstallFor', { serviceName })
       )
 
       // Step 1: Try to stop and remove the container if it exists
@@ -405,7 +406,7 @@ export class DockerService {
 
           // Only try to stop if it's running
           if (container.State === 'running') {
-            this._broadcast(serviceName, 'stopping', `Stopping container...`)
+            this._broadcast(serviceName, 'stopping', t('server.dockerService.stoppingContainer'))
             await dockerContainer.stop({ t: 10 }).catch((error) => {
               // If already stopped, continue
               if (!error.message.includes('already stopped')) {
@@ -415,7 +416,7 @@ export class DockerService {
           }
 
           // Step 2: Remove the container
-          this._broadcast(serviceName, 'removing', `Removing container...`)
+          this._broadcast(serviceName, 'removing', t('server.dockerService.removingContainer'))
           await dockerContainer.remove({ force: true }).catch((error) => {
             logger.warn(`Error removing container: ${error.message}`)
           })
@@ -423,17 +424,17 @@ export class DockerService {
           this._broadcast(
             serviceName,
             'no-container',
-            `No existing container found, proceeding with installation...`
+            t('server.dockerService.noExistingContainerFoundProceeding')
           )
         }
       } catch (error: any) {
         logger.warn({ err: error }, `[DockerService] Error during container cleanup for ${serviceName}`)
-        this._broadcast(serviceName, 'cleanup-warning', 'Warning during container cleanup. Check server logs for details.')
+        this._broadcast(serviceName, 'cleanup-warning', t('server.dockerService.warningDuringContainerCleanupCheck'))
       }
 
       // Step 3: Clear volumes/data if needed
       try {
-        this._broadcast(serviceName, 'clearing-volumes', `Checking for volumes to clear...`)
+        this._broadcast(serviceName, 'clearing-volumes', t('server.dockerService.checkingForVolumesToClear'))
         const volumes = await this.docker.listVolumes()
         const serviceVolumes =
           volumes.Volumes?.filter(
@@ -447,21 +448,21 @@ export class DockerService {
           try {
             const volume = this.docker.getVolume(vol.Name)
             await volume.remove({ force: true })
-            this._broadcast(serviceName, 'volume-removed', `Removed volume: ${vol.Name}`)
+            this._broadcast(serviceName, 'volume-removed', t('server.dockerService.removedVolume', { Name: vol.Name }))
           } catch (error: any) {
             logger.warn(`Failed to remove volume ${vol.Name}: ${error.message}`)
           }
         }
 
         if (serviceVolumes.length === 0) {
-          this._broadcast(serviceName, 'no-volumes', `No volumes found to clear`)
+          this._broadcast(serviceName, 'no-volumes', t('server.dockerService.noVolumesFoundToClear'))
         }
       } catch (error: any) {
         logger.warn({ err: error }, `[DockerService] Error during volume cleanup for ${serviceName}`)
         this._broadcast(
           serviceName,
           'volume-cleanup-warning',
-          'Warning during volume cleanup. Check server logs for details.'
+          t('server.dockerService.warningDuringVolumeCleanupCheck')
         )
       }
 
@@ -472,7 +473,7 @@ export class DockerService {
       this.invalidateServicesStatusCache()
 
       // Step 5: Recreate the container
-      this._broadcast(serviceName, 'recreating', `Recreating container...`)
+      this._broadcast(serviceName, 'recreating', t('server.dockerService.recreatingContainer'))
       const containerConfig = this._parseContainerConfig(service.container_config)
 
       // Execute installation asynchronously and handle cleanup
@@ -483,14 +484,14 @@ export class DockerService {
 
       return {
         success: true,
-        message: `Service ${serviceName} force reinstall initiated successfully. You can receive updates via server-sent events.`,
+        message: t('server.dockerService.serviceForceReinstallInitiatedSuccessfully', { serviceName }),
       }
     } catch (error: any) {
       logger.error({ err: error }, `[DockerService] Force reinstall failed for ${serviceName}`)
       await this._cleanupFailedInstallation(serviceName)
       return {
         success: false,
-        message: `Failed to force reinstall service ${serviceName}. Check server logs for details.`,
+        message: t('server.dockerService.failedToForceReinstallService', { serviceName }),
       }
     }
   }
@@ -510,11 +511,11 @@ export class DockerService {
     const portMatch = raw.match(/(?:Bind for [^:]+:(\d+) failed: port is already allocated|:(\d+): bind: address already in use)/i)
     if (portMatch) {
       const port = portMatch[1] || portMatch[2]
-      const portText = port ? `port ${port}` : 'a required port'
+      const portText = port ? t('serverDocker.port', { port }) : t('serverDocker.somePort')
       if (port === '11434' || serviceName === SERVICE_NAMES.OLLAMA) {
-        return `Couldn't start because ${portText} is already in use on this machine. This usually means Ollama is already installed and running directly on the host (outside NOMAD). Stop and disable the host Ollama service (e.g. "sudo systemctl stop ollama" then "sudo systemctl disable ollama"), then try again.`
+        return t('serverDocker.portBusyOllama', { portText })
       }
-      return `Couldn't start because ${portText} is already in use on this machine. Stop whatever is using ${portText} on the host, then try again.`
+      return t('serverDocker.portBusy', { portText })
     }
     return raw
   }
@@ -649,14 +650,14 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'checking-dependencies',
-          `Checking dependencies for service ${service.service_name}...`
+          t('server.dockerService.checkingDependenciesForService', { service_name: service.service_name })
         )
         for (const dependency of dependencies) {
           if (!dependency.installed) {
             this._broadcast(
               service.service_name,
               'dependency-not-installed',
-              `Dependency service ${dependency.service_name} is not installed. Installing it first...`
+              t('server.dockerService.dependencyServiceIsNotInstalled', { service_name: dependency.service_name })
             )
             await this._createContainer(
               dependency,
@@ -666,7 +667,7 @@ export class DockerService {
             this._broadcast(
               service.service_name,
               'dependency-installed',
-              `Dependency service ${dependency.service_name} is already installed.`
+              t('server.dockerService.dependencyServiceIsAlreadyInstalled', { service_name: dependency.service_name })
             )
           }
         }
@@ -677,14 +678,14 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'image-exists',
-          `Docker image ${service.container_image} already exists locally. Skipping pull...`
+          t('server.dockerService.dockerImageAlreadyExistsLocally', { container_image: service.container_image })
         )
       } else {
         // Start pulling the Docker image and wait for it to complete
         this._broadcast(
           service.service_name,
           'pulling',
-          `Pulling Docker image ${service.container_image}...`
+          t('server.dockerService.pullingDockerImage', { container_image: service.container_image })
         )
         await this.pullImage(service.container_image)
       }
@@ -694,7 +695,7 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'preinstall-complete',
-          `Pre-install actions for Kiwix Serve completed successfully.`
+          t('server.dockerService.preInstallActionsForKiwix')
         )
       }
 
@@ -703,7 +704,7 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'preinstall-complete',
-          `Pre-install actions for Calibre-Web completed successfully.`
+          t('server.dockerService.preInstallActionsForCalibre')
         )
       }
 
@@ -712,7 +713,7 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'preinstall-complete',
-          `Pre-install actions for Vaultwarden completed successfully.`
+          t('server.dockerService.preInstallActionsForVaultwarden')
         )
       }
 
@@ -721,7 +722,7 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'preinstall-complete',
-          `Pre-install actions for Jellyfin completed successfully.`
+          t('server.dockerService.preInstallActionsForJellyfin')
         )
       }
 
@@ -730,7 +731,7 @@ export class DockerService {
         this._broadcast(
           service.service_name,
           'preinstall-complete',
-          `Pre-install actions for MeshCore Web completed successfully.`
+          t('server.dockerService.preInstallActionsForMeshcore')
         )
       }
 
@@ -746,7 +747,7 @@ export class DockerService {
           this._broadcast(
             service.service_name,
             'gpu-config',
-            `NVIDIA container runtime detected. Configuring container with GPU support...`
+            t('server.dockerService.nvidiaContainerRuntimeDetectedConfiguring')
           )
 
           // Add GPU support for NVIDIA
@@ -770,7 +771,7 @@ export class DockerService {
             this._broadcast(
               service.service_name,
               'gpu-config',
-              `AMD GPU detected. Using ROCm image with /dev/kfd and /dev/dri passthrough...`
+              t('server.dockerService.amdGpuDetectedUsingRocm')
             )
 
             finalImage = 'ollama/ollama:rocm'
@@ -783,7 +784,7 @@ export class DockerService {
               this._broadcast(
                 service.service_name,
                 'pulling',
-                `Pulling Docker image ${finalImage}...`
+                t('server.dockerService.pullingDockerImage2', { finalImage })
               )
               await this.pullImage(finalImage)
             }
@@ -801,7 +802,7 @@ export class DockerService {
             this._broadcast(
               service.service_name,
               'gpu-config',
-              `AMD GPU detected but acceleration is disabled via ai.amdGpuAcceleration. Using CPU-only configuration.`
+              t('server.dockerService.amdGpuDetectedButAcceleration')
             )
             logger.info('[DockerService] AMD GPU acceleration disabled by KV opt-out; using CPU-only configuration.')
           }
@@ -809,13 +810,13 @@ export class DockerService {
           this._broadcast(
             service.service_name,
             'gpu-config',
-            `NVIDIA GPU detected but NVIDIA Container Toolkit is not installed. Using CPU-only configuration. Install the toolkit and reinstall AI Assistant for GPU acceleration: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html`
+            t('server.dockerService.nvidiaGpuDetectedButNvidia')
           )
         } else {
           this._broadcast(
             service.service_name,
             'gpu-config',
-            `No GPU detected. Using CPU-only configuration...`
+            t('server.dockerService.noGpuDetectedUsingCpu')
           )
         }
       }
@@ -863,7 +864,7 @@ export class DockerService {
       this._broadcast(
         service.service_name,
         'creating',
-        `Creating Docker container for service ${service.service_name}...`
+        t('server.dockerService.creatingDockerContainerForService', { service_name: service.service_name })
       )
       // Built once and reused, so the AMD fallback below cannot drift from the
       // real payload as this config grows.
@@ -902,7 +903,7 @@ export class DockerService {
       this._broadcast(
         service.service_name,
         'starting',
-        `Starting Docker container for service ${service.service_name}...`
+        t('server.dockerService.startingDockerContainerForService', { service_name: service.service_name })
       )
       try {
         await container.start()
@@ -965,7 +966,7 @@ export class DockerService {
       this._broadcast(
         service.service_name,
         'finalizing',
-        `Finalizing installation of service ${service.service_name}...`
+        t('server.dockerService.finalizingInstallationOfService', { service_name: service.service_name })
       )
       service.installed = true
       service.installation_status = 'idle'
@@ -994,14 +995,14 @@ export class DockerService {
       this._broadcast(
         service.service_name,
         'completed',
-        `Service ${service.service_name} installation completed successfully.`
+        t('server.dockerService.serviceInstallationCompletedSuccessfully', { service_name: service.service_name })
       )
     } catch (error: any) {
       const friendly = this._humanizeDockerError(error, service.service_name)
       this._broadcast(
         service.service_name,
         'error',
-        `Error installing service ${service.service_name}: ${friendly}`
+        t('server.dockerService.errorInstallingService', { service_name: service.service_name, friendly })
       )
       // Mark install as failed and cleanup
       await this._cleanupFailedInstallation(service.service_name)
@@ -1026,18 +1027,18 @@ export class DockerService {
       const containers = await this.docker.listContainers({ all: true })
       const container = containers.find((c) => c.Names.includes(`/${serviceName}`))
       if (!container) {
-        return { success: false, message: `Container for service ${serviceName} not found` }
+        return { success: false, message: t('server.dockerService.containerForServiceNotFound', { serviceName }) }
       }
 
       const dockerContainer = this.docker.getContainer(container.Id)
       await dockerContainer.remove({ force: true })
 
-      return { success: true, message: `Service ${serviceName} container removed successfully` }
+      return { success: true, message: t('server.dockerService.serviceContainerRemovedSuccessfully', { serviceName }) }
     } catch (error: any) {
       logger.error({ err: error }, `[DockerService] Error removing service container ${serviceName}`)
       return {
         success: false,
-        message: `Failed to remove service ${serviceName} container. Check server logs for details.`,
+        message: t('server.dockerService.failedToRemoveServiceContainer', { serviceName }),
       }
     }
   }
@@ -1056,7 +1057,7 @@ export class DockerService {
     this._broadcast(
       SERVICE_NAMES.KIWIX,
       'preinstall',
-      `Running pre-install actions for Kiwix Serve...`
+      t('server.dockerService.runningPreInstallActionsFor')
     )
 
     try {
@@ -1095,18 +1096,18 @@ export class DockerService {
       this._broadcast(
         SERVICE_NAMES.KIWIX,
         'preinstall',
-        `Starter ZIM ready at ${filepath}`
+        t('server.dockerService.starterZimReady', { filepath })
       )
 
       // Generate the initial kiwix library XML before the container is created
       const kiwixLibraryService = new KiwixLibraryService()
       await kiwixLibraryService.rebuildFromDisk()
-      this._broadcast(SERVICE_NAMES.KIWIX, 'preinstall', 'Generated kiwix library XML.')
+      this._broadcast(SERVICE_NAMES.KIWIX, 'preinstall', t('server.dockerService.generatedKiwixLibraryXml'))
     } catch (error: any) {
       this._broadcast(
         SERVICE_NAMES.KIWIX,
         'preinstall-error',
-        `Failed to prepare the starter ZIM file: ${error.message}`
+        t('server.dockerService.starterZimFailed', { error: error.message })
       )
       throw new Error(`Pre-install action failed: ${error.message}`)
     }
@@ -1132,7 +1133,7 @@ export class DockerService {
     this._broadcast(
       SERVICE_NAMES.CALIBREWEB,
       'preinstall',
-      `Running pre-install actions for Calibre-Web...`
+      t('server.dockerService.runningPreInstallActionsFor2')
     )
 
     try {
@@ -1147,14 +1148,14 @@ export class DockerService {
         this._broadcast(
           SERVICE_NAMES.CALIBREWEB,
           'preinstall',
-          `Existing Calibre library found in books folder — leaving it as-is.`
+          t('server.dockerService.existingCalibreLibraryFoundIn')
         )
       } else {
         await copyFile(assetPath, metadataPath)
         this._broadcast(
           SERVICE_NAMES.CALIBREWEB,
           'preinstall',
-          `Seeded an empty Calibre library into the books folder.`
+          t('server.dockerService.seededAnEmptyCalibreLibrary')
         )
       }
 
@@ -1166,7 +1167,7 @@ export class DockerService {
       this._broadcast(
         SERVICE_NAMES.CALIBREWEB,
         'preinstall-error',
-        `Failed to prepare the Calibre library: ${error.message}`
+        t('server.dockerService.failedToPrepareTheCalibre', { error: error.message })
       )
       throw new Error(`Pre-install action failed: ${error.message}`)
     }
@@ -1228,7 +1229,7 @@ export class DockerService {
     this._broadcast(
       SERVICE_NAMES.VAULTWARDEN,
       'preinstall',
-      `Running pre-install actions for Vaultwarden...`
+      t('server.dockerService.runningPreInstallActionsFor3')
     )
 
     try {
@@ -1236,13 +1237,13 @@ export class DockerService {
       this._broadcast(
         SERVICE_NAMES.VAULTWARDEN,
         'preinstall',
-        `Vaultwarden HTTPS certificate is ready.`
+        t('server.dockerService.vaultwardenHttpsCertificateIsReady')
       )
     } catch (error: any) {
       this._broadcast(
         SERVICE_NAMES.VAULTWARDEN,
         'preinstall-error',
-        `Failed to prepare the Vaultwarden certificate: ${error.message}`
+        t('server.dockerService.failedToPrepareTheVaultwarden', { error: error.message })
       )
       throw new Error(`Pre-install action failed: ${error.message}`)
     }
@@ -1264,7 +1265,7 @@ export class DockerService {
     this._broadcast(
       SERVICE_NAMES.MESHCORE_WEB,
       'preinstall',
-      `Running pre-install actions for MeshCore Web...`
+      t('server.dockerService.runningPreInstallActionsFor4')
     )
 
     try {
@@ -1293,13 +1294,13 @@ export class DockerService {
       this._broadcast(
         SERVICE_NAMES.MESHCORE_WEB,
         'preinstall',
-        `MeshCore Web HTTPS certificate and config are ready.`
+        t('server.dockerService.meshcoreWebHttpsCertificateAnd')
       )
     } catch (error: any) {
       this._broadcast(
         SERVICE_NAMES.MESHCORE_WEB,
         'preinstall-error',
-        `Failed to prepare MeshCore Web: ${error.message}`
+        t('server.dockerService.failedToPrepareMeshcoreWeb', { error: error.message })
       )
       throw new Error(`Pre-install action failed: ${error.message}`)
     }
@@ -1319,7 +1320,7 @@ export class DockerService {
     this._broadcast(
       SERVICE_NAMES.JELLYFIN,
       'preinstall',
-      `Running pre-install actions for Jellyfin...`
+      t('server.dockerService.runningPreInstallActionsFor5')
     )
 
     try {
@@ -1330,13 +1331,13 @@ export class DockerService {
       this._broadcast(
         SERVICE_NAMES.JELLYFIN,
         'preinstall',
-        `Prepared media folders: ${JELLYFIN_MEDIA_SUBFOLDERS.join(', ')}.`
+        t('server.dockerService.preparedMediaFolders', { join: JELLYFIN_MEDIA_SUBFOLDERS.join(', ') })
       )
     } catch (error: any) {
       this._broadcast(
         SERVICE_NAMES.JELLYFIN,
         'preinstall-error',
-        `Failed to prepare the Jellyfin media folders: ${error.message}`
+        t('server.dockerService.failedToPrepareTheJellyfin', { error: error.message })
       )
       throw new Error(`Pre-install action failed: ${error.message}`)
     }
@@ -1408,10 +1409,10 @@ export class DockerService {
 
     try {
       // Step 1: Build/update the XML from current disk state
-      this._broadcast(SERVICE_NAMES.KIWIX, 'migrating', 'Migrating kiwix to library mode...')
+      this._broadcast(SERVICE_NAMES.KIWIX, 'migrating', t('server.dockerService.migratingKiwixToLibraryMode'))
       const kiwixLibraryService = new KiwixLibraryService()
       await kiwixLibraryService.rebuildFromDisk()
-      this._broadcast(SERVICE_NAMES.KIWIX, 'migrating', 'Built kiwix library XML from existing ZIM files.')
+      this._broadcast(SERVICE_NAMES.KIWIX, 'migrating', t('server.dockerService.builtKiwixLibraryXmlFrom'))
 
       // Step 2: Stop and remove old container (leave ZIM volumes intact)
       const containers = await this.docker.listContainers({ all: true })
@@ -1446,7 +1447,7 @@ export class DockerService {
 
       // Step 4: Recreate container directly (skipping _createContainer to avoid re-downloading
       // the bootstrap ZIM — ZIM files already exist on disk)
-      this._broadcast(SERVICE_NAMES.KIWIX, 'migrating', 'Recreating kiwix container with library mode config...')
+      this._broadcast(SERVICE_NAMES.KIWIX, 'migrating', t('server.dockerService.recreatingKiwixContainerWithLibrary'))
       const newContainer = await this.docker.createContainer({
         Image: service.container_image,
         name: service.service_name,
@@ -1469,7 +1470,7 @@ export class DockerService {
       await service.save()
       this.activeInstallations.delete(SERVICE_NAMES.KIWIX)
 
-      this._broadcast(SERVICE_NAMES.KIWIX, 'migrated', 'Kiwix successfully migrated to library mode.')
+      this._broadcast(SERVICE_NAMES.KIWIX, 'migrated', t('server.dockerService.kiwixSuccessfullyMigratedToLibrary'))
       logger.info('[DockerService] Kiwix migration to library mode complete.')
     } catch (error: any) {
       logger.error(`[DockerService] Kiwix migration failed: ${error.message}`)
@@ -1757,20 +1758,20 @@ export class DockerService {
     try {
       const service = await Service.query().where('service_name', serviceName).first()
       if (!service) {
-        return { success: false, message: `Service ${serviceName} not found` }
+        return { success: false, message: t('server.dockerService.serviceNotFound', { serviceName }) }
       }
       if (!service.installed) {
-        return { success: false, message: `Service ${serviceName} is not installed` }
+        return { success: false, message: t('server.dockerService.serviceIsNotInstalled', { serviceName }) }
       }
       if (this.activeInstallations.has(serviceName)) {
-        return { success: false, message: `Service ${serviceName} already has an operation in progress` }
+        return { success: false, message: t('server.dockerService.serviceAlreadyHasAnOperation', { serviceName }) }
       }
       // DB-level guard mirrors the install path. Unlike the in-memory Set above, this survives a
       // page reload and is visible to other clients, so a second Update click (or one from another
       // tab) is rejected cleanly instead of racing two updateContainer runs into Docker 304/400
       // errors (stop/rename on a container the first run already moved).
       if (service.installation_status === 'installing') {
-        return { success: false, message: `Service ${serviceName} already has an update in progress` }
+        return { success: false, message: t('server.dockerService.serviceAlreadyHasAnUpdate', { serviceName }) }
       }
 
       this.activeInstallations.add(serviceName)
@@ -1803,7 +1804,7 @@ export class DockerService {
           this._broadcast(
             serviceName,
             'update-gpu-config',
-            `NVIDIA container runtime detected. Configuring updated container with GPU support...`
+            t('server.dockerService.nvidiaContainerRuntimeDetectedConfiguring2')
           )
           updatedDeviceRequests = [
             { Driver: 'nvidia', Count: -1, Capabilities: [['gpu']] },
@@ -1815,7 +1816,7 @@ export class DockerService {
             this._broadcast(
               serviceName,
               'update-gpu-config',
-              `AMD GPU detected. Using ROCm image with /dev/kfd and /dev/dri passthrough...`
+              t('server.dockerService.amdGpuDetectedUsingRocm')
             )
             runtimeImage = 'ollama/ollama:rocm'
             updatedAmdDevices = await this._discoverAMDDevices()
@@ -1824,32 +1825,32 @@ export class DockerService {
             this._broadcast(
               serviceName,
               'update-gpu-config',
-              `AMD GPU detected but acceleration is disabled via ai.amdGpuAcceleration. Using CPU-only configuration.`
+              t('server.dockerService.amdGpuDetectedButAcceleration')
             )
           }
         } else if (gpuResult.toolkitMissing) {
           this._broadcast(
             serviceName,
             'update-gpu-config',
-            `NVIDIA GPU detected but NVIDIA Container Toolkit is not installed. Using CPU-only configuration. Install the toolkit and reinstall AI Assistant for GPU acceleration: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html`
+            t('server.dockerService.nvidiaGpuDetectedButNvidia')
           )
         } else {
-          this._broadcast(serviceName, 'update-gpu-config', `No GPU detected. Using CPU-only configuration.`)
+          this._broadcast(serviceName, 'update-gpu-config', t('server.dockerService.noGpuDetectedUsingCpu2'))
         }
       }
 
       // Step 1: Pull new image (runtimeImage diverges from newImage for AMD, see above)
-      this._broadcast(serviceName, 'update-pulling', `Pulling image ${runtimeImage}...`)
+      this._broadcast(serviceName, 'update-pulling', t('server.dockerService.pullingImage', { runtimeImage }))
       await this.pullImage(runtimeImage)
 
       // Step 2: Find and stop existing container
-      this._broadcast(serviceName, 'update-stopping', `Stopping current container...`)
+      this._broadcast(serviceName, 'update-stopping', t('server.dockerService.stoppingCurrentContainer'))
       const containers = await this.docker.listContainers({ all: true })
       const existingContainer = containers.find((c) => c.Names.includes(`/${serviceName}`))
 
       if (!existingContainer) {
         this.activeInstallations.delete(serviceName)
-        return { success: false, message: `Container for ${serviceName} not found` }
+        return { success: false, message: t('server.dockerService.containerForNotFound', { serviceName }) }
       }
 
       const oldContainer = this.docker.getContainer(existingContainer.Id)
@@ -1894,7 +1895,7 @@ export class DockerService {
       }
 
       // Step 4: Create new container with inspected config + new image
-      this._broadcast(serviceName, 'update-creating', `Creating updated container...`)
+      this._broadcast(serviceName, 'update-creating', t('server.dockerService.creatingUpdatedContainer'))
 
       const hostConfig = inspectData.HostConfig || {}
 
@@ -1962,23 +1963,23 @@ export class DockerService {
         newContainer = await this.docker.createContainer(newContainerConfig)
       } catch (createError: any) {
         // Rollback: rename old container back
-        this._broadcast(serviceName, 'update-rollback', `Failed to create new container: ${createError.message}. Rolling back...`)
+        this._broadcast(serviceName, 'update-rollback', t('server.dockerService.failedToCreateNewContainer', { error: createError.message }))
         await rollbackToOld()
         this.activeInstallations.delete(serviceName)
-        return { success: false, message: `Failed to create updated container: ${createError.message}` }
+        return { success: false, message: t('server.dockerService.failedToCreateUpdatedContainer', { error: createError.message }) }
       }
 
       // Step 5: Start new container. If the start itself throws (bad device/GPU config,
       // a host port already bound, image incompatibility), roll back to the previous
       // container instead of leaving the service stopped with no replacement running.
-      this._broadcast(serviceName, 'update-starting', `Starting updated container...`)
+      this._broadcast(serviceName, 'update-starting', t('server.dockerService.startingUpdatedContainer'))
       try {
         await newContainer.start()
       } catch (startError: any) {
         this._broadcast(
           serviceName,
           'update-rollback',
-          `Updated container failed to start: ${startError.message}. Rolling back to previous version...`
+          t('server.dockerService.updatedContainerFailedToStart', { error: startError.message })
         )
         try {
           await newContainer.remove({ force: true })
@@ -1989,7 +1990,7 @@ export class DockerService {
         this.activeInstallations.delete(serviceName)
         return {
           success: false,
-          message: `Update failed: new container did not start (${startError.message}). Rolled back to previous version.`,
+          message: t('server.dockerService.updateFailedNewContainerDid', { error: startError.message }),
         }
       }
 
@@ -2019,15 +2020,15 @@ export class DockerService {
         this._broadcast(
           serviceName,
           'update-complete',
-          `Successfully updated ${serviceName} to ${targetVersion}`
+          t('server.dockerService.successfullyUpdatedTo', { serviceName, targetVersion })
         )
-        return { success: true, message: `Service ${serviceName} updated to ${targetVersion}` }
+        return { success: true, message: t('server.dockerService.serviceUpdatedTo', { serviceName, targetVersion }) }
       } else {
         // Unhealthy — rollback
         this._broadcast(
           serviceName,
           'update-rollback',
-          `New container failed health check. Rolling back to previous version...`
+          t('server.dockerService.newContainerFailedHealthCheck')
         )
 
         try {
@@ -2042,7 +2043,7 @@ export class DockerService {
         this.activeInstallations.delete(serviceName)
         return {
           success: false,
-          message: `Update failed: new container did not stay running. Rolled back to previous version.`,
+          message: t('server.dockerService.updateFailedNewContainerDid2'),
         }
       }
     } catch (error: any) {
@@ -2050,10 +2051,10 @@ export class DockerService {
       this._broadcast(
         serviceName,
         'update-rollback',
-        'Update failed. Check server logs for details.'
+        t('server.dockerService.updateFailedCheckServerLogs')
       )
       logger.error({ err: error }, `[DockerService] Update failed for ${serviceName}`)
-      return { success: false, message: 'Update failed. Check server logs for details.' }
+      return { success: false, message: t('server.dockerService.updateFailedCheckServerLogs') }
     } finally {
       // Always clear the in-progress flag we set above, on every exit path (success, rollback,
       // not-found, or thrown error). The success path already persisted the new image/version on
@@ -2145,7 +2146,7 @@ export class DockerService {
       const containers = await this.docker.listContainers({ all: true })
       const container = containers.find((c) => c.Names.includes(`/${serviceName}`))
 
-      if (!container) return { success: true, message: 'No container found — nothing to remove' }
+      if (!container) return { success: true, message: t('server.dockerService.noContainerFoundNothingTo') }
 
       const imageRef = container.Image
       const c = this.docker.getContainer(container.Id)
@@ -2162,7 +2163,7 @@ export class DockerService {
       }
 
       this.invalidateServicesStatusCache()
-      return { success: true, message: `Container ${serviceName} removed` }
+      return { success: true, message: t('server.dockerService.containerRemoved', { serviceName }) }
     } catch (error: any) {
       logger.error({ err: error }, `[DockerService] removeCustomAppContainer failed for ${serviceName}`)
       return { success: false, message: error.message }
@@ -2181,7 +2182,7 @@ export class DockerService {
   ): Promise<{ success: boolean; message: string }> {
     const service = await Service.query().where('service_name', serviceName).first()
     if (!service || !service.installed) {
-      return { success: false, message: `Service ${serviceName} not found or not installed` }
+      return { success: false, message: t('server.dockerService.serviceNotFoundOrNot', { serviceName }) }
     }
 
     // Container/image removal is shared with custom-app deletion — the lookup is by container
@@ -2194,7 +2195,7 @@ export class DockerService {
     await service.save()
     this.invalidateServicesStatusCache()
 
-    return { success: true, message: `Service ${serviceName} uninstalled` }
+    return { success: true, message: t('server.dockerService.serviceUninstalled', { serviceName }) }
   }
 
   /** Find a container by its managed service name (`/serviceName`), or null. */
@@ -2230,7 +2231,7 @@ export class DockerService {
   ): Promise<{ success: boolean; logs?: string; message?: string }> {
     try {
       const info = await this._findContainerByName(serviceName)
-      if (!info) return { success: false, message: `No container found for ${serviceName}` }
+      if (!info) return { success: false, message: t('server.dockerService.noContainerFoundFor', { serviceName }) }
 
       const container = this.docker.getContainer(info.Id)
       const inspect = await container.inspect()
@@ -2264,7 +2265,7 @@ export class DockerService {
   }> {
     try {
       const info = await this._findContainerByName(serviceName)
-      if (!info) return { success: false, message: `No container found for ${serviceName}` }
+      if (!info) return { success: false, message: t('server.dockerService.noContainerFoundFor', { serviceName }) }
       if (info.State !== 'running') return { success: true, running: false }
 
       const container = this.docker.getContainer(info.Id)
@@ -2318,20 +2319,20 @@ export class DockerService {
       inspect = await container.inspect()
       return inspect.State?.Running
         ? { ready: true }
-        : { ready: false, reason: 'container did not stay running' }
+        : { ready: false, reason: t('server.dockerService.containerDidNotStayRunning') }
     }
 
     const deadline = Date.now() + timeoutMs
     while (Date.now() < deadline) {
       inspect = await container.inspect()
-      if (!inspect.State?.Running) return { ready: false, reason: 'container exited' }
+      if (!inspect.State?.Running) return { ready: false, reason: t('server.dockerService.containerExited') }
       const status = inspect.State?.Health?.Status
       if (status === 'healthy') return { ready: true }
-      if (status === 'unhealthy') return { ready: false, reason: 'failed its health check' }
+      if (status === 'unhealthy') return { ready: false, reason: t('server.dockerService.failedItsHealthCheck') }
       await new Promise((r) => setTimeout(r, 2000))
     }
     // Still in "starting" at timeout — accept it if it's at least running rather than roll back a slow boot.
-    return inspect.State?.Running ? { ready: true } : { ready: false, reason: 'health check timed out' }
+    return inspect.State?.Running ? { ready: true } : { ready: false, reason: t('server.dockerService.healthCheckTimedOut') }
   }
 
   /**
@@ -2346,7 +2347,7 @@ export class DockerService {
     opts: { forcePull?: boolean } = {}
   ): Promise<{ success: boolean; message: string }> {
     const service = await Service.query().where('service_name', serviceName).first()
-    if (!service) return { success: false, message: `Service ${serviceName} not found` }
+    if (!service) return { success: false, message: t('server.dockerService.serviceNotFound', { serviceName }) }
 
     const containerConfig = this._parseContainerConfig(service.container_config)
     const oldInfo = await this._findContainerByName(serviceName)
@@ -2415,7 +2416,7 @@ export class DockerService {
       service.installation_status = 'idle'
       await service.save()
       this.invalidateServicesStatusCache()
-      return { success: true, message: `Service ${serviceName} reconfigured successfully` }
+      return { success: true, message: t('server.dockerService.serviceReconfiguredSuccessfully', { serviceName }) }
     } catch (error: any) {
       logger.error({ err: error }, `[DockerService] recreateCustomAppContainer failed for ${serviceName}`)
       // Roll back: discard the failed new container and restore the renamed original.
@@ -2436,7 +2437,7 @@ export class DockerService {
         logger.error({ err: rollbackError }, `[DockerService] rollback failed for ${serviceName}`)
       }
       this.invalidateServicesStatusCache()
-      return { success: false, message: `Reconfigure failed and was rolled back: ${error.message}` }
+      return { success: false, message: t('server.dockerService.reconfigureFailedAndWasRolled', { error: error.message }) }
     }
   }
 

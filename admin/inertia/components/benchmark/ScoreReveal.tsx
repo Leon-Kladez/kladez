@@ -4,6 +4,7 @@ import CircularGauge from '~/components/systeminfo/CircularGauge'
 import StyledButton from '~/components/StyledButton'
 import { getScoreDisplay } from '~/lib/benchmarkScore'
 import BenchmarkResult from '#models/benchmark_result'
+import { t, formatNumber } from '../../../constants/i18n'
 
 interface ScoreRevealProps {
   result: BenchmarkResult
@@ -30,10 +31,10 @@ function useCountUp(target: number, durationMs = 1200): number {
     let raf = 0
     const start = performance.now()
     const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / durationMs)
-      const eased = 1 - Math.pow(1 - t, 3)
+      const progress = Math.min(1, (now - start) / durationMs)
+      const eased = 1 - Math.pow(1 - progress, 3)
       setValue(target * eased)
-      if (t < 1) raf = requestAnimationFrame(tick)
+      if (progress < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
@@ -63,14 +64,14 @@ export default function ScoreReveal({
     variant: 'cpu' | 'memory' | 'disk'
     icon: React.ReactNode
   }[] = [
-    { label: 'CPU', value: result.cpu_score * 100, variant: 'cpu', icon: <IconCpu className="w-6 h-6" /> },
-    { label: 'Memory', value: result.memory_score * 100, variant: 'memory', icon: <IconDatabase className="w-6 h-6" /> },
-    { label: 'Disk Read', value: result.disk_read_score * 100, variant: 'disk', icon: <IconServer className="w-6 h-6" /> },
-    { label: 'Disk Write', value: result.disk_write_score * 100, variant: 'disk', icon: <IconServer className="w-6 h-6" /> },
+    { label: t('benchRun.score.cpu'), value: result.cpu_score * 100, variant: 'cpu', icon: <IconCpu className="w-6 h-6" /> },
+    { label: t('benchRun.score.memory'), value: result.memory_score * 100, variant: 'memory', icon: <IconDatabase className="w-6 h-6" /> },
+    { label: t('benchRun.diskRead'), value: result.disk_read_score * 100, variant: 'disk', icon: <IconServer className="w-6 h-6" /> },
+    { label: t('benchRun.diskWrite'), value: result.disk_write_score * 100, variant: 'disk', icon: <IconServer className="w-6 h-6" /> },
   ]
   if (result.ai_tokens_per_second) {
     gauges.push({
-      label: 'AI Score',
+      label: t('benchmark.score.ai'),
       value: getAIScore(result.ai_tokens_per_second),
       variant: 'cpu',
       icon: <IconRobot className="w-6 h-6" />,
@@ -106,10 +107,10 @@ export default function ScoreReveal({
       <div className="bg-desert-white rounded-lg border border-desert-stone-light overflow-hidden">
         <div className="bg-desert-olive px-6 py-2 flex items-center gap-2">
           <div className="w-1 h-4 bg-desert-green" />
-          <span className="text-xs font-semibold text-white uppercase tracking-wide">Report</span>
+          <span className="text-xs font-semibold text-white uppercase tracking-wide">{t('benchRun.report')}</span>
           {scoreInfo.isPartial && (
             <span className="ml-auto px-2 py-0.5 rounded-full bg-desert-white/20 text-white text-xs font-semibold uppercase tracking-wide">
-              Partial
+              {t('benchRun.partial')}
             </span>
           )}
         </div>
@@ -133,12 +134,12 @@ export default function ScoreReveal({
                   scoreInfo.isPartial ? 'text-desert-stone-dark' : getScoreColor(result.nomad_score)
                 }`}
               >
-                {displayScore.toFixed(1)}
+                {formatNumber(Math.round(displayScore * 10) / 10)}
               </div>
               <p className="text-desert-stone-dark">
                 {scoreInfo.isPartial
                   ? scoreInfo.cta
-                  : 'Your NOMAD Score is a weighted composite of all benchmark results.'}
+                  : t('benchRun.compositeNote')}
               </p>
             </div>
           </div>
@@ -156,7 +157,7 @@ export default function ScoreReveal({
 
           <div className="mt-8 flex justify-end">
             <StyledButton onClick={fireDone} icon="IconArrowRight">
-              Continue
+              {t('common.continue')}
             </StyledButton>
           </div>
         </div>

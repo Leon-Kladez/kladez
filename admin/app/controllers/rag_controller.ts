@@ -10,6 +10,7 @@ import { basename } from 'node:path'
 import { deleteFileSchema, embedFileSchema, estimateBatchSchema, fileSourceSchema, getJobStatusSchema } from '#validators/rag'
 import logger from '@adonisjs/core/services/logger'
 import { sanitizeCollectionName } from '../../constants/kb_collections.js'
+import { t } from '../../constants/i18n/index.js'
 
 @inject()
 export default class RagController {
@@ -18,7 +19,7 @@ export default class RagController {
   public async upload({ request, response }: HttpContext) {
     const uploadedFile = request.file('file')
     if (!uploadedFile) {
-      return response.status(400).json({ error: 'No file uploaded' })
+      return response.status(400).json({ error: t('server.ragController.noFileUploaded') })
     }
 
     const collection = sanitizeCollectionName(request.input('collection', null))
@@ -61,7 +62,7 @@ export default class RagController {
     const status = await EmbedFileJob.getStatus(fullPath)
 
     if (!status.exists) {
-      return response.status(404).json({ error: 'Job not found for this file' })
+      return response.status(404).json({ error: t('server.ragController.jobNotFoundForThis') })
     }
 
     return response.status(200).json(status)
@@ -84,7 +85,7 @@ export default class RagController {
     const collection = sanitizeCollectionName(request.input('collection', null))
 
     if (!source) {
-      return response.status(400).json({ error: 'source is required.' })
+      return response.status(400).json({ error: t('server.ragController.sourceIsRequired') })
     }
 
     const result = await this.ragService.updateFileCollection(source, collection)
@@ -99,7 +100,7 @@ export default class RagController {
     const active: boolean | null = request.input('active', null)
 
     if (!source || typeof active !== 'boolean') {
-      return response.status(400).json({ error: 'source and active are required.' })
+      return response.status(400).json({ error: t('server.ragController.sourceAndActiveAreRequired') })
     }
 
     const result = await this.ragService.setFileActive(source, active)
@@ -127,11 +128,11 @@ export default class RagController {
     // out of reach of a form POST from another origin. Do not "helpfully"
     // coerce it.
     if (rawCollection === undefined || typeof active !== 'boolean') {
-      return response.status(400).json({ error: 'collection and active are required.' })
+      return response.status(400).json({ error: t('server.ragController.collectionAndActiveAreRequired') })
     }
 
     if (rawCollection !== null && typeof rawCollection !== 'string') {
-      return response.status(400).json({ error: 'collection must be a string or null.' })
+      return response.status(400).json({ error: t('server.ragController.collectionMustBeAString') })
     }
 
     const collection = rawCollection === null ? null : sanitizeCollectionName(rawCollection)
@@ -150,7 +151,7 @@ export default class RagController {
     const newName = sanitizeCollectionName(request.input('newName', null))
 
     if (!oldName || !newName) {
-      return response.status(400).json({ error: 'oldName and newName are required.' })
+      return response.status(400).json({ error: t('server.ragController.oldnameAndNewnameAreRequired') })
     }
 
     const result = await this.ragService.renameKnowledgeCollection(oldName, newName)
@@ -164,7 +165,7 @@ export default class RagController {
     const name = sanitizeCollectionName(request.input('name', null))
 
     if (!name) {
-      return response.status(400).json({ error: 'name is required.' })
+      return response.status(400).json({ error: t('server.ragController.nameIsRequired') })
     }
 
     const result = await this.ragService.deleteKnowledgeCollection(name)
@@ -211,7 +212,7 @@ export default class RagController {
   public async cleanupFailedJobs({ response }: HttpContext) {
     const result = await EmbedFileJob.cleanupFailedJobs()
     return response.status(200).json({
-      message: `Cleaned up ${result.cleaned} failed job${result.cleaned !== 1 ? 's' : ''}${result.filesDeleted > 0 ? `, deleted ${result.filesDeleted} file${result.filesDeleted !== 1 ? 's' : ''}` : ''}.`,
+      message: t('server.ragController.cleanedUp', { count: result.cleaned }) + (result.filesDeleted > 0 ? t('server.ragController.filesDeleted', { count: result.filesDeleted }) : '') + '.',
       ...result,
     })
   }
@@ -219,7 +220,7 @@ export default class RagController {
   public async cancelAllJobs({ response }: HttpContext) {
     const result = await EmbedFileJob.cancelAllJobs()
     return response.status(200).json({
-      message: `Cancelled ${result.cancelled} job${result.cancelled !== 1 ? 's' : ''}${result.filesDeleted > 0 ? `, deleted ${result.filesDeleted} file${result.filesDeleted !== 1 ? 's' : ''}` : ''}.`,
+      message: t('server.ragController.cancelled', { count: result.cancelled }) + (result.filesDeleted > 0 ? t('server.ragController.filesDeleted', { count: result.filesDeleted }) : '') + '.',
       ...result,
     })
   }
@@ -235,7 +236,7 @@ export default class RagController {
       return response.status(200).json(syncResult)
     } catch (error) {
       logger.error({ err: error }, '[RagController] Error scanning and syncing storage')
-      return response.status(500).json({ error: 'Error scanning and syncing storage' })
+      return response.status(500).json({ error: t('server.ragController.errorScanningAndSyncingStorage') })
     }
   }
 
@@ -245,7 +246,7 @@ export default class RagController {
       return response.status(200).json(result)
     } catch (error) {
       logger.error({ err: error }, '[RagController] Error during re-embed all')
-      return response.status(500).json({ error: 'Error during re-embed all' })
+      return response.status(500).json({ error: t('server.ragController.errorDuringReEmbedAll') })
     }
   }
 
@@ -255,7 +256,7 @@ export default class RagController {
       return response.status(200).json(result)
     } catch (error) {
       logger.error({ err: error }, '[RagController] Error during reset and rebuild')
-      return response.status(500).json({ error: 'Error during reset and rebuild' })
+      return response.status(500).json({ error: t('server.ragController.errorDuringResetAndRebuild') })
     }
   }
 
@@ -281,7 +282,7 @@ export default class RagController {
     const { source } = await request.validateUsing(fileSourceSchema)
     const result = await this.ragService.readFileContent(source)
     if (!result) {
-      return response.status(404).json({ error: 'File not found or not viewable' })
+      return response.status(404).json({ error: t('server.ragController.fileNotFoundOrNot') })
     }
     return response.status(200).json(result)
   }
@@ -290,7 +291,7 @@ export default class RagController {
     const { source } = await request.validateUsing(fileSourceSchema)
     const filePath = await this.ragService.resolveDownloadPath(source)
     if (!filePath) {
-      return response.status(404).json({ error: 'File not found' })
+      return response.status(404).json({ error: t('server.ragController.fileNotFound') })
     }
     const fileName = filePath.split(/[/\\]/).at(-1) ?? 'download'
     return response.attachment(filePath, fileName)

@@ -18,6 +18,8 @@ import { BenchmarkType, RunBenchmarkResponse, SubmitBenchmarkResponse, UpdateBui
 import type { CreateMapMarkerPayload, MapMarkerResponse, UpdateMapMarkerPayload } from '../../types/maps'
 import type { ChatSource } from '../../types/chat'
 import { chatStreamErrorMessage } from './chat_stream.js'
+import { t } from '../../constants/i18n/index.js'
+import { errorText } from './error_text.js'
 
 type OllamaChatRequestWithImages = OllamaChatRequest & { images?: File[] }
 
@@ -997,12 +999,12 @@ class API {
     } catch (error: any) {
       // For 409 Conflict errors, throw a specific error that the UI can handle
       if (error.response?.status === 409) {
-        const err = new Error(error.response?.data?.error || 'This benchmark has already been submitted to the repository')
+        const err = new Error(error.response?.data?.error || t('benchmark.alreadySubmitted'))
           ; (err as any).status = 409
         throw err
       }
       // For other errors, extract the message and throw
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to submit benchmark'
+      const errorMessage = errorText(error, t('benchmark.submitFailed'))
       throw new Error(errorMessage)
     }
   }

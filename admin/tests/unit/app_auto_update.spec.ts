@@ -46,7 +46,7 @@ test('major bump is never auto-eligible (manual update required)', () => {
     NOW
   )
   assert.equal(v.eligible, false)
-  assert.match(v.reason, /Major version/)
+  assert.match(v.reason, /Крупная версия/)
 })
 
 test('same-major newer but still inside cool-off → not eligible', () => {
@@ -59,7 +59,7 @@ test('same-major newer but still inside cool-off → not eligible', () => {
     NOW
   )
   assert.equal(v.eligible, false)
-  assert.match(v.reason, /cool-off/i)
+  assert.match(v.reason, /выдержк/i)
 })
 
 test('same-major newer and past cool-off → eligible', () => {

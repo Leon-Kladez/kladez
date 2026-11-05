@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { router, usePage } from '@inertiajs/react'
 import Alert from '~/components/Alert'
+import { t } from '../../constants/i18n'
 
 /**
  * Post-upgrade "what's new" highlights shown once on the dashboard.
@@ -16,13 +17,13 @@ import Alert from '~/components/Alert'
  */
 const WHATS_NEW = {
   version: '1.34',
-  title: "What's new in v1.34",
+  title: t('whatsNew.title', { version: '1.34' }),
   highlights: [
-    'Creator Packs - install curated video packs from your favorite creators and watch them fully offline.',
-    'Medication Reference - offline FDA drug-label lookup for quick, reliable medication information.',
-    'Benchmark Score v2 - a rebuilt scoring model, with live telemetry while the test runs and your score revealed at the end.',
-    'NOMAD.md - give your AI assistant standing instructions it follows in every conversation.',
-    'Knowledge Base collections - group what the assistant searches by subject, so answers stay on topic.',
+    t('whatsNew.v134.creatorPacks'),
+    t('whatsNew.v134.medication'),
+    t('whatsNew.v134.benchmark'),
+    t('whatsNew.v134.nomadMd'),
+    t('whatsNew.v134.kbCollections'),
   ],
 }
 
@@ -72,7 +73,7 @@ export default function WhatsNewBanner() {
         onDismiss={handleDismiss}
         buttonProps={{
           variant: 'primary',
-          children: 'See release notes',
+          children: t('whatsNew.releaseNotes'),
           icon: 'IconBook',
           onClick: () => router.visit('/docs/release-notes'),
         }}

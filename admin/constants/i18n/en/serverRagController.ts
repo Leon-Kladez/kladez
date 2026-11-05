@@ -1,0 +1,18 @@
+export const serverRagControllerEn = {
+  'server.ragController.noFileUploaded': 'No file uploaded',
+  'server.ragController.jobNotFoundForThis': 'Job not found for this file',
+  'server.ragController.sourceIsRequired': 'source is required.',
+  'server.ragController.sourceAndActiveAreRequired': 'source and active are required.',
+  'server.ragController.collectionAndActiveAreRequired': 'collection and active are required.',
+  'server.ragController.collectionMustBeAString': 'collection must be a string or null.',
+  'server.ragController.oldnameAndNewnameAreRequired': 'oldName and newName are required.',
+  'server.ragController.nameIsRequired': 'name is required.',
+  'server.ragController.errorScanningAndSyncingStorage': 'Error scanning and syncing storage',
+  'server.ragController.errorDuringReEmbedAll': 'Error during re-embed all',
+  'server.ragController.errorDuringResetAndRebuild': 'Error during reset and rebuild',
+  'server.ragController.fileNotFoundOrNot': 'File not found or not viewable',
+  'server.ragController.fileNotFound': 'File not found',
+  'server.ragController.cleanedUp': 'Cleaned up {count} failed job|Cleaned up {count} failed jobs',
+  'server.ragController.cancelled': 'Cancelled {count} job|Cancelled {count} jobs',
+  'server.ragController.filesDeleted': ', deleted {count} file|, deleted {count} files',
+} as const

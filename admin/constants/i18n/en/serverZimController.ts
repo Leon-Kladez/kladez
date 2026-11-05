@@ -1,0 +1,15 @@
+export const serverZimControllerEn = {
+  'server.zimController.downloadStartedSuccessfully': 'Download started successfully',
+  'server.zimController.kiwixLibraryRescanned': 'Kiwix library rescanned',
+  'server.zimController.zimFileWithKeyNot': 'ZIM file with key {filename} not found',
+  'server.zimController.zimFileDeletedSuccessfully': 'ZIM file deleted successfully',
+  'server.zimController.onlyZimFilesAreAccepted': 'Only .zim files are accepted',
+  'server.zimController.invalidFilename': 'Invalid filename',
+  'server.zimController.aZimFileWithThat': 'A ZIM file with that name already exists',
+  'server.zimController.noFileReceived': 'No file received',
+  'server.zimController.zimFileUploadedAndRegistered': 'ZIM file uploaded and registered successfully',
+  'server.zimController.uploadFailed': 'Upload failed',
+  'server.zimController.customLibraryAdded': 'Custom library added',
+  'server.zimController.customLibraryRemoved': 'Custom library removed',
+  'server.zimController.couldNotFetchDirectoryListing': 'Could not fetch directory listing from the provided URL',
+} as const

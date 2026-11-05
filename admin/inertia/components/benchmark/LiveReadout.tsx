@@ -1,4 +1,5 @@
 import classNames from '~/lib/classNames'
+import { formatNumber } from '../../../constants/i18n'
 
 interface LiveReadoutProps {
   value: number | null
@@ -15,7 +16,7 @@ interface LiveReadoutProps {
  * Uses tabular figures so the digits don't jitter as the value updates.
  */
 export default function LiveReadout({ value, unit, label, sub, size = 'md', className = 'text-desert-green' }: LiveReadoutProps) {
-  const display = value === null ? '--' : value >= 100 ? Math.round(value).toString() : value.toFixed(1)
+  const display = value === null ? '--' : value >= 100 ? formatNumber(Math.round(value)) : formatNumber(Math.round(value * 10) / 10)
 
   return (
     <div className="flex flex-col">

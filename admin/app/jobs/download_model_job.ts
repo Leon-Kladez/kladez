@@ -3,6 +3,7 @@ import { QueueService } from '#services/queue_service'
 import { createHash } from 'crypto'
 import logger from '@adonisjs/core/services/logger'
 import { OllamaService } from '#services/ollama_service'
+import { t } from '../../constants/i18n/index.js'
 
 export interface DownloadModelJobParams {
   modelName: string
@@ -202,7 +203,7 @@ export class DownloadModelJob {
       return {
         job: inFlight,
         created: false,
-        message: `Download already in progress for model ${params.modelName}`,
+        message: t('server.downloadModelJob.downloadAlreadyInProgressFor', { modelName: params.modelName }),
       }
     }
 
@@ -221,7 +222,7 @@ export class DownloadModelJob {
       return {
         job,
         created: true,
-        message: `Dispatched model download job for ${params.modelName}`,
+        message: t('server.downloadModelJob.dispatchedModelDownloadJobFor', { modelName: params.modelName }),
       }
     } catch (error) {
       if (error.message.includes('job already exists')) {
@@ -229,7 +230,7 @@ export class DownloadModelJob {
         return {
           job: active,
           created: false,
-          message: `Job already exists for model ${params.modelName}`,
+          message: t('server.downloadModelJob.jobAlreadyExistsForModel', { modelName: params.modelName }),
         }
       }
       throw error

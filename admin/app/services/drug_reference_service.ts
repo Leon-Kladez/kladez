@@ -22,6 +22,7 @@ import {
   summarizeJobError,
   isExportDateNewer,
 } from '../../util/drug_labels.js'
+import { humanizeOptional } from '../utils/user_errors.js'
 import KVStore from '#models/kv_store'
 import { parseCompareIds, MAX_COMPARE } from '../../util/compare_ids.js'
 import type {
@@ -33,6 +34,7 @@ import type {
   DrugIngestPhaseStatus,
   DrugInteractionEntry,
 } from '../../types/drug_reference.js'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * Drug Reference v1 — service layer.
@@ -486,9 +488,7 @@ export class DrugReferenceService {
     if (!check.updateAvailable) {
       return {
         started: false,
-        reason: `up-to-date (current=${check.currentExportDate ?? 'none'}, latest=${
-          check.latestExportDate ?? 'unknown'
-        })`,
+        reason: t('server.drugReferenceService.upToDateCurrentLatest', { currentExportDate: check.currentExportDate ?? 'none', latestExportDate: check.latestExportDate ?? 'unknown' }),
         latestExportDate: check.latestExportDate,
       }
     }
@@ -518,7 +518,7 @@ export class DrugReferenceService {
       return {
         job: undefined,
         created: false,
-        message: 'Nothing downloaded — run Download FDA data first.',
+        message: t('server.drugReferenceService.nothingDownloadedRunDownloadFda'),
         nothingDownloaded: true,
       }
     }
@@ -543,7 +543,7 @@ export class DrugReferenceService {
       return {
         job: undefined,
         created: false,
-        message: 'Nothing downloaded — run Download FDA data first.',
+        message: t('server.drugReferenceService.nothingDownloadedRunDownloadFda'),
         nothingDownloaded: true,
       }
     }
@@ -717,8 +717,8 @@ export class DrugReferenceService {
       success,
       rowsDropped,
       message: success
-        ? `Uninstalled FDA drug reference (${rowsDropped} labels removed).`
-        : `Uninstall completed with ${errors.length} issue(s): ${errors.join('; ')}`,
+        ? t('server.drugReferenceService.uninstalledFdaDrugReferenceLabels', { rowsDropped })
+        : t('server.drugReferenceService.uninstallCompletedWithIssueS', { length: errors.length, join: errors.join('; ') }),
     }
   }
 
@@ -811,7 +811,7 @@ export class DrugReferenceService {
       bytesDownloaded: dlData.bytesDownloaded,
       currentPartName: dlData.currentPartName ?? null,
       failedReason:
-        dlState === 'failed' ? summarizeJobError(downloadJob?.failedReason) : undefined,
+        dlState === 'failed' ? humanizeOptional(summarizeJobError(downloadJob?.failedReason)) : undefined,
     }
 
     // ── Ingest sub-status ───────────────────────────────────────────────────
@@ -854,7 +854,7 @@ export class DrugReferenceService {
       partsDone: ingData.partIndex ?? 0,
       totalParts: ingData.totalParts ?? marker?.totalParts ?? 0,
       currentPartName: ingData.currentPartName ?? null,
-      failedReason: ingState === 'failed' ? summarizeJobError(ingestJob?.failedReason) : undefined,
+      failedReason: ingState === 'failed' ? humanizeOptional(summarizeJobError(ingestJob?.failedReason)) : undefined,
     }
 
     const phase = deriveIngestPhase(download, ingest, count)

@@ -6,6 +6,7 @@ import { searchDrugValidator, interactionsValidator } from '#validators/drug_ref
 import { parseCompareIds } from '../../util/compare_ids.js'
 import { situationsForIndications } from '../../util/conditions.js'
 import { affirmativeRemediesEnabled } from '../utils/affirmative_remedies.js'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * Drug Reference v1 — HTTP boundary.
@@ -67,13 +68,13 @@ export default class DrugReferenceController {
   async show({ inertia, params, response }: HttpContext) {
     const id = Number(params.id)
     if (!Number.isInteger(id) || id <= 0) {
-      return response.notFound({ error: 'invalid id' })
+      return response.notFound({ error: t('server.drugReferenceController.invalidId') })
     }
 
     try {
       const label = await this.service.find(id)
       if (!label) {
-        return response.notFound({ error: 'Drug label not found' })
+        return response.notFound({ error: t('server.drugReferenceController.drugLabelNotFound') })
       }
 
       // Reverse link — the other direction of the symbiotic relationship: which
@@ -88,7 +89,7 @@ export default class DrugReferenceController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[DrugReferenceController] show(${id}) failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not load drug label' })
+      return response.internalServerError({ error: t('server.drugReferenceController.couldNotLoadDrugLabel') })
     }
   }
 
@@ -126,7 +127,7 @@ export default class DrugReferenceController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[DrugReferenceController] status failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not read ingest status' })
+      return response.internalServerError({ error: t('server.drugReferenceController.couldNotReadIngestStatus') })
     }
   }
 
@@ -187,7 +188,7 @@ export default class DrugReferenceController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[DrugReferenceController] download trigger failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not trigger download' })
+      return response.internalServerError({ error: t('server.drugReferenceController.couldNotTriggerDownload') })
     }
   }
 
@@ -207,7 +208,7 @@ export default class DrugReferenceController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[DrugReferenceController] ingest trigger failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not trigger ingest' })
+      return response.internalServerError({ error: t('server.drugReferenceController.couldNotTriggerIngest') })
     }
   }
 
@@ -227,7 +228,7 @@ export default class DrugReferenceController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[DrugReferenceController] reset-ingest failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not reset ingest' })
+      return response.internalServerError({ error: t('server.drugReferenceController.couldNotResetIngest') })
     }
   }
 
@@ -252,7 +253,7 @@ export default class DrugReferenceController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[DrugReferenceController] uninstall failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not uninstall drug reference' })
+      return response.internalServerError({ error: t('server.drugReferenceController.couldNotUninstallDrugReference') })
     }
   }
 

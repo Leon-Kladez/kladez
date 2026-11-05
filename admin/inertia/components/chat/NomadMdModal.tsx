@@ -5,6 +5,9 @@ import StyledButton from '~/components/StyledButton'
 import MarkdownEditor from '~/components/MarkdownEditor'
 import { useNotifications } from '~/context/NotificationContext'
 import api from '~/lib/api'
+import { tx } from '~/lib/tx'
+import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 interface NomadMdModalProps {
   aiAssistantName?: string
@@ -55,19 +58,19 @@ export default function NomadMdModal({ aiAssistantName, onClose }: NomadMdModalP
     mutationFn: (value: string) => api.saveNomadMd(value),
     onSuccess: (result) => {
       if (!result?.success) {
-        addNotification({ type: 'error', message: 'Failed to save NOMAD.md.' })
+        addNotification({ type: 'error', message: t('nomadMd.saveFailed') })
         return
       }
-      addNotification({ type: 'success', message: 'NOMAD.md saved. It applies to new messages.' })
+      addNotification({ type: 'success', message: t('nomadMd.saved') })
       queryClient.invalidateQueries({ queryKey: ['nomad-md'] })
       onClose()
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || 'Failed to save NOMAD.md.' })
+      addNotification({ type: 'error', message: errorText(error, t('nomadMd.saveFailed')) })
     },
   })
 
-  const assistantName = aiAssistantName?.trim() || 'your AI assistant'
+  const assistantName = aiAssistantName?.trim() || t('services.nomad_ollama.title')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm transition-opacity">
@@ -76,7 +79,7 @@ export default function NomadMdModal({ aiAssistantName, onClose }: NomadMdModalP
           <div>
             <h2 className="text-2xl font-semibold text-text-primary">NOMAD.md</h2>
             <p className="text-sm text-text-muted mt-1">
-              Custom instructions passed to {assistantName} as a system prompt on every chat.
+              {t('nomadMd.subtitle', { name: assistantName })}
             </p>
           </div>
           <button
@@ -89,21 +92,20 @@ export default function NomadMdModal({ aiAssistantName, onClose }: NomadMdModalP
 
         <div className="overflow-y-auto flex-1 p-6">
           {isLoading || content === null ? (
-            <div className="py-16 text-center text-text-muted">Loading…</div>
+            <div className="py-16 text-center text-text-muted">{t('common.loadingEllipsis')}</div>
           ) : (
             <div className="rounded-lg border border-border-subtle overflow-hidden h-[55vh]">
               <MarkdownEditor initialValue={content} onChange={setContent} className="h-full text-sm" />
             </div>
           )}
           <p className="text-xs text-text-muted mt-3">
-            Tip: this file is also stored on disk at{' '}
-            <code className="font-mono">storage/NOMAD.md</code> and can be edited directly.
+            {tx('nomadMd.tip', { path: <code className="font-mono">storage/NOMAD.md</code> })}
           </p>
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-border-subtle shrink-0">
           <StyledButton variant="outline" onClick={onClose} disabled={saveMutation.isPending}>
-            Cancel
+            {t('common.cancel')}
           </StyledButton>
           <StyledButton
             variant="primary"
@@ -112,7 +114,7 @@ export default function NomadMdModal({ aiAssistantName, onClose }: NomadMdModalP
             loading={saveMutation.isPending}
             disabled={content === null}
           >
-            Save
+            {t('common.save')}
           </StyledButton>
         </div>
       </div>

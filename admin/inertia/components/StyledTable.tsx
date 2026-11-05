@@ -2,6 +2,7 @@ import { capitalizeFirstLetter } from '~/lib/util'
 import classNames from '~/lib/classNames'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import React, { RefObject, useState } from 'react'
+import { t } from '../../constants/i18n'
 
 export type StyledTableProps<T extends { [key: string]: any }> = {
   loading?: boolean
@@ -43,7 +44,7 @@ function StyledTable<T extends { [key: string]: any }>({
   tableBodyClassName = '',
   tableBodyStyle = {},
   data = [],
-  noDataText = 'No records found',
+  noDataText = t('table.noData'),
   onRowClick,
   columns = [],
   className = '',
@@ -140,7 +141,7 @@ function StyledTable<T extends { [key: string]: any }>({
                       >
                         <button
                           className="text-text-muted hover:text-text-primary focus:outline-none"
-                          aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+                          aria-label={isExpanded ? t('table.collapseRow') : t('table.expandRow')}
                         >
                           <svg
                             className={classNames(

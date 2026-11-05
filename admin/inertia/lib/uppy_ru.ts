@@ -1,0 +1,121 @@
+import { pluralIndex } from '../../constants/i18n/index.js'
+
+/**
+ * Русские надписи для окна загрузки файлов (Uppy: core + dashboard + xhr-upload, версия 5).
+ * Пакет @uppy/locales в проект не входит, а новые зависимости не добавляем — поэтому свой словарь.
+ * Формы множественного числа: 0 — «один», 1 — «несколько», 2 — «много».
+ */
+export const uppyRu = {
+  pluralize: (n: number) => pluralIndex(n, 3),
+  strings: {
+    // core
+    addBulkFilesFailed: {
+      0: 'Не удалось добавить %{smart_count} файл из-за внутренней ошибки',
+      1: 'Не удалось добавить %{smart_count} файла из-за внутренних ошибок',
+      2: 'Не удалось добавить %{smart_count} файлов из-за внутренних ошибок',
+    },
+    youCanOnlyUploadX: {
+      0: 'Можно загрузить только %{smart_count} файл',
+      1: 'Можно загрузить только %{smart_count} файла',
+      2: 'Можно загрузить только %{smart_count} файлов',
+    },
+    youHaveToAtLeastSelectX: {
+      0: 'Выберите хотя бы %{smart_count} файл',
+      1: 'Выберите хотя бы %{smart_count} файла',
+      2: 'Выберите хотя бы %{smart_count} файлов',
+    },
+    aggregateExceedsSize: 'Выбрано %{size}, а можно не больше %{sizeAllowed}',
+    exceedsSize: 'Файл %{file} больше допустимого размера %{size}',
+    inferiorSize: 'Файл меньше допустимого размера %{size}',
+    youCanOnlyUploadFileTypes: 'Можно загружать только: %{types}',
+    noMoreFilesAllowed: 'Больше файлов добавить нельзя',
+    noDuplicates: 'Файл «%{fileName}» уже добавлен',
+    failedToUpload: 'Не удалось загрузить %{file}',
+    noInternetConnection: 'Нет подключения к сети',
+    connectedToInternet: 'Подключение к сети есть',
+    cancel: 'Отмена',
+    loading: 'Загрузка…',
+    addedNumFiles: 'Добавлено файлов: %{numFiles}',
+    unnamed: 'Без названия',
+    pleaseWait: 'Подождите',
+    // dashboard
+    closeModal: 'Закрыть окно',
+    addMoreFiles: 'Добавить ещё файлы',
+    addingMoreFiles: 'Добавляем файлы',
+    dashboardWindowTitle: 'Окно загрузки файлов (Esc — закрыть)',
+    dashboardTitle: 'Загрузка файлов',
+    back: 'Назад',
+    removeFile: 'Убрать файл',
+    editFile: 'Изменить файл',
+    error: 'Ошибка',
+    saveChanges: 'Сохранить изменения',
+    myDevice: 'Мой компьютер',
+    dropHint: 'Перетащите файлы сюда',
+    uploadComplete: 'Загрузка завершена',
+    uploadPaused: 'Загрузка на паузе',
+    resumeUpload: 'Продолжить загрузку',
+    pauseUpload: 'Приостановить загрузку',
+    retryUpload: 'Повторить загрузку',
+    cancelUpload: 'Отменить загрузку',
+    xFilesSelected: {
+      0: 'Выбран %{smart_count} файл',
+      1: 'Выбрано %{smart_count} файла',
+      2: 'Выбрано %{smart_count} файлов',
+    },
+    uploadingXFiles: {
+      0: 'Загружается %{smart_count} файл',
+      1: 'Загружается %{smart_count} файла',
+      2: 'Загружается %{smart_count} файлов',
+    },
+    processingXFiles: {
+      0: 'Обрабатывается %{smart_count} файл',
+      1: 'Обрабатывается %{smart_count} файла',
+      2: 'Обрабатывается %{smart_count} файлов',
+    },
+    addMore: 'Добавить ещё',
+    save: 'Сохранить',
+    dropPasteFiles: 'Перетащите файлы сюда или %{browseFiles}',
+    dropPasteFolders: 'Перетащите файлы сюда или %{browseFolders}',
+    dropPasteBoth: 'Перетащите файлы сюда, %{browseFiles} или %{browseFolders}',
+    browseFiles: 'выберите файлы',
+    browseFolders: 'выберите папки',
+    recoveredAllFiles: 'Все файлы восстановлены. Можно продолжить загрузку.',
+    sessionRestored: 'Загрузка восстановлена',
+    reSelect: 'Выбрать снова',
+    uploading: 'Загружается',
+    complete: 'Готово',
+    uploadFailed: 'Не удалось загрузить',
+    paused: 'На паузе',
+    retry: 'Повторить',
+    pause: 'Пауза',
+    resume: 'Продолжить',
+    done: 'Готово',
+    filesUploadedOfTotal: {
+      0: 'Загружено %{complete} из %{smart_count} файла',
+      1: 'Загружено %{complete} из %{smart_count} файлов',
+      2: 'Загружено %{complete} из %{smart_count} файлов',
+    },
+    dataUploadedOfTotal: '%{complete} из %{total}',
+    dataUploadedOfUnknown: '%{complete} из неизвестного объёма',
+    xTimeLeft: 'осталось %{time}',
+    uploadXFiles: {
+      0: 'Загрузить %{smart_count} файл',
+      1: 'Загрузить %{smart_count} файла',
+      2: 'Загрузить %{smart_count} файлов',
+    },
+    uploadXNewFiles: {
+      0: 'Загрузить ещё %{smart_count} файл',
+      1: 'Загрузить ещё %{smart_count} файла',
+      2: 'Загрузить ещё %{smart_count} файлов',
+    },
+    upload: 'Загрузить',
+    xMoreFilesAdded: {
+      0: 'Добавлен ещё %{smart_count} файл',
+      1: 'Добавлено ещё %{smart_count} файла',
+      2: 'Добавлено ещё %{smart_count} файлов',
+    },
+    showErrorDetails: 'Подробнее об ошибке',
+    // xhr-upload
+    uploadStalled: 'Загрузка не продвигается уже %{seconds} с. Возможно, стоит повторить.',
+  },
+}

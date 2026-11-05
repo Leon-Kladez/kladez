@@ -3,6 +3,7 @@ import DynamicIcon, { DynamicIconName } from './DynamicIcon'
 import type { CollectionWithStatus } from '../../types/collections'
 import classNames from 'classnames'
 import { IconCircleCheck } from '@tabler/icons-react'
+import { t } from '../../constants/i18n'
 
 export interface CuratedCollectionCardProps {
   collection: CollectionWithStatus
@@ -41,16 +42,16 @@ const CuratedCollectionCard: React.FC<CuratedCollectionCardProps> = ({ collectio
             <div className="flex items-center">
               <IconCircleCheck
                 className="w-5 h-5 text-lime-400 ml-2"
-                title="All items downloaded"
+                title={t('collection.allDownloaded')}
               />
-              <p className="text-lime-400 text-sm ml-1">All items downloaded</p>
+              <p className="text-lime-400 text-sm ml-1">{t('collection.allDownloaded')}</p>
             </div>
           )}
         </div>
       </div>
       <p className="text-gray-200 grow">{collection.description}</p>
       <p className="text-gray-200 text-xs mt-2">
-        Items: {collection.resources?.length} | Size: {formatBytes(totalSizeBytes, 0)}
+        {t('collection.itemsAndSize', { n: collection.resources?.length ?? 0, size: formatBytes(totalSizeBytes, 0) })}
       </p>
     </div>
   )

@@ -6,6 +6,7 @@ import { RunBenchmarkJob } from '#jobs/run_benchmark_job'
 import type { BenchmarkType } from '../../types/benchmark.js'
 import { randomUUID } from 'node:crypto'
 import logger from '@adonisjs/core/services/logger'
+import { t } from '../../constants/i18n/index.js'
 
 @inject()
 export default class BenchmarkController {
@@ -24,7 +25,7 @@ export default class BenchmarkController {
     if (status.status !== 'idle') {
       return response.status(409).send({
         success: false,
-        error: 'A benchmark is already running',
+        error: t('server.benchmarkController.aBenchmarkIsAlreadyRunning'),
         current_benchmark_id: status.benchmarkId,
       })
     }
@@ -56,7 +57,7 @@ export default class BenchmarkController {
         logger.error({ err: error }, '[BenchmarkController] Benchmark run failed')
         return response.status(500).send({
           success: false,
-          error: 'An internal error occurred while running the benchmark.',
+          error: t('server.benchmarkController.anInternalErrorOccurredWhile'),
         })
       }
     }
@@ -74,8 +75,8 @@ export default class BenchmarkController {
       job_id: job?.id || benchmarkId,
       benchmark_id: benchmarkId,
       message: created
-        ? `${benchmarkType} benchmark started`
-        : 'Benchmark job already exists',
+        ? t('server.benchmarkController.benchmarkStarted', { benchmarkType })
+        : t('server.benchmarkController.benchmarkJobAlreadyExists'),
     })
   }
 
@@ -87,7 +88,7 @@ export default class BenchmarkController {
     if (status.status !== 'idle') {
       return response.status(409).send({
         success: false,
-        error: 'A benchmark is already running',
+        error: t('server.benchmarkController.aBenchmarkIsAlreadyRunning'),
       })
     }
 
@@ -101,7 +102,7 @@ export default class BenchmarkController {
     return response.status(201).send({
       success: true,
       benchmark_id: benchmarkId,
-      message: 'System benchmark started',
+      message: t('server.benchmarkController.systemBenchmarkStarted'),
     })
   }
 
@@ -113,7 +114,7 @@ export default class BenchmarkController {
     if (status.status !== 'idle') {
       return response.status(409).send({
         success: false,
-        error: 'A benchmark is already running',
+        error: t('server.benchmarkController.aBenchmarkIsAlreadyRunning'),
       })
     }
 
@@ -127,7 +128,7 @@ export default class BenchmarkController {
     return response.status(201).send({
       success: true,
       benchmark_id: benchmarkId,
-      message: 'AI benchmark started',
+      message: t('server.benchmarkController.aiBenchmarkStarted'),
     })
   }
 
@@ -160,7 +161,7 @@ export default class BenchmarkController {
     const result = await this.benchmarkService.getResultById(params.id)
     if (!result) {
       return response.status(404).send({
-        error: 'Benchmark result not found',
+        error: t('server.benchmarkController.benchmarkResultNotFound'),
       })
     }
     return { result }
@@ -191,10 +192,10 @@ export default class BenchmarkController {
       // validation message) and fall back to a safe generic only when we have none.
       let errorMessage: string
       if (statusCode === 429) {
-        errorMessage = 'You can only submit one benchmark per hour. Please wait a bit and try again.'
+        errorMessage = t('serverBench.rateLimit')
       } else {
         errorMessage =
-          (error as any).detail || (error as any).message || 'Failed to submit benchmark results.'
+          (error as any).detail || (error as any).message || t('benchmark.submitFailed')
       }
 
       return response.status(statusCode).send({
@@ -214,7 +215,7 @@ export default class BenchmarkController {
     if (!benchmarkId) {
       return response.status(400).send({
         success: false,
-        error: 'benchmark_id is required',
+        error: t('server.benchmarkController.benchmarkIdIsRequired'),
       })
     }
 
@@ -222,7 +223,7 @@ export default class BenchmarkController {
     if (!result) {
       return response.status(404).send({
         success: false,
-        error: 'Benchmark result not found',
+        error: t('server.benchmarkController.benchmarkResultNotFound'),
       })
     }
 
@@ -232,7 +233,7 @@ export default class BenchmarkController {
       if (!tagPattern.test(builderTag)) {
         return response.status(400).send({
           success: false,
-          error: 'Invalid builder tag format. Expected: Word-Word-0000',
+          error: t('server.benchmarkController.invalidBuilderTagFormatExpected'),
         })
       }
     }

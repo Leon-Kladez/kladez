@@ -48,6 +48,7 @@ import { execFile } from 'child_process'
 import { createHash, randomBytes } from 'crypto'
 import { tmpdir } from 'os'
 import { promisify } from 'util'
+import { t } from '../../constants/i18n/index.js'
 
 const execFileAsync = promisify(execFile)
 const DRY_RUN_TIMEOUT_MS = 60_000
@@ -306,7 +307,7 @@ export class MapService implements IMapService {
     const baseAssetsExist = await this.ensureBaseAssets()
     if (!baseAssetsExist) {
       throw new Error(
-        'Base map assets are missing and could not be downloaded. Please check your connection and try again.'
+        t('server.mapsController.baseMapAssetsAreMissing')
       )
     }
 
@@ -368,7 +369,7 @@ export class MapService implements IMapService {
       return { filename, size }
     } catch (error: any) {
       logger.error({ err: error }, '[MapService] Preflight check failed for URL')
-      return { message: 'Preflight check failed. Please verify the URL is valid and accessible.' }
+      return { message: t('server.mapService.preflightCheckFailedPleaseVerify') }
     }
   }
 
@@ -700,7 +701,7 @@ export class MapService implements IMapService {
     const baseAssetsExist = await this.ensureBaseAssets()
     if (!baseAssetsExist) {
       throw new Error(
-        'Base map assets are missing and could not be downloaded. Please check your connection and try again.'
+        t('server.mapsController.baseMapAssetsAreMissing')
       )
     }
 
@@ -802,7 +803,7 @@ export class MapService implements IMapService {
     ])
     if (!baseAssetsExist) {
       throw new Error(
-        'Base map assets are missing and could not be downloaded. Please check your connection and try again.'
+        t('server.mapsController.baseMapAssetsAreMissing')
       )
     }
 

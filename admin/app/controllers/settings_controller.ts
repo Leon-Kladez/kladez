@@ -12,6 +12,7 @@ import { parseMinRelevance } from '../utils/misc.js'
 import { isRelevanceCheckEnabled } from '../utils/relevance_judge.js'
 import { parseResponseStyle } from '../utils/sampler.js'
 import { RAG_MIN_FINAL_SCORE } from '../../constants/ollama.js'
+import { t } from '../../constants/i18n/index.js'
 
 @inject()
 export default class SettingsController {
@@ -183,6 +184,6 @@ export default class SettingsController {
       return response.status(422).send({ success: false, message: valueError })
     }
     await this.systemService.updateSetting(reqData.key, reqData.value)
-    return response.status(200).send({ success: true, message: 'Setting updated successfully' })
+    return response.status(200).send({ success: true, message: t('server.settingsController.settingUpdatedSuccessfully') })
   }
 }

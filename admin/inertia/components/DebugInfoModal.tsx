@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { IconBug, IconCopy, IconCheck } from '@tabler/icons-react'
 import StyledModal from './StyledModal'
 import api from '~/lib/api'
+import { t } from '../../constants/i18n'
 
 interface DebugInfoModalProps {
   open: boolean
@@ -52,14 +53,13 @@ export default function DebugInfoModal({ open, onClose }: DebugInfoModalProps) {
     <StyledModal
       open={open}
       onClose={onClose}
-      title="Debug Info"
+      title={t('common.footer.debugInfo')}
       icon={<IconBug className="size-8 text-desert-green" />}
-      cancelText="Close"
+      cancelText={t('common.close')}
       onCancel={onClose}
     >
       <p className="text-sm text-gray-500 mb-3 text-left">
-        This is non-sensitive system info you can share when reporting issues.
-        No passwords, IPs, or API keys are included.
+        {t('debug.description')}
       </p>
 
       <textarea
@@ -79,12 +79,12 @@ export default function DebugInfoModal({ open, onClose }: DebugInfoModalProps) {
           {copied ? (
             <>
               <IconCheck className="size-4" />
-              Copied!
+              {t('common.copied')}
             </>
           ) : (
             <>
               <IconCopy className="size-4" />
-              Copy to Clipboard
+              {t('common.copyToClipboard')}
             </>
           )}
         </button>
@@ -95,7 +95,7 @@ export default function DebugInfoModal({ open, onClose }: DebugInfoModalProps) {
           rel="noopener noreferrer"
           className="text-sm text-desert-green hover:underline"
         >
-          Open a GitHub Issue
+          {t('debug.openIssue')}
         </a>
       </div>
     </StyledModal>

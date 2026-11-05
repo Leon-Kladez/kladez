@@ -27,6 +27,8 @@ import {
   installedModelsFromOpenAIResponse,
   resolveModelCapabilities,
 } from '../utils/model_capabilities.js'
+import { t } from '../../constants/i18n/index.js'
+import { humanizeError } from '../utils/user_errors.js'
 
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
@@ -355,7 +357,7 @@ export class OllamaService {
   ): Promise<{ success: boolean; message: string; retryable?: boolean }> {
     await this._ensureDependencies()
     if (!this.baseUrl) {
-      return { success: false, message: 'AI service is not initialized.' }
+      return { success: false, message: t('server.ollamaService.aiServiceIsNotInitialized') }
     }
 
     try {
@@ -363,7 +365,7 @@ export class OllamaService {
       const installedModels = await this.getModels()
       if (installedModels && installedModels.some((m) => m.name === model)) {
         logger.info(`[OllamaService] Model "${model}" is already installed.`)
-        return { success: true, message: 'Model is already installed.' }
+        return { success: true, message: t('server.ollamaService.modelIsAlreadyInstalled') }
       }
 
       // Model pulling is an Ollama-only operation. Non-Ollama backends (LM Studio, llama.cpp, etc.)
@@ -374,7 +376,7 @@ export class OllamaService {
         )
         return {
           success: false,
-          message: `Model "${model}" is not available in your AI host. Please load it manually (model pulling is only supported for Ollama backends).`,
+          message: t('server.ollamaService.modelIsNotAvailableIn', { model }),
         }
       }
 
@@ -504,12 +506,12 @@ export class OllamaService {
       const installedAfter = await this.getModels(true)
       if (!installedAfter.some((m) => tag(m.name) === tag(model))) {
         throw new Error(
-          'Ollama reported no error but the model is not installed. The download did not complete.'
+          t('serverOllama.notInstalledAfterPull')
         )
       }
 
       logger.info(`[OllamaService] Model "${model}" downloaded successfully.`)
-      return { success: true, message: 'Model downloaded successfully.' }
+      return { success: true, message: t('server.ollamaService.modelDownloadedSuccessfully') }
     } catch (error) {
       // Detect axios cancel (signal-triggered abort). Don't broadcast an error event for
       // user-initiated cancels — the cancel handler in DownloadService already broadcasts
@@ -520,7 +522,7 @@ export class OllamaService {
         (error as any)?.name === 'CanceledError'
       if (isCancelled) {
         logger.info(`[OllamaService] Model "${model}" download cancelled by user.`)
-        return { success: false, message: 'Download cancelled', retryable: false }
+        return { success: false, message: t('server.ollamaService.downloadCancelled'), retryable: false }
       }
 
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -539,10 +541,10 @@ export class OllamaService {
         /manifest|not found|does not exist|unauthorized|no such/i.test(errorMessage)
 
       const userMessage = isVersionMismatch
-        ? 'This model requires a newer version of Ollama. Please update AI Assistant from the Apps page.'
+        ? t('serverOllama.newerVersion')
         : isPermanentPullError
-          ? `Ollama could not find this model: ${errorMessage}`
-          : `Failed to download model: ${errorMessage}`
+          ? t('serverOllama.notFound', { error: errorMessage })
+          : t('serverOllama.downloadFailed', { error: humanizeError(errorMessage) })
 
       // Broadcast failure to connected clients so UI can show the error
       this.broadcastDownloadError(model, userMessage)
@@ -566,7 +568,7 @@ export class OllamaService {
       return {
         success: true,
         message:
-          'Model download has been queued successfully. It will start shortly after Ollama and Open WebUI are ready (if not already).',
+          t('server.ollamaService.modelDownloadHasBeenQueued'),
       }
     } catch (error) {
       logger.error(
@@ -574,7 +576,7 @@ export class OllamaService {
       )
       return {
         success: false,
-        message: 'Failed to queue model download. Please try again.',
+        message: t('server.ollamaService.failedToQueueModelDownload'),
       }
     }
   }
@@ -973,7 +975,7 @@ export class OllamaService {
   public async deleteModel(modelName: string): Promise<{ success: boolean; message: string }> {
     await this._ensureDependencies()
     if (!this.baseUrl) {
-      return { success: false, message: 'AI service is not initialized.' }
+      return { success: false, message: t('server.ollamaService.aiServiceIsNotInitialized') }
     }
 
     try {
@@ -981,12 +983,12 @@ export class OllamaService {
         data: { model: modelName },
         timeout: 10000,
       })
-      return { success: true, message: `Model "${modelName}" deleted.` }
+      return { success: true, message: t('server.ollamaService.modelDeleted', { modelName }) }
     } catch (error) {
       logger.error(
         `[OllamaService] Failed to delete model "${modelName}": ${error instanceof Error ? error.message : error}`
       )
-      return { success: false, message: 'Failed to delete model. This may not be an Ollama backend.' }
+      return { success: false, message: t('server.ollamaService.failedToDeleteModelThis') }
     }
   }
 

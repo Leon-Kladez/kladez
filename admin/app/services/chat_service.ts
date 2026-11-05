@@ -16,6 +16,7 @@ import {
   resolveStructured,
 } from '../utils/structured_output.js'
 import type { ChatSource } from '../../types/chat.js'
+import { t } from '../../constants/i18n/index.js'
 
 /** Sidebar width, near enough. Applied once, to whichever candidate title won. */
 const TITLE_MAX_LENGTH = 57
@@ -398,7 +399,7 @@ export class ChatService {
   async deleteAllSessions() {
     try {
       await ChatSession.query().delete()
-      return { success: true, message: 'All chat sessions deleted' }
+      return { success: true, message: t('server.chatService.allChatSessionsDeleted') }
     } catch (error) {
       logger.error(
         `[ChatService] Failed to delete all sessions: ${

@@ -1,0 +1,26 @@
+import type { gpuEn } from '../en/gpu.js'
+
+export const gpuRu: Record<keyof typeof gpuEn, string> = {
+  'gpu.reinstalling': '{name} переустанавливается с поддержкой видеокарты. Страница скоро обновится.',
+  'gpu.reinstallFailed': 'Не удалось переустановить: {error}',
+  'gpu.reinstallTitle': 'Переустановить {name}?',
+  'gpu.reinstall': 'Переустановить',
+  'gpu.reinstallBody': 'Контейнер {name} будет создан заново с поддержкой видеокарты. Скачанные модели сохранятся. Во время переустановки помощник ненадолго будет недоступен.',
+  'gpu.needsOverride': 'В компьютере есть видеокарта AMD, но {name} работает только на процессоре. Переустановка не поможет: видеокарты{target} нет в списке ROCm, нужна подмена версии GFX.',
+  'gpu.noAccess': 'В компьютере есть видеокарта {vendor}, но {name} не может ей пользоваться. ИИ работает только на процессоре — это намного медленнее.',
+  'gpu.notAccessibleTitle': '{name} не видит видеокарту',
+  'gpu.fixOverride': 'Исправить: подменить версию GFX',
+  'gpu.fixReinstall': 'Исправить: переустановить {name}',
+  'gpu.overrideSaveFailed': 'Не удалось сохранить подмену GFX: {error}',
+  'gpu.overrideTitle': 'Подмена версии GFX для AMD',
+  'gpu.saveAndReinstall': 'Сохранить и переустановить',
+  'gpu.overrideExplain': 'ROCm умеет работать только с определёнными чипами AMD. Встроенные видеокарты Radeon не из этого списка работают на процессоре, пока ROCm не начнёт считать их поддерживаемыми — это задаётся через HSA_OVERRIDE_GFX_VERSION.',
+  'gpu.rdna2Line': 'Radeon 680M / 660M и другие встроенные RDNA 2 (с gfx1031 по gfx1036): 10.3.0',
+  'gpu.detected': 'Видеокарта: {gpu}. Сейчас задано: {current}.',
+  'gpu.notReported': 'Ollama её не сообщила',
+  'gpu.none': 'ничего',
+  'gpu.recommended': ' Для этой видеокарты советуем: {value}.',
+  'gpu.overrideLabel': 'Подмена версии GFX',
+  'gpu.overrideHelp': 'После сохранения контейнер {name} создастся заново с этой настройкой. Скачанные модели сохранятся.',
+  'gpu.reinstallFailedShort': 'Переустановить не удалось',
+}

@@ -4,6 +4,8 @@ import StyledModal from '../StyledModal'
 import StyledButton from '~/components/StyledButton'
 import { useNotifications } from '~/context/NotificationContext'
 import api from '~/lib/api'
+import { t } from '../../../constants/i18n'
+import { errorText } from '~/lib/error_text'
 
 interface CollectionsManagerProps {
   onClose: () => void
@@ -31,46 +33,45 @@ export default function CollectionsManager({ onClose }: CollectionsManagerProps)
     mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) =>
       api.renameCollection(oldName, newName),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || 'Collection renamed.' })
+      addNotification({ type: 'success', message: errorText(data, t('collections.renamed')) })
       setEditingName(null)
       invalidateAll()
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || 'Failed to rename collection.' })
+      addNotification({ type: 'error', message: errorText(error, t('collections.renameFailed')) })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (name: string) => api.deleteCollection(name),
     onSuccess: (data) => {
-      addNotification({ type: 'success', message: data?.message || 'Collection removed.' })
+      addNotification({ type: 'success', message: errorText(data, t('collections.removed')) })
       setConfirmDelete(null)
       invalidateAll()
     },
     onError: (error: any) => {
-      addNotification({ type: 'error', message: error?.message || 'Failed to remove collection.' })
+      addNotification({ type: 'error', message: errorText(error, t('collections.removeFailed')) })
     },
   })
 
   return (
     <StyledModal
       open={true}
-      title="Manage Collections"
+      title={t('collections.manage')}
       onClose={onClose}
-      cancelText="Close"
+      cancelText={t('common.close')}
       onCancel={onClose}
       large
     >
       <div className="text-left">
         <p className="text-sm text-text-secondary mb-4">
-          Rename or remove collections. Removing a collection doesn't delete any files —
-          they're simply moved back to Uncategorized so you can re-sort them.
+          {t('collections.intro')}
         </p>
 
-        {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
+        {isLoading && <p className="text-sm text-text-muted">{t('common.loadingEllipsis')}</p>}
         {!isLoading && collections.length === 0 && (
           <p className="text-sm text-text-muted">
-            No collections yet. Assign a file to a collection from the Knowledge Base table to create one.
+            {t('collections.none')}
           </p>
         )}
 
@@ -94,16 +95,16 @@ export default function CollectionsManager({ onClose }: CollectionsManagerProps)
                       renameMutation.mutate({ oldName: name, newName: editValue.trim() })
                     }
                   >
-                    Save
+                    {t('common.save')}
                   </StyledButton>
                   <StyledButton variant="outline" onClick={() => setEditingName(null)}>
-                    Cancel
+                    {t('common.cancel')}
                   </StyledButton>
                 </>
               ) : confirmDelete === name ? (
                 <>
                   <span className="flex-1 text-sm text-text-primary">
-                    Remove "{name}"? Files move to Uncategorized.
+                    {t('collections.removeQuestion', { name })}
                   </span>
                   <StyledButton
                     variant="danger"
@@ -111,10 +112,10 @@ export default function CollectionsManager({ onClose }: CollectionsManagerProps)
                     loading={deleteMutation.isPending}
                     onClick={() => deleteMutation.mutate(name)}
                   >
-                    Confirm
+                    {t('common.confirm')}
                   </StyledButton>
                   <StyledButton variant="outline" onClick={() => setConfirmDelete(null)}>
-                    Cancel
+                    {t('common.cancel')}
                   </StyledButton>
                 </>
               ) : (
@@ -128,14 +129,14 @@ export default function CollectionsManager({ onClose }: CollectionsManagerProps)
                       setEditValue(name)
                     }}
                   >
-                    Rename
+                    {t('collections.rename')}
                   </StyledButton>
                   <StyledButton
                     variant="danger"
                     icon="IconTrash"
                     onClick={() => setConfirmDelete(name)}
                   >
-                    Remove
+                    {t('common.remove')}
                   </StyledButton>
                 </>
               )}

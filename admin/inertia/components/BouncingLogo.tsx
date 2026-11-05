@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import KladezLogo from '~/components/KladezLogo';
 
 // Fading Image Component
-const FadingImage = ({  alt = "Fading image", className = "" }) => {
+const FadingImage = ({ className = "" }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [shouldShow, setShouldShow] = useState(true);
 
@@ -30,11 +31,7 @@ const FadingImage = ({  alt = "Fading image", className = "" }) => {
     <div className={`fixed inset-0 flex justify-center items-center bg-desert-sand z-50 pointer-events-none transition-opacity duration-1000 ${
       isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
-      <img
-        src="/nomad-primary.svg"
-        alt={alt}
-        className={`w-64 h-64 object-contain ${className}`}
-      />
+      <KladezLogo className={className} />
     </div>
   );
 };

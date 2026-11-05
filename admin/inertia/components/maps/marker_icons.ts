@@ -39,6 +39,7 @@ import {
 } from '@tabler/icons-react'
 import type { IconProps } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
+import { t } from '../../../constants/i18n'
 
 /**
  * The marker icon set: a curated 36, laid out as six rows of six.
@@ -69,52 +70,52 @@ const entry = (
 
 export const MARKER_ICONS: MarkerIconEntry[] = [
   // Water and food
-  entry(IconDroplet, 'IconDroplet', 'Water'),
-  entry(IconBarrel, 'IconBarrel', 'Water storage'),
-  entry(IconToolsKitchen2, 'IconToolsKitchen2', 'Food'),
-  entry(IconWheat, 'IconWheat', 'Grain or crops'),
-  entry(IconMeat, 'IconMeat', 'Meat or game'),
-  entry(IconFish, 'IconFish', 'Fishing'),
+  entry(IconDroplet, 'IconDroplet', t('pins.icon.droplet')),
+  entry(IconBarrel, 'IconBarrel', t('pins.icon.barrel')),
+  entry(IconToolsKitchen2, 'IconToolsKitchen2', t('pins.icon.toolsKitchen2')),
+  entry(IconWheat, 'IconWheat', t('pins.icon.wheat')),
+  entry(IconMeat, 'IconMeat', t('pins.icon.meat')),
+  entry(IconFish, 'IconFish', t('pins.icon.fish')),
 
   // Shelter and living
-  entry(IconHome, 'IconHome', 'Building'),
-  entry(IconTent, 'IconTent', 'Camp'),
-  entry(IconBed, 'IconBed', 'Shelter'),
-  entry(IconDoor, 'IconDoor', 'Entrance'),
-  entry(IconCampfire, 'IconCampfire', 'Fire'),
-  entry(IconSeeding, 'IconSeeding', 'Garden'),
+  entry(IconHome, 'IconHome', t('pins.icon.home')),
+  entry(IconTent, 'IconTent', t('pins.icon.tent')),
+  entry(IconBed, 'IconBed', t('pins.icon.bed')),
+  entry(IconDoor, 'IconDoor', t('pins.icon.door')),
+  entry(IconCampfire, 'IconCampfire', t('pins.icon.campfire')),
+  entry(IconSeeding, 'IconSeeding', t('pins.icon.seeding')),
 
   // Medical
-  entry(IconFirstAidKit, 'IconFirstAidKit', 'First aid'),
-  entry(IconBuildingHospital, 'IconBuildingHospital', 'Hospital'),
-  entry(IconStethoscope, 'IconStethoscope', 'Clinic'),
-  entry(IconPill, 'IconPill', 'Medication'),
-  entry(IconBandage, 'IconBandage', 'Supplies'),
-  entry(IconAmbulance, 'IconAmbulance', 'Ambulance'),
+  entry(IconFirstAidKit, 'IconFirstAidKit', t('pins.icon.firstAidKit')),
+  entry(IconBuildingHospital, 'IconBuildingHospital', t('pins.icon.buildingHospital')),
+  entry(IconStethoscope, 'IconStethoscope', t('pins.icon.stethoscope')),
+  entry(IconPill, 'IconPill', t('pins.icon.pill')),
+  entry(IconBandage, 'IconBandage', t('pins.icon.bandage')),
+  entry(IconAmbulance, 'IconAmbulance', t('pins.icon.ambulance')),
 
   // Power and communications
-  entry(IconBolt, 'IconBolt', 'Power'),
-  entry(IconSolarPanel, 'IconSolarPanel', 'Solar'),
-  entry(IconBattery, 'IconBattery', 'Battery'),
-  entry(IconAntenna, 'IconAntenna', 'Antenna'),
-  entry(IconRadio, 'IconRadio', 'Radio'),
-  entry(IconWifi, 'IconWifi', 'Network'),
+  entry(IconBolt, 'IconBolt', t('pins.icon.bolt')),
+  entry(IconSolarPanel, 'IconSolarPanel', t('pins.icon.solarPanel')),
+  entry(IconBattery, 'IconBattery', t('pins.icon.battery')),
+  entry(IconAntenna, 'IconAntenna', t('pins.icon.antenna')),
+  entry(IconRadio, 'IconRadio', t('pins.icon.radio')),
+  entry(IconWifi, 'IconWifi', t('pins.icon.wifi')),
 
   // Transport and supply
-  entry(IconGasStation, 'IconGasStation', 'Fuel'),
-  entry(IconCar, 'IconCar', 'Vehicle'),
-  entry(IconTruck, 'IconTruck', 'Truck'),
-  entry(IconTractor, 'IconTractor', 'Machinery'),
-  entry(IconPackage, 'IconPackage', 'Cache or supplies'),
-  entry(IconTool, 'IconTool', 'Tools'),
+  entry(IconGasStation, 'IconGasStation', t('pins.icon.gasStation')),
+  entry(IconCar, 'IconCar', t('pins.icon.car')),
+  entry(IconTruck, 'IconTruck', t('pins.icon.truck')),
+  entry(IconTractor, 'IconTractor', t('pins.icon.tractor')),
+  entry(IconPackage, 'IconPackage', t('pins.icon.package')),
+  entry(IconTool, 'IconTool', t('pins.icon.tool')),
 
   // Terrain, routes and hazards
-  entry(IconMountain, 'IconMountain', 'High ground'),
-  entry(IconTrees, 'IconTrees', 'Woodland'),
-  entry(IconRoute, 'IconRoute', 'Route'),
-  entry(IconFlag, 'IconFlag', 'Rally point'),
-  entry(IconAlertTriangle, 'IconAlertTriangle', 'Hazard'),
-  entry(IconSkull, 'IconSkull', 'Danger'),
+  entry(IconMountain, 'IconMountain', t('pins.icon.mountain')),
+  entry(IconTrees, 'IconTrees', t('pins.icon.trees')),
+  entry(IconRoute, 'IconRoute', t('pins.icon.route')),
+  entry(IconFlag, 'IconFlag', t('pins.icon.flag')),
+  entry(IconAlertTriangle, 'IconAlertTriangle', t('pins.icon.alertTriangle')),
+  entry(IconSkull, 'IconSkull', t('pins.icon.skull')),
 ]
 
 /** The pin used when a marker has no icon, or names one no longer in the set. */

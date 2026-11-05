@@ -7,6 +7,7 @@ import useServiceInstallationActivity from '~/hooks/useServiceInstallationActivi
 import InstallActivityFeed from '~/components/InstallActivityFeed'
 import ActiveDownloads from '~/components/ActiveDownloads'
 import StyledSectionHeader from '~/components/StyledSectionHeader'
+import { t } from '../../../constants/i18n'
 
 export default function EasySetupWizardComplete() {
   const { isOnline } = useInternetStatus()
@@ -14,11 +15,11 @@ export default function EasySetupWizardComplete() {
 
   return (
     <AppLayout>
-      <Head title="Easy Setup Wizard Complete" />
+      <Head title={t('easySetup.complete.pageTitle')} />
       {!isOnline && (
         <Alert
-          title="No Internet Connection"
-          message="It looks like you're not connected to the internet. Installing apps and downloading content will require an internet connection."
+          title={t('easySetup.noInternet.title')}
+          message={t('easySetup.noInternet.message')}
           type="warning"
           variant="solid"
           className="mb-8"
@@ -26,15 +27,15 @@ export default function EasySetupWizardComplete() {
       )}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-surface-primary rounded-md shadow-md p-6">
-          <StyledSectionHeader title="App Installation Activity" className=" mb-4" />
+          <StyledSectionHeader title={t('easySetup.complete.activity')} className=" mb-4" />
           <InstallActivityFeed
             activity={installActivity}
             className="!shadow-none border-desert-stone-light border"
           />
           <ActiveDownloads withHeader />
           <Alert
-            title="Running in the Background"
-            message='Feel free to leave this page at any time - your app installs and downloads will continue in the background! Please note, the Information Library (if installed) may be unavailable until all initial downloads complete.'
+            title={t('easySetup.complete.backgroundTitle')}
+            message={t('easySetup.complete.backgroundMessage')}
             type="info"
             variant="solid"
             className='mt-12'
@@ -42,7 +43,7 @@ export default function EasySetupWizardComplete() {
           <div className="flex justify-center mt-8 pt-4 border-t border-desert-stone-light">
             <div className="flex space-x-4">
               <StyledButton onClick={() => router.visit('/home')} icon="IconHome">
-                Go to Home
+                {t('nav.backToHome')}
               </StyledButton>
             </div>
           </div>

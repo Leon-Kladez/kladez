@@ -3,6 +3,7 @@ import logger from '@adonisjs/core/services/logger'
 import { ConditionService } from '#services/condition_service'
 import { conditionDrugsValidator } from '#validators/conditions'
 import { affirmativeRemediesEnabled } from '../utils/affirmative_remedies.js'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * "When to use what" — condition-first HTTP boundary (Phase 1).
@@ -38,13 +39,13 @@ export default class ConditionsController {
   async show({ inertia, params, response }: HttpContext) {
     const slug = String(params.slug ?? '').trim()
     if (!slug) {
-      return response.notFound({ error: 'invalid condition' })
+      return response.notFound({ error: t('server.conditionsController.invalidCondition') })
     }
 
     try {
       const condition = this.service.findCondition(slug)
       if (!condition) {
-        return response.notFound({ error: 'Condition not found' })
+        return response.notFound({ error: t('server.conditionsController.conditionNotFound') })
       }
 
       const [result, drugRowCount, remediesOn] = await Promise.all([
@@ -64,7 +65,7 @@ export default class ConditionsController {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`[ConditionsController] show(${slug}) failed: ${msg}`)
-      return response.internalServerError({ error: 'Could not load condition' })
+      return response.internalServerError({ error: t('server.conditionsController.couldNotLoadCondition') })
     }
   }
 
@@ -78,7 +79,7 @@ export default class ConditionsController {
       const params = await request.validateUsing(conditionDrugsValidator)
 
       if (params.slug && params.q) {
-        return response.badRequest({ error: 'Provide either slug or q, not both' })
+        return response.badRequest({ error: t('server.conditionsController.provideEitherSlugOrQ') })
       }
 
       const filterOpts = {
@@ -94,7 +95,7 @@ export default class ConditionsController {
       if (params.slug) {
         const result = await this.service.drugsForSlug(params.slug, params.limit, filterOpts)
         if (!result) {
-          return response.notFound({ error: 'Condition not found' })
+          return response.notFound({ error: t('server.conditionsController.conditionNotFound') })
         }
         return remediesOn ? result : { ...result, remedies: [] }
       }
@@ -104,7 +105,7 @@ export default class ConditionsController {
         return remediesOn ? result : { ...result, remedies: [] }
       }
 
-      return response.badRequest({ error: 'Provide a slug or q query parameter' })
+      return response.badRequest({ error: t('server.conditionsController.provideASlugOrQ') })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.warn(`[ConditionsController] drugsApi failed: ${msg}`)

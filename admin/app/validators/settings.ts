@@ -3,6 +3,7 @@ import { SETTINGS_KEYS } from "../../constants/kv_store.js";
 import type { KVStoreKey } from "../../types/kv_store.js";
 import { CONTEXT_LADDER } from "../utils/context_window.js";
 import { RESPONSE_STYLE_PRESETS } from "../../constants/ollama.js";
+import { t } from '../../constants/i18n/index.js'
 
 export const getSettingSchema = vine.compile(vine.object({
     key: vine.enum(SETTINGS_KEYS),
@@ -27,14 +28,14 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
         case 'contentAutoUpdate.windowStart':
         case 'contentAutoUpdate.windowEnd':
             if (typeof value !== 'string' || !HHMM_PATTERN.test(value)) {
-                return 'Time window values must be in 24-hour HH:MM format (e.g. "20:00").'
+                return t('serverValidate.timeWindow')
             }
             return null
         case 'autoUpdate.cooloffHours':
         case 'contentAutoUpdate.cooloffHours': {
             const num = Number(value)
             if (!Number.isInteger(num) || num < 0 || num > 8760) {
-                return 'Cool-off must be a whole number of hours between 0 and 8760.'
+                return t('serverValidate.cooloff')
             }
             return null
         }
@@ -44,15 +45,15 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
                 return null
             }
             if (typeof value !== 'string') {
-                return 'Test URL must be a string.'
+                return t('serverValidate.urlString')
             }
             try {
                 const url = new URL(value)
                 if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-                    return 'Test URL must use http or https.'
+                    return t('advanced.urlScheme')
                 }
             } catch {
-                return 'Test URL must be a valid URL (e.g. "https://example.com").'
+                return t('serverValidate.urlValid')
             }
             return null
         }
@@ -60,7 +61,7 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
             // Per-window download budget in bytes. 0 = unlimited.
             const num = Number(value)
             if (!Number.isInteger(num) || num < 0) {
-                return 'The per-window data cap must be a whole number of bytes (0 = unlimited).'
+                return t('serverValidate.cap')
             }
             return null
         }
@@ -74,7 +75,7 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
             }
             const num = Number(value)
             if (!CONTEXT_LADDER.includes(num as (typeof CONTEXT_LADDER)[number])) {
-                return `Context window must be "auto" or one of: ${CONTEXT_LADDER.join(', ')}.`
+                return t('serverValidate.context', { values: CONTEXT_LADDER.join(', ') })
             }
             return null
         }
@@ -91,7 +92,7 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
             }
             const num = Number(raw)
             if (!Number.isFinite(num) || num < 0 || num > 1) {
-                return 'Relevance threshold must be a number between 0 and 1, or empty to use the recommended default.'
+                return t('serverValidate.relevance')
             }
             return null
         }
@@ -104,7 +105,7 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
             }
             const styles = RESPONSE_STYLE_PRESETS.map((preset) => preset.value)
             if (typeof value !== 'string' || !styles.includes(value as (typeof styles)[number])) {
-                return `Response style must be one of: ${styles.join(', ')}.`
+                return t('serverValidate.style', { values: styles.join(', ') })
             }
             return null
         }
@@ -114,7 +115,7 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
                 return null
             }
             if (typeof value !== 'string' || !/^(-?\d+|\d+(\.\d+)?(ms|s|m|h))$/.test(value)) {
-                return 'Keep-alive must be a duration like "10m", "1h", or "-1" to keep the model loaded indefinitely.'
+                return t('serverValidate.keepAlive')
             }
             return null
         }
@@ -127,7 +128,7 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
                 return null
             }
             if (typeof raw !== 'string' || !/^\d{1,2}\.\d{1,2}\.\d{1,2}$/.test(raw)) {
-                return 'GFX override must be a version like "11.0.0", "none", or empty to use the detected default.'
+                return t('serverValidate.gfx')
             }
             return null
         }

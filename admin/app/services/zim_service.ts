@@ -46,6 +46,7 @@ import { isWikipediaMainFile } from '../utils/wikipedia_file.js'
 import env from '#start/env'
 import { getHostedContentHeaders } from '../utils/hosted_content_auth.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
+import { t } from '../../constants/i18n/index.js'
 
 const ZIM_MIME_TYPES = ['application/x-zim', 'application/x-openzim', 'application/octet-stream']
 // Kladez: Russian Wikipedia options from the Kladez catalog repository.
@@ -861,7 +862,7 @@ export class ZimService {
 
     // If same as currently installed, no action needed
     if (currentSelection?.option_id === optionId && currentSelection.status === 'installed') {
-      return { success: true, message: 'Already installed' }
+      return { success: true, message: t('server.zimService.alreadyInstalled') }
     }
 
     // Handle "none" option - delete current Wikipedia file and update DB
@@ -899,7 +900,7 @@ export class ZimService {
           logger.error(`[ZimService] Failed to restart Kiwix after Wikipedia removal:`, error)
         })
 
-      return { success: true, message: 'Wikipedia removed' }
+      return { success: true, message: t('server.zimService.wikipediaRemoved') }
     }
 
     // Start download for the new Wikipedia option
@@ -928,7 +929,7 @@ export class ZimService {
     // Check if already downloading
     const existingJob = await RunDownloadJob.getActiveByUrl(downloadUrl)
     if (existingJob) {
-      return { success: false, message: 'Download already in progress' }
+      return { success: false, message: t('server.zimService.downloadAlreadyInProgress') }
     }
 
     // Extract filename from URL
@@ -983,7 +984,7 @@ export class ZimService {
     return {
       success: true,
       jobId: result.job.id,
-      message: 'Download started',
+      message: t('server.zimService.downloadStarted'),
     }
   }
 
@@ -1064,7 +1065,7 @@ export class ZimService {
     const count = await CustomLibrarySource.query().count('* as total')
     const total = Number(count[0].$extras.total)
     if (total >= 10) {
-      throw new Error('Maximum of 10 custom libraries allowed')
+      throw new Error(t('serverZim.maxLibraries'))
     }
 
     // Ensure URL ends with /
@@ -1079,7 +1080,7 @@ export class ZimService {
   async removeCustomLibrary(id: number): Promise<void> {
     const source = await CustomLibrarySource.find(id)
     if (!source) {
-      throw new Error('Custom library not found')
+      throw new Error(t('serverZim.libraryNotFound'))
     }
     if (source.is_default) {
       throw new Error('Cannot remove a built-in mirror')

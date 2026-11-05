@@ -79,12 +79,12 @@ test('evaluateBindMounts hard-blocks a colon in the container path', () => {
 test('evaluateImageReference warns on the latest tag', () => {
   const { blocked, warnings } = evaluateImageReference('nginx:latest')
   assert.equal(blocked.length, 0)
-  assert.ok(warnings.some((w) => w.includes('moving tag')))
+  assert.ok(warnings.some((w) => w.includes('без точной версии')))
 })
 
 test('evaluateImageReference warns when no tag is given', () => {
   const { warnings } = evaluateImageReference('nginx')
-  assert.ok(warnings.some((w) => w.includes('moving tag')))
+  assert.ok(warnings.some((w) => w.includes('без точной версии')))
 })
 
 test('evaluateImageReference is clean for a pinned image from a trusted registry', () => {
@@ -95,7 +95,7 @@ test('evaluateImageReference is clean for a pinned image from a trusted registry
 
 test('evaluateImageReference warns on an untrusted registry', () => {
   const { warnings } = evaluateImageReference('myregistry.example.com/app:1.0.0')
-  assert.ok(warnings.some((w) => w.includes('trusted registries')))
+  assert.ok(warnings.some((w) => w.includes('проверенных хранилищ')))
 })
 
 test('evaluateImageReference blocks a malformed reference', () => {
