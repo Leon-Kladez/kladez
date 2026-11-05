@@ -32,7 +32,8 @@ export class GatedContentAuthError extends Error {
 // User-Agent per Wikimedia's UA policy. Identify ourselves descriptively so
 // those downloads succeed.
 const DOWNLOAD_HEADERS: Record<string, string> = {
-  'User-Agent': 'ProjectNOMAD/1.0 (+https://projectnomad.us)',
+  // Kladez: descriptive per Wikimedia UA policy; carries nothing about the user.
+  'User-Agent': 'Kladez/1.0 (+https://github.com/Leon-Kladez/kladez)',
 }
 
 /**

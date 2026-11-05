@@ -11,6 +11,8 @@ import { OllamaService } from '#services/ollama_service'
 import { EmbedFileJob } from './embed_file_job.js'
 import { basename, join, resolve, sep } from 'node:path'
 import { ZIM_STORAGE_PATH } from '../utils/fs.js'
+import { mirrorCandidates, pickDownloadUrl } from '../utils/mirrors.js'
+import type { MirrorsSpec } from '../../types/collections.js'
 
 /** Maps live under `<cwd>/storage/maps/pmtiles`; no shared constant exists. */
 const MAP_STORAGE_PATH = '/storage/maps'
@@ -67,8 +69,14 @@ export class RunDownloadJob {
   }
 
   async handle(job: Job) {
-    const { url, filepath, timeout, allowedMimeTypes, forceNew, filetype, resourceMetadata, requestHeaders } =
+    const { url, filepath, timeout, allowedMimeTypes, forceNew, filetype, resourceMetadata, requestHeaders, fallbackUrls } =
       job.data as RunDownloadJobParams
+    // Kladez: each retry tries the next mirror, resuming the same .tmp. `url`
+    // stays the job's identity (InstalledResource, Wikipedia selection, dedupe).
+    const servedUrl = pickDownloadUrl(url, fallbackUrls, job.attemptsMade)
+    if (servedUrl !== url) {
+      console.log(`[RunDownloadJob] Attempt ${job.attemptsMade + 1}: using mirror ${servedUrl}`)
+    }
 
     // Register abort controller for this job
     const abortController = new AbortController()
@@ -105,7 +113,7 @@ export class RunDownloadJob {
 
     try {
       await doResumableDownload({
-        url,
+        url: servedUrl,
         filepath,
         timeout,
         allowedMimeTypes,
@@ -127,7 +135,7 @@ export class RunDownloadJob {
           })
           lastKnownProgress = { downloadedBytes: progress.downloadedBytes, totalBytes: progress.totalBytes }
         },
-        async onComplete(url) {
+        async onComplete(_servedUrl) {
           // The previous file recorded for this resource (if any). Hoisted out of
           // the metadata block below so the ZIM branch can decide whether this
           // download is a content UPDATE (replacing a prior file) vs a fresh
@@ -363,7 +371,24 @@ export class RunDownloadJob {
     return undefined
   }
 
+  /**
+   * Kladez: Kiwix ZIMs get mirror fallbacks automatically. Never throws — no
+   * mirrors spec simply means no fallbacks.
+   */
+  static async withMirrorFallbacks(params: RunDownloadJobParams): Promise<RunDownloadJobParams> {
+    if (params.fallbackUrls || params.filetype !== 'zim' || params.requestHeaders) return params
+    try {
+      const { CollectionManifestService } = await import('#services/collection_manifest_service')
+      const spec = await new CollectionManifestService().getSpecWithFallback<MirrorsSpec>('mirrors')
+      const fallbacks = mirrorCandidates(params.url, spec).slice(1)
+      return fallbacks.length ? { ...params, fallbackUrls: fallbacks } : params
+    } catch {
+      return params
+    }
+  }
+
   static async dispatch(params: RunDownloadJobParams) {
+    params = await this.withMirrorFallbacks(params)
     const queueService = QueueService.getInstance()
     const queue = queueService.getQueue(this.queue)
     const jobId = this.getJobId(params.url)

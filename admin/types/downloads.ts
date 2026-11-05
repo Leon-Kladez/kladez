@@ -63,6 +63,14 @@ export type RunDownloadJobParams = Omit<
      */
     skip_embedding?: boolean
   }
+  /**
+   * Kladez (shared with part 3, maps): full fallback addresses, tried in order
+   * on each retry while resuming the same `.tmp`. Filled automatically for Kiwix
+   * ZIMs from collections-ru/mirrors.json when not given.
+   */
+  fallbackUrls?: string[]
+  /** Kladez: expected SHA-256 (hex) of the finished file; checked before install. */
+  expectedSha256?: string
 }
 
 export type DownloadJobWithProgress = {
