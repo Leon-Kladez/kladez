@@ -36,6 +36,7 @@ import { tierRu } from './ru/tier.js'
 import { gpuRu } from './ru/gpu.js'
 import { benchRunRu } from './ru/benchRun.js'
 import { countryPickerRu } from './ru/countryPicker.js'
+import { mapRegionsRu } from './ru/mapRegions.js'
 import { continentRu } from './ru/continent.js'
 import { linkTileRu } from './ru/linkTile.js'
 import { pinsRu } from './ru/pins.js'
@@ -157,6 +158,7 @@ export const ru: Record<MessageKey, string> = {
   ...gpuRu,
   ...benchRunRu,
   ...countryPickerRu,
+  ...mapRegionsRu,
   ...continentRu,
   ...linkTileRu,
   ...pinsRu,

@@ -13,7 +13,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import useDownloads from '~/hooks/useDownloads'
 import StyledSectionHeader from '~/components/StyledSectionHeader'
 import CuratedCollectionCard from '~/components/CuratedCollectionCard'
-import CountryPickerModal from '~/components/CountryPickerModal'
+import MapRegionPicker from '~/components/maps/MapRegionPicker'
+import { formatMapVersion, versionFromFilename } from '../../../app/utils/map_picker'
 import type { CollectionWithStatus } from '../../../types/collections'
 import ActiveDownloads from '~/components/ActiveDownloads'
 import Alert from '~/components/Alert'
@@ -248,21 +249,21 @@ export default function MapsManager(props: {
     )
   }
 
-  function openCountryPickerModal() {
+  function openRegionPicker() {
     openModal(
-      <CountryPickerModal
+      <MapRegionPicker
+        mode="modal"
         onCancel={closeAllModals}
-        installedFilenames={(props.maps.regionFiles ?? []).map((f) => f.name)}
         onDownloadStart={() => {
           invalidateDownloads()
           addNotification({
             type: 'success',
-            message: t('mapsManager.queuedWatch'),
+            message: t('mapRegions.queued'),
           })
           closeAllModals()
         }}
       />,
-      'country-picker-modal'
+      'map-region-picker-modal'
     )
   }
 
@@ -337,51 +338,18 @@ export default function MapsManager(props: {
               }}
             />
           )}
-          {globalMapInfo && globalMapAlreadyDownloaded && (
-            <Alert
-              title={t('mapsManager.globalInstalled')}
-              message={t('mapsManager.globalInstalledMessage', { date: globalMapInfo.date, size: formatBytes(globalMapInfo.size, 1) })}
-              type="success"
-              variant="bordered"
-              className="mt-8"
-              icon="IconCircleCheck"
-              buttonProps={{
-                variant: 'secondary',
-                children: t('mapsManager.downloadLatest'),
-                icon: 'IconRefresh',
-                onClick: () => confirmGlobalMapDownload(),
-              }}
-            />
-          )}
-          {globalMapInfo && !globalMapAlreadyDownloaded && (
-            <Alert
-              title={t('mapsManager.globalAvailable')}
-              message={t('mapsManager.globalAvailableMessage', { size: formatBytes(globalMapInfo.size, 1), date: globalMapInfo.date })}
-              type="info-inverted"
-              variant="bordered"
-              className="mt-8"
-              icon="IconWorld"
-              buttonProps={{
-                variant: 'primary',
-                children: t('mapsManager.downloadGlobal'),
-                icon: 'IconCloudDownload',
-                loading: downloadGlobalMap.isPending,
-                onClick: () => confirmGlobalMapDownload(),
-              }}
-            />
-          )}
           <Alert
-            title={t('mapsManager.byCountryTitle')}
-            message={t('mapsManager.byCountryMessage')}
+            title={t('mapRegions.byRegionTitle')}
+            message={t('mapRegions.byRegionMessage')}
             type="info-inverted"
             variant="bordered"
             className="mt-8"
-            icon="IconMap2"
+            icon="IconMap"
             buttonProps={{
               variant: 'primary',
-              children: t('mapsManager.chooseCountries'),
-              icon: 'IconMap2',
-              onClick: openCountryPickerModal,
+              children: t('mapRegions.chooseRegion'),
+              icon: 'IconMap',
+              onClick: openRegionPicker,
             }}
           />
 
@@ -418,13 +386,21 @@ export default function MapsManager(props: {
               {t('mapsManager.downloadCustom')}
             </StyledButton>
           </div>
-          <StyledTable<FileEntry & { actions?: any }>
+          <StyledTable<FileEntry & { actions?: any; version?: string }>
             className="font-semibold mt-4"
             rowLines={true}
             loading={false}
             compact
             columns={[
               { accessor: 'name', title: t('apps.col.name') },
+              {
+                accessor: 'version',
+                title: '',
+                render: (record) => {
+                  const version = versionFromFilename(record.name)
+                  return <span className="text-text-muted font-normal">{version ? formatMapVersion(version) : ''}</span>
+                },
+              },
               {
                 accessor: 'actions',
                 title: t('zimManager.actions'),
@@ -446,6 +422,42 @@ export default function MapsManager(props: {
             data={props.maps.regionFiles || []}
           />
           <ActiveDownloads filetype="map" withHeader />
+          <details className="mt-12 rounded-lg border border-border-subtle p-4">
+            <summary className="cursor-pointer text-lg font-semibold">{t('mapRegions.advanced')}</summary>
+          {globalMapInfo && globalMapAlreadyDownloaded && (
+            <Alert
+              title={t('mapsManager.globalInstalled')}
+              message={t('mapsManager.globalInstalledMessage', { date: globalMapInfo.date, size: formatBytes(globalMapInfo.size, 1) })}
+              type="success"
+              variant="bordered"
+              className="mt-4"
+              icon="IconCircleCheck"
+              buttonProps={{
+                variant: 'secondary',
+                children: t('mapsManager.downloadLatest'),
+                icon: 'IconRefresh',
+                onClick: () => confirmGlobalMapDownload(),
+              }}
+            />
+          )}
+          {globalMapInfo && !globalMapAlreadyDownloaded && (
+            <Alert
+              title={t('mapsManager.globalAvailable')}
+              message={t('mapsManager.globalAvailableMessage', { size: formatBytes(globalMapInfo.size, 1), date: globalMapInfo.date })}
+              type="info-inverted"
+              variant="bordered"
+              className="mt-4"
+              icon="IconWorld"
+              buttonProps={{
+                variant: 'primary',
+                children: t('mapsManager.downloadGlobal'),
+                icon: 'IconCloudDownload',
+                loading: downloadGlobalMap.isPending,
+                onClick: () => confirmGlobalMapDownload(),
+              }}
+            />
+          )}
+          </details>
         </main>
       </div>
     </SettingsLayout>

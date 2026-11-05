@@ -227,6 +227,14 @@ router
       summary: 'Download the global map',
       tags: ['maps'],
     })
+    documented(router.get('/picker', [MapsController, 'picker']), {
+      summary: 'Countries, map packages and free space for the region picker',
+      tags: ['maps'],
+    })
+    documented(router.get('/schema/ru-districts', [MapsController, 'ruDistricts']), {
+      summary: 'Simplified outlines of Russian federal districts',
+      tags: ['maps'],
+    })
     documented(router.get('/countries', [MapsController, 'listCountries']), {
       summary: 'List available countries',
       tags: ['maps'],

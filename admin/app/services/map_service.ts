@@ -22,7 +22,7 @@ import { assertNotPrivateUrl } from '#validators/common'
 import InstalledResource from '#models/installed_resource'
 import { CollectionManifestService } from './collection_manifest_service.js'
 import { decideSupersededDeletion } from '../utils/superseded_resource.js'
-import type { CollectionWithStatus, MapsSpec } from '../../types/collections.js'
+import type { CollectionWithStatus, MapsSpec, SpecResource } from '../../types/collections.js'
 import type { Country, CountryCode, CountryGroup, MapExtractPreflight } from '../../types/maps.js'
 import {
   EXTRACT_DEFAULT_MAX_ZOOM,
@@ -42,7 +42,8 @@ import {
   pickBaseAssetsSource,
   siblingVariantId,
 } from '../utils/map_packages.js'
-import { copyFile } from 'fs/promises'
+import { copyFile, statfs } from 'fs/promises'
+import { explainExtractError, pickerCountries, type PickerCountry } from '../utils/map_picker.js'
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
 import { createHash, randomBytes } from 'crypto'
@@ -727,6 +728,46 @@ export class MapService implements IMapService {
     }
   }
 
+  /**
+   * Кладезъ: данные окна выбора региона. Страны — из контуров в программе (работает без сети),
+   * пакеты — из maps.json (сеть → кэш → встроенная копия по правилам части 2).
+   */
+  async pickerData(): Promise<{
+    countries: PickerCountry[]
+    resources: SpecResource[]
+    installed: string[]
+    freeBytes: number | null
+  }> {
+    const manifestService = new CollectionManifestService()
+    const [countries, spec, installed, freeBytes] = await Promise.all([
+      CountriesService.getInstance().list(),
+      manifestService.getSpecWithFallback<MapsSpec>('maps').catch(() => null),
+      InstalledResource.query().where('resource_type', 'map'),
+      this.freeStorageBytes(),
+    ])
+    return {
+      countries: pickerCountries(countries, spec),
+      resources: (spec?.collections ?? []).flatMap((c) => c.resources),
+      installed: installed.map((r) => r.resource_id),
+      freeBytes,
+    }
+  }
+
+  private async freeStorageBytes(): Promise<number | null> {
+    try {
+      await ensureDirectoryExists(this.baseDirPath)
+      const s = await statfs(this.baseDirPath)
+      return Number(s.bavail) * Number(s.bsize)
+    } catch {
+      return null
+    }
+  }
+
+  /** Упрощённые контуры федеральных округов России для схемы в окне выбора. */
+  ruDistrictsSchemaPath(): string {
+    return join(process.cwd(), 'resources', 'geodata', 'ru_federal_districts.geojson')
+  }
+
   async listCountries(): Promise<Country[]> {
     return CountriesService.getInstance().list()
   }
@@ -770,9 +811,10 @@ export class MapService implements IMapService {
       stdout = result.stdout
       stderr = result.stderr
     } catch (err: any) {
-      throw new Error(
-        `pmtiles extract --dry-run failed: ${err.message}. stderr: ${err.stderr ?? ''}`
-      )
+      logger.warn(`[MapService] pmtiles extract --dry-run failed: ${err.message}. stderr: ${err.stderr ?? ''}`)
+      // Кладезъ: человеку — понятная причина (чаще всего мировая карта недоступна без VPN).
+      throw new Error(t(explainExtractError(`${err.message ?? ''}
+${err.stderr ?? ''}`)))
     }
 
     const parsed = this.parseDryRunOutput(stdout + '\n' + stderr)
