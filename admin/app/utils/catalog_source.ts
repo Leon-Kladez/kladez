@@ -17,6 +17,7 @@ export const CATALOG_FILES = {
   creator_packs: 'creator-packs.json',
   bundles: 'bundles.json',
   mirrors: 'mirrors.json',
+  ai_models: 'ai-models.json',
 } as const
 
 export type CatalogFileType = keyof typeof CATALOG_FILES

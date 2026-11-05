@@ -14,7 +14,6 @@ const ALLOWED: Array<{ file: string; pattern: RegExp; why: string }> = [
   { file: 'app/services/auto_update_service.ts', pattern: /ghcr\.io\/crosstalk-solutions\/project-nomad/, why: 'Docker image — part 5 (installer)' },
   { file: 'app/services/kiwix_catalog_service.ts', pattern: /project-nomad-maps/, why: 'maps — part 3' },
   { file: 'app/services/map_service.ts', pattern: /project-nomad-maps|project-nomad\//, why: 'maps — part 3' },
-  { file: 'constants/misc.ts', pattern: /api\.projectnomad\.us/, why: 'AI model list (plain GET, no user data) — needs a Kladez-hosted list; open question for the author' },
 ]
 
 const SCANNED = ['app', 'start', 'constants', 'commands']

@@ -6,6 +6,12 @@ export type NomadOllamaModel = {
   model_last_updated: string
   first_seen: string
   tags: NomadOllamaModelTag[]
+  /**
+   * Kladez: how well the model understands Russian. 'good' — Russian is
+   * officially listed by the model's makers; 'fair' — works, not officially
+   * listed; absent — unknown or weak.
+   */
+  ru?: 'good' | 'fair'
 }
 
 export type NomadOllamaModelTag = {

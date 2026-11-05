@@ -18,7 +18,9 @@ import transmit from '@adonisjs/transmit/services/main'
 import Fuse, { IFuseOptions } from 'fuse.js'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import env from '#start/env'
-import { NOMAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
+import { catalogUrl } from '../utils/catalog_source.js'
+import { readBundledSpec } from '../utils/bundled_catalog.js'
+import { modelsFromCatalog } from '../utils/ai_models.js'
 import KVStore from '#models/kv_store'
 import type { ModelCapabilities } from '../utils/model_capabilities.js'
 import {
@@ -26,7 +28,6 @@ import {
   resolveModelCapabilities,
 } from '../utils/model_capabilities.js'
 
-const NOMAD_MODELS_API_PATH = '/api/v1/ollama/models'
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
 
@@ -1392,35 +1393,27 @@ export class OllamaService {
         logger.info('[OllamaService] Force refresh requested, bypassing cache')
       }
 
-      logger.info('[OllamaService] Fetching fresh available models from API')
+      logger.info('[OllamaService] Fetching the Kladez AI model list')
 
-      const baseUrl = env.get('NOMAD_API_URL') || NOMAD_API_DEFAULT_BASE_URL
-      const fullUrl = new URL(NOMAD_MODELS_API_PATH, baseUrl).toString()
-
-      const response = await axios.get(fullUrl, { timeout: 10000 })
-      if (!response.data || !Array.isArray(response.data.models)) {
+      // Kladez: the model list lives in our repository (collections-ru/ai-models.json);
+      // offline, the copy built into the image is used. NOMAD's API is not contacted.
+      let noCloud: NomadOllamaModel[] | null = null
+      try {
+        const response = await axios.get(catalogUrl('ai_models', env.get('KLADEZ_CATALOG_BASE_URL')), {
+          timeout: 10000,
+        })
+        noCloud = modelsFromCatalog(response.data)
+      } catch (error) {
         logger.warn(
-          `[OllamaService] Invalid response format when fetching available models: ${JSON.stringify(response.data)}`
+          `[OllamaService] Kladez model list unreachable, using the built-in copy: ${error instanceof Error ? error.message : error}`
         )
-        return null
       }
+      if (!noCloud) noCloud = modelsFromCatalog(await readBundledSpec('ai_models'))
 
-      const rawModels = response.data.models as NomadOllamaModel[]
-
-      const noCloud = rawModels
-        .map((model) => ({
-          ...model,
-          tags: model.tags.filter((tag) => !tag.cloud),
-        }))
-        .filter((model) => model.tags.length > 0)
-
-      // A successful-but-empty upstream response (0 models, or all filtered out
-      // as cloud-only) is a soft failure: return null so the caller serves the
-      // fallback list, and don't poison the 24h cache with an empty array.
-      if (noCloud.length === 0) {
-        logger.warn(
-          '[OllamaService] Nomad API returned no usable (non-cloud) models; using fallback'
-        )
+      // No usable list at all: return null so the caller serves the fallback
+      // list, and don't poison the 24h cache with an empty array.
+      if (!noCloud) {
+        logger.warn('[OllamaService] No usable model list; using fallback')
         return null
       }
 
@@ -1428,7 +1421,7 @@ export class OllamaService {
       return this.sortModels(noCloud, sort)
     } catch (error) {
       logger.error(
-        `[OllamaService] Failed to retrieve models from Nomad API: ${error instanceof Error ? error.message : error}`
+        `[OllamaService] Failed to retrieve the model list: ${error instanceof Error ? error.message : error}`
       )
       return null
     }
