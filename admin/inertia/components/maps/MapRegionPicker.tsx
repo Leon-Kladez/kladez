@@ -1,6 +1,6 @@
 // Кладезъ, часть 3: выбор страны и (для России) федерального округа в два шага.
 // Описание: docs/superpowers/specs/2026-11-05-kladez-3-maps-design.md, §5.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { IconArrowLeft, IconCheck, IconSearch } from '@tabler/icons-react'
 import api from '~/lib/api'
@@ -10,15 +10,20 @@ import StyledButton from '~/components/StyledButton'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import DistrictSchema from './DistrictSchema'
 import { formatBytes, t } from '../../../constants/i18n'
-import { matchesQuery, packagesForCountry, selectionSummary } from '../../../app/utils/map_picker'
+import { matchesQuery, packagesForCountry, restoreSelection, selectionSummary } from '../../../app/utils/map_picker'
 import type { MapsSpec, SpecResource } from '../../../types/collections'
 
 type Detail = 'full' | 'overview'
 const DETAIL_MAXZOOM: Record<Detail, number> = { full: 15, overview: 13 }
 
 export type MapRegionPickerProps =
-  | { mode: 'modal'; onCancel: () => void; onDownloadStart?: () => void }
-  | { mode: 'inline'; onChange: (ids: string[], bytes: number) => void }
+  | { mode: 'modal'; onCancel: () => void; onDownloadStart?: (unavailable: string[]) => void }
+  | {
+      mode: 'inline'
+      onChange: (ids: string[], bytes: number) => void
+      /** Уже выбранные id — при возврате к шагу первой настройки выбор не теряется. */
+      initialIds?: string[]
+    }
 
 export default function MapRegionPicker(props: MapRegionPickerProps) {
   const { data, isLoading, isError } = useQuery({
@@ -26,10 +31,11 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
     queryFn: () => api.getMapPicker(),
     refetchOnWindowFocus: false,
   })
+  const restored = restoreSelection(props.mode === 'inline' ? props.initialIds ?? [] : [])
   const [country, setCountry] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [detail, setDetail] = useState<Detail>('full')
+  const [selected, setSelected] = useState<Set<string>>(new Set(restored.selected))
+  const [detail, setDetail] = useState<Detail>(restored.detail)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [onSiteBytes, setOnSiteBytes] = useState<number | null>(null)
@@ -47,14 +53,25 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
   const packages = country ? packagesForCountry(spec, country) : []
   const published = packages.filter((p) => !p.planned)
   const installed = new Set(data?.installed ?? [])
-  const chosen = published.filter((p) => selected.has(p.id))
+  // Выбор считается по всем опубликованным пакетам, а не только по открытой стране:
+  // так восстановленный выбор (первая настройка) виден и до открытия страны.
+  const chosen = resources.filter((r) => !r.planned && (r.detail ?? 'full') === 'full' && selected.has(r.id))
   const summary = selectionSummary(chosen, detail, resources, data?.freeBytes ?? null)
 
-  // Во встроенном режиме (первая настройка) выбор сразу отдаётся наружу.
+  // При возврате к шагу открываем страну уже выбранных пакетов.
+  const restoredCountry = useRef(false)
   useEffect(() => {
-    if (props.mode === 'inline') props.onChange(summary.ids, summary.bytes)
+    if (restoredCountry.current || !data || selected.size === 0) return
+    restoredCountry.current = true
+    const first = data.resources.find((r) => selected.has(r.id))
+    if (first?.country) setCountry(first.country)
+  }, [data, selected])
+
+  // Во встроенном режиме (первая настройка) выбор отдаётся наружу; до загрузки списка — не трогаем.
+  useEffect(() => {
+    if (props.mode === 'inline' && data) props.onChange(summary.ids, summary.bytes)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [summary.ids.join(','), summary.bytes])
+  }, [data, summary.ids.join(','), summary.bytes])
 
   useEffect(() => {
     setOnSiteBytes(null)
@@ -74,8 +91,9 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
     setMessage(null)
     try {
       const res = await api.downloadMapPackages(summary.ids)
-      if (res?.unavailable?.length) setMessage(t('mapRegions.unavailable', { ids: res.unavailable.join(', ') }))
-      if (res && res.filenames.length > 0 && props.mode === 'modal') props.onDownloadStart?.()
+      if (!res) return // ошибку уже показало уведомление
+      if (res.filenames.length > 0 && props.mode === 'modal') return props.onDownloadStart?.(res.unavailable)
+      if (res.unavailable.length) setMessage(t('mapRegions.unavailable', { ids: res.unavailable.join(', ') }))
     } finally {
       setBusy(false)
     }
@@ -86,10 +104,9 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
     setBusy(true)
     setMessage(null)
     try {
+      // Ошибку (например, «нужен VPN») показывает уведомление; здесь — только результат.
       const res = await api.extractMapPreflight({ countries: [country], maxzoom: DETAIL_MAXZOOM[detail] })
       if (res) setOnSiteBytes(res.bytes)
-    } catch (err: any) {
-      setMessage(err?.message ?? t('maps.error.extractFailed'))
     } finally {
       setBusy(false)
     }
@@ -100,15 +117,13 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
     setBusy(true)
     setMessage(null)
     try {
-      await api.extractMapRegion({
+      const res = await api.extractMapRegion({
         countries: [country],
         maxzoom: DETAIL_MAXZOOM[detail],
         label: current?.nameRu,
         estimatedBytes: onSiteBytes ?? undefined,
       })
-      if (props.mode === 'modal') props.onDownloadStart?.()
-    } catch (err: any) {
-      setMessage(err?.message ?? t('maps.error.extractFailed'))
+      if (res && props.mode === 'modal') props.onDownloadStart?.([])
     } finally {
       setBusy(false)
     }
@@ -116,6 +131,7 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
 
   const freeText = data?.freeBytes != null ? formatBytes(data.freeBytes) : null
   const needsOnSite = country !== null && published.length === 0
+  const onSiteFits = onSiteBytes === null || data?.freeBytes == null || onSiteBytes <= data.freeBytes
 
   const body = (
     <div className="space-y-4">
@@ -176,7 +192,7 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
           </button>
           <h3 className="text-xl font-semibold text-text-primary">{current?.nameRu}</h3>
 
-          <div className="flex flex-wrap gap-2" role="radiogroup">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('mapRegions.detailLabel')}>
             {(['full', 'overview'] as Detail[]).map((d) => (
               <button
                 key={d}
@@ -247,9 +263,20 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
                             ? t('mapRegions.summary', { size: formatBytes(onSiteBytes), free: freeText })
                             : t('mapRegions.summaryUnknownFree', { size: formatBytes(onSiteBytes) })}
                         </span>
-                        <StyledButton variant="primary" onClick={downloadOnSite} loading={busy} icon="IconDownload">
+                        <StyledButton
+                          variant="primary"
+                          onClick={downloadOnSite}
+                          loading={busy}
+                          disabled={!onSiteFits}
+                          icon="IconDownload"
+                        >
                           {t('mapRegions.download')}
                         </StyledButton>
+                        {!onSiteFits && data?.freeBytes != null && onSiteBytes !== null && (
+                          <span className="text-desert-red font-medium">
+                            {t('mapRegions.missing', { missing: formatBytes(onSiteBytes - data.freeBytes) })}
+                          </span>
+                        )}
                       </>
                     )}
                   </div>
@@ -269,6 +296,9 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
                     ? t('mapRegions.summary', { size: formatBytes(summary.bytes), free: freeText })
                     : t('mapRegions.summaryUnknownFree', { size: formatBytes(summary.bytes) })}
                 </p>
+              )}
+              {summary.noOverview.length > 0 && (
+                <p className="text-text-muted">{t('mapRegions.noOverview')}</p>
               )}
               {!summary.enough && (
                 <p className="text-desert-red font-medium">

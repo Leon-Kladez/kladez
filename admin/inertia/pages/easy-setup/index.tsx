@@ -867,6 +867,7 @@ export default function EasySetupWizard(props: {
       </div>
       <MapRegionPicker
         mode="inline"
+        initialIds={selectedMapPackages}
         onChange={(ids, bytes) => {
           setSelectedMapPackages(ids)
           setSelectedMapBytes(bytes)

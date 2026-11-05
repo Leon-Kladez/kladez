@@ -31,6 +31,9 @@ export const mapRegionsEn = {
   'mapRegions.loadFailed': 'Could not load the list of countries.',
   'mapRegions.selectedCount': '{count} region selected|{count} regions selected',
   'mapRegions.installed': 'Already downloaded',
+  'mapRegions.detailLabel': 'Map detail',
+  'mapRegions.versionColumn': 'Map date',
+  'mapRegions.noOverview': 'Some regions have no overview version yet — the detailed map will be downloaded for them.',
   'maps.error.protomapsUnreachable': 'Could not reach the world map server. From Russia you may need a VPN for this country.',
   'maps.error.extractFailed': 'Could not cut the map. Please try again later.',
 }

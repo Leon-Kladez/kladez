@@ -58,7 +58,10 @@ export type PickerCountry = Country & { hasPackages: boolean }
 
 export function pickerCountries(countries: Country[], spec: MapsSpec | null): PickerCountry[] {
   const withPackages = new Set(
-    (spec?.collections ?? []).flatMap((col) => col.resources.flatMap((r) => [r.country, ...(r.countries ?? [])])).filter(Boolean)
+    (spec?.collections ?? [])
+      .flatMap((col) => col.resources.filter((r) => !r.planned))
+      .flatMap((r) => [r.country, ...(r.countries ?? [])])
+      .filter(Boolean)
   )
   return sortForPicker(countries).map((c) => ({ ...c, hasPackages: withPackages.has(c.code) }))
 }
@@ -74,7 +77,14 @@ export function explainExtractError(stderr: string): ExtractErrorKey {
   return network.test(stderr) ? 'maps.error.protomapsUnreachable' : 'maps.error.extractFailed'
 }
 
-export type SelectionSummary = { ids: string[]; bytes: number; enough: boolean; missingBytes: number }
+export type SelectionSummary = {
+  ids: string[]
+  bytes: number
+  enough: boolean
+  missingBytes: number
+  /** Выбрано «обзорно», но обзорного варианта нет или он не опубликован — берётся подробный. */
+  noOverview: string[]
+}
 
 /**
  * Что скачаем и хватит ли места. Для «обзорно» берётся `<id>-overview`, если он есть.
@@ -86,11 +96,17 @@ export function selectionSummary(
   all: SpecResource[],
   freeBytes: number | null
 ): SelectionSummary {
-  const byId = new Map(all.map((r) => [r.id, r]))
-  const chosen = selected.map((r) => (detail === 'overview' ? byId.get(`${r.id}-overview`) ?? r : r))
+  const byId = new Map(all.filter((r) => !r.planned).map((r) => [r.id, r]))
+  const noOverview: string[] = []
+  const chosen = selected.map((r) => {
+    if (detail !== 'overview') return r
+    const ov = byId.get(`${r.id}-overview`)
+    if (!ov) noOverview.push(r.id)
+    return ov ?? r
+  })
   const bytes = chosen.reduce((sum, r) => sum + Math.round((r.size_mb ?? 0) * 1_000_000), 0)
   const missingBytes = freeBytes === null ? 0 : Math.max(0, bytes - freeBytes)
-  return { ids: chosen.map((r) => r.id), bytes, enough: missingBytes === 0, missingBytes }
+  return { ids: chosen.map((r) => r.id), bytes, enough: missingBytes === 0, missingBytes, noOverview }
 }
 
 const MONTH_GENITIVE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' })
@@ -110,4 +126,13 @@ export function versionFromFilename(name: string): string | null {
   if (curated) return curated[1]
   const extract = /_(\d{4})(\d{2})\d{2}_z\d+\.pmtiles$/.exec(name)
   return extract ? `${extract[1]}-${extract[2]}` : null
+}
+
+/** Восстановить выбор окна по уже выбранным id (возврат к шагу первой настройки). */
+export function restoreSelection(ids: string[]): { selected: string[]; detail: 'full' | 'overview' } {
+  const overview = ids.length > 0 && ids.every((id) => id.endsWith('-overview'))
+  return {
+    selected: ids.map((id) => (id.endsWith('-overview') ? id.slice(0, -'-overview'.length) : id)),
+    detail: overview ? 'overview' : 'full',
+  }
 }

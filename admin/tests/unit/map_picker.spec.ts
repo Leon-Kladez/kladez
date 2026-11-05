@@ -11,6 +11,7 @@ import {
   selectionSummary,
   formatMapVersion,
   versionFromFilename,
+  restoreSelection,
 } from '../../app/utils/map_picker.js'
 import type { Country } from '../../types/maps.js'
 import type { MapsSpec, SpecResource } from '../../types/collections.js'
@@ -137,4 +138,25 @@ test('versionFromFilename', () => {
   assert.equal(versionFromFilename('ru-central_2026-11.pmtiles'), '2026-11')
   assert.equal(versionFromFilename('ru_20261104_z15.pmtiles'), '2026-11')
   assert.equal(versionFromFilename('world.pmtiles'), null)
+})
+
+test('pickerCountries: значок «готовые карты» только при опубликованных пакетах', () => {
+  const planned: MapsSpec = { spec_version: 'x', collections: [{ ...spec.collections[1], resources: [{ ...res('kz', 'KZ', 'full'), planned: true }] }] }
+  assert.deepEqual(pickerCountries([KZ], planned).map((x) => x.hasPackages), [false])
+})
+
+test('selectionSummary: неопубликованный обзорный вариант не подставляется', () => {
+  const full = [sized('ru-central', 1100)]
+  const all = [...full, sized('ru-central-overview', 275, { detail: 'overview', planned: true })]
+  const s = selectionSummary(full, 'overview', all, null)
+  assert.deepEqual(s.ids, ['ru-central'])
+  assert.deepEqual(s.noOverview, ['ru-central'])
+  assert.deepEqual(selectionSummary(full, 'overview', full, null).noOverview, ['ru-central'])
+  assert.deepEqual(selectionSummary(full, 'full', all, null).noOverview, [])
+})
+
+test('restoreSelection: возврат к шагу восстанавливает выбор и подробность', () => {
+  assert.deepEqual(restoreSelection([]), { selected: [], detail: 'full' })
+  assert.deepEqual(restoreSelection(['ru-central-overview', 'ru-volga-overview']), { selected: ['ru-central', 'ru-volga'], detail: 'overview' })
+  assert.deepEqual(restoreSelection(['ru-central']), { selected: ['ru-central'], detail: 'full' })
 })

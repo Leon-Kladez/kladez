@@ -254,12 +254,18 @@ export default function MapsManager(props: {
       <MapRegionPicker
         mode="modal"
         onCancel={closeAllModals}
-        onDownloadStart={() => {
+        onDownloadStart={(unavailable) => {
           invalidateDownloads()
           addNotification({
             type: 'success',
             message: t('mapRegions.queued'),
           })
+          if (unavailable.length > 0) {
+            addNotification({
+              type: 'info',
+              message: t('mapRegions.unavailable', { ids: unavailable.join(', ') }),
+            })
+          }
           closeAllModals()
         }}
       />,
@@ -395,7 +401,7 @@ export default function MapsManager(props: {
               { accessor: 'name', title: t('apps.col.name') },
               {
                 accessor: 'version',
-                title: '',
+                title: t('mapRegions.versionColumn'),
                 render: (record) => {
                   const version = versionFromFilename(record.name)
                   return <span className="text-text-muted font-normal">{version ? formatMapVersion(version) : ''}</span>

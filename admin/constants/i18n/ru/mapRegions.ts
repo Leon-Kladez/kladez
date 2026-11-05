@@ -32,6 +32,9 @@ export const mapRegionsRu: Record<keyof typeof mapRegionsEn, string> = {
   'mapRegions.loadFailed': 'Не удалось загрузить список стран.',
   'mapRegions.selectedCount': 'Выбран {count} регион|Выбрано {count} региона|Выбрано {count} регионов',
   'mapRegions.installed': 'Уже скачана',
+  'mapRegions.detailLabel': 'Подробность карты',
+  'mapRegions.versionColumn': 'Дата карты',
+  'mapRegions.noOverview': 'Для части регионов обзорной карты пока нет — для них скачается подробная.',
   'maps.error.protomapsUnreachable': 'Не удалось связаться с сервером мировой карты. Из России для этой страны может понадобиться VPN.',
   'maps.error.extractFailed': 'Не удалось собрать карту. Попробуйте позже.',
 }

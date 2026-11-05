@@ -13,7 +13,10 @@ type Props = {
   enabled: Set<string>
 }
 
-/** Схема федеральных округов России: щелчок по округу ставит или снимает отметку. Работает без сети. */
+/**
+ * Схема федеральных округов России: щелчок по округу ставит или снимает отметку. Работает без сети.
+ * Для экранных дикторов скрыта: тот же выбор есть в списке флажков под ней.
+ */
 export default function DistrictSchema({ selected, onToggle, titles, enabled }: Props) {
   const { data } = useQuery({
     queryKey: ['maps-ru-districts-schema'],
@@ -27,8 +30,7 @@ export default function DistrictSchema({ selected, onToggle, titles, enabled }: 
       <svg
         viewBox={`0 0 ${SCHEMA_WIDTH} ${SCHEMA_HEIGHT}`}
         className="w-full h-auto"
-        role="img"
-        aria-label={t('mapRegions.schemaTitle')}
+        aria-hidden="true"
       >
         {data.features.map((f, i) => {
           const id = f.properties.id
@@ -49,7 +51,7 @@ export default function DistrictSchema({ selected, onToggle, titles, enabled }: 
               strokeWidth={0.5}
               onClick={() => canPick && onToggle(id)}
             >
-              <title>{titles[id] ?? id}</title>
+              <title>{canPick ? titles[id] ?? id : `${titles[id] ?? id} — ${t('mapRegions.notPublished')}`}</title>
             </path>
           )
         })}
