@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react'
+import { KLADEZ_FEATURES } from '../../../constants/kladez'
 import SettingsLayout from '~/layouts/SettingsLayout'
 import StyledButton from '~/components/StyledButton'
 import StyledSectionHeader from '~/components/StyledSectionHeader'
@@ -457,6 +458,8 @@ export default function SystemUpdatePage(props: { system: Props }) {
           <AppAutoUpdateSection />
           <ContentAutoUpdateSection />
           <ContentUpdatesSection />
+          {/* Kladez: no e-mail list — the address would go to NOMAD's server */}
+          {KLADEZ_FEATURES.releaseNotesEmail && (
           <div className="bg-surface-primary rounded-lg border shadow-md overflow-hidden py-6 mt-12">
             <div className="flex flex-col md:flex-row justify-between items-center p-8 gap-y-8 md:gap-y-0 gap-x-8">
               <div>
@@ -492,6 +495,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
               </div>
             </div>
           </div>
+          )}
 
           {showLogs && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

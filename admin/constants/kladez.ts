@@ -21,3 +21,14 @@ export const STARTER_ZIM = {
     'https://download.kiwix.org/zim/vikidia/vikidia_ru_all_nopic_2026-09.zim',
   ],
 } as const
+
+/**
+ * Kladez: features of upstream NOMAD that send data to NOMAD's servers and are
+ * switched off in Kladez. The UI hides them; the server refuses them anyway.
+ */
+export const KLADEZ_FEATURES = {
+  /** E-mail subscription to NOMAD release notes. */
+  releaseNotesEmail: false,
+  /** Uploading benchmark results to NOMAD's shared leaderboard. */
+  benchmarkSharing: false,
+} as const

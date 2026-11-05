@@ -61,7 +61,9 @@ export class CreatorPackService {
    * that would 503. The public catalog still lists, but nothing is installable.
    */
   isConfigured(): boolean {
-    return !!env.get('CREATOR_PACKS_APP_KEY')
+    // Kladez: needs both a key and a Worker address; Kladez ships neither, so
+    // every Creator Packs surface (wizard step, settings, explorer) hides itself.
+    return !!env.get('CREATOR_PACKS_APP_KEY') && !!this.workerBase
   }
 
   /** Stable, per-version download URL. Not signed — the gate is the auth header. */

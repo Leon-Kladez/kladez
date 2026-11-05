@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import { KLADEZ_FEATURES } from '../../../constants/kladez'
 import { useState } from 'react'
 import SettingsLayout from '~/layouts/SettingsLayout'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -180,7 +181,9 @@ export default function BenchmarkPage(props: {
   })
 
   // Check if the latest result is a full benchmark with AI data (eligible for sharing)
+  // Kladez: results stay on this computer — no sharing to NOMAD's leaderboard.
   const canShareBenchmark =
+    KLADEZ_FEATURES.benchmarkSharing &&
     latestResult &&
     latestResult.benchmark_type === 'full' &&
     latestResult.ai_tokens_per_second !== null &&
@@ -470,7 +473,8 @@ export default function BenchmarkPage(props: {
                       )}
 
                       {/* Show message for partial benchmarks */}
-                      {latestResult &&
+                      {KLADEZ_FEATURES.benchmarkSharing &&
+                        latestResult &&
                         !latestResult.submitted_to_repository &&
                         !canShareBenchmark && (
                           <Alert
