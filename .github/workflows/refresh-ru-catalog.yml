@@ -1,0 +1,44 @@
+# Kladez: once a month, pick up new Kiwix builds for the Russian catalog.
+# Kiwix keeps only the two latest builds of each file, so pinned links rot
+# within months. This only reads the public Kiwix catalog and opens a PR with
+# new versions/sizes; a person reviews and merges it. No secrets besides the
+# default GITHUB_TOKEN, nothing about users is involved.
+name: Refresh Russian catalog
+
+on:
+  schedule:
+    - cron: '0 5 3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install admin dependencies
+        working-directory: admin
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Refresh collections-ru from Kiwix
+        working-directory: admin
+        run: npm run catalog:refresh
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: catalog/refresh-ru
+          commit-message: 'chore(catalog): свежие версии файлов Kiwix'
+          title: 'Каталог: свежие версии файлов Kiwix'
+          body: |
+            Автоматическое ежемесячное обновление `collections-ru/`: новые версии, адреса и размеры файлов из каталога Kiwix.
+            Тексты и состав наборов не менялись. Все новые ссылки проверены (HEAD 200).
+          add-paths: collections-ru/*.json

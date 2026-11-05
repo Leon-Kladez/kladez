@@ -112,6 +112,15 @@ documented(
     tags: ['easy-setup'],
   }
 )
+// Kladez: ready-made sets
+documented(router.get('/api/easy-setup/bundles', [EasySetupController, 'listBundles']), {
+  summary: 'List ready-made sets (Аптечка / Библиотека / Всё) with status',
+  tags: ['easy-setup'],
+})
+documented(router.post('/api/easy-setup/bundles/install', [EasySetupController, 'installBundle']), {
+  summary: 'Install a ready-made set: its Wikipedia option and category tiers',
+  tags: ['easy-setup'],
+})
 documented(router.post('/api/manifests/refresh', [EasySetupController, 'refreshManifests']), {
   summary: 'Refresh content manifests',
   tags: ['easy-setup'],
