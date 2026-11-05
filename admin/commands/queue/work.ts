@@ -12,6 +12,7 @@ import { CheckServiceUpdatesJob } from '#jobs/check_service_updates_job'
 import { AutoUpdateJob } from '#jobs/auto_update_job'
 import { AppAutoUpdateJob } from '#jobs/app_auto_update_job'
 import { ContentAutoUpdateJob } from '#jobs/content_auto_update_job'
+import { ResumeDownloadsJob } from '#jobs/resume_downloads_job'
 import { DownloadDrugDataJob } from '#jobs/download_drug_data_job'
 import { IngestDrugDataJob } from '#jobs/ingest_drug_data_job'
 import { stallOptionsForQueue, type StallOptions } from '../../app/utils/queue_stall_options.js'
@@ -150,6 +151,7 @@ export default class QueueWork extends BaseCommand {
     await AutoUpdateJob.schedule()
     await AppAutoUpdateJob.schedule()
     await ContentAutoUpdateJob.schedule()
+    await ResumeDownloadsJob.schedule() // Kladez: continue downloads when the internet returns
 
     // Safety net: log unhandled rejections instead of crashing the worker process.
     // Individual job errors are already caught by BullMQ; this catches anything that
@@ -183,6 +185,7 @@ export default class QueueWork extends BaseCommand {
     handlers.set(AutoUpdateJob.key, new AutoUpdateJob())
     handlers.set(AppAutoUpdateJob.key, new AppAutoUpdateJob())
     handlers.set(ContentAutoUpdateJob.key, new ContentAutoUpdateJob())
+    handlers.set(ResumeDownloadsJob.key, new ResumeDownloadsJob())
     handlers.set(DownloadDrugDataJob.key, new DownloadDrugDataJob())
     handlers.set(IngestDrugDataJob.key, new IngestDrugDataJob())
 
@@ -196,6 +199,7 @@ export default class QueueWork extends BaseCommand {
     queues.set(AutoUpdateJob.key, AutoUpdateJob.queue)
     queues.set(AppAutoUpdateJob.key, AppAutoUpdateJob.queue)
     queues.set(ContentAutoUpdateJob.key, ContentAutoUpdateJob.queue)
+    queues.set(ResumeDownloadsJob.key, ResumeDownloadsJob.queue)
     queues.set(DownloadDrugDataJob.key, DownloadDrugDataJob.queue)
     queues.set(IngestDrugDataJob.key, IngestDrugDataJob.queue)
 

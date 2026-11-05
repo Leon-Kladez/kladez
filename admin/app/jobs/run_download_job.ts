@@ -376,6 +376,12 @@ export class RunDownloadJob {
       if (error instanceof GatedContentAuthError) {
         throw new UnrecoverableError(error.message)
       }
+      // Kladez: 404 on the last address of the rotation means every mirror
+      // tried has dropped the file — stop retrying (and stop auto-resuming).
+      const addresses = new Set([url, ...(fallbackUrls ?? [])]).size
+      if (error?.response?.status === 404 && job.attemptsMade + 1 >= addresses) {
+        throw new UnrecoverableError(`all mirrors returned 404: ${url}`)
+      }
       throw error
     } finally {
       if (cancelPollInterval !== null) {
