@@ -100,3 +100,68 @@ export function pointInGeometry(pt, fc) {
     g.type === 'Polygon' ? inPolygon(pt, g.coordinates) : g.coordinates.some((p) => inPolygon(pt, p))
   )
 }
+
+// ---- Упрощение контуров и схема округов России (для маленькой карты в окне выбора) ----
+
+function perpDist([x, y], [x1, y1], [x2, y2]) {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len = Math.hypot(dx, dy)
+  if (len === 0) return Math.hypot(x - x1, y - y1)
+  return Math.abs(dy * x - dx * y + x2 * y1 - y2 * x1) / len
+}
+
+/** Дуглас — Пекер для незамкнутой линии. */
+function dp(points, tol) {
+  if (points.length < 3) return points
+  let idx = 0
+  let max = 0
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = perpDist(points[i], points[0], points.at(-1))
+    if (d > max) [max, idx] = [d, i]
+  }
+  if (max <= tol) return [points[0], points.at(-1)]
+  return [...dp(points.slice(0, idx + 1), tol).slice(0, -1), ...dp(points.slice(idx), tol)]
+}
+
+function simplifyRing(ring, tol) {
+  // Кольцо режем в самой дальней от начала точке, чтобы не потерять форму целиком.
+  let far = 0
+  let max = -1
+  for (let i = 1; i < ring.length - 1; i++) {
+    const d = Math.hypot(ring[i][0] - ring[0][0], ring[i][1] - ring[0][1])
+    if (d > max) [max, far] = [d, i]
+  }
+  const out = [...dp(ring.slice(0, far + 1), tol).slice(0, -1), ...dp(ring.slice(far), tol)]
+  return out.length >= 4 ? out : null
+}
+
+const round = (ring) => ring.map(([x, y]) => [Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000])
+
+/** Упрощает контур; кольца, выродившиеся в точку или отрезок, отбрасываются. */
+export function simplifyGeometry(geometry, tol) {
+  const poly = (rings) => {
+    const outer = simplifyRing(rings[0], tol)
+    if (!outer) return null
+    return [round(outer), ...rings.slice(1).map((r) => simplifyRing(r, tol)).filter(Boolean).map(round)]
+  }
+  if (geometry.type === 'Polygon') {
+    const p = poly(geometry.coordinates)
+    return p ? { type: 'Polygon', coordinates: p } : null
+  }
+  const ps = geometry.coordinates.map(poly).filter(Boolean)
+  return ps.length ? { type: 'MultiPolygon', coordinates: ps } : null
+}
+
+/** Схема федеральных округов: субъекты без запаса по краю, упрощённые, с properties.id округа. */
+export function districtSchema(regions, ne0, ne1, tol = 0.05) {
+  const features = []
+  for (const region of regions.filter((r) => r.group === 'russia')) {
+    const fc = regionGeometry(region, ne0, ne1, 0)
+    for (const f of fc.features) {
+      const geometry = simplifyGeometry(f.geometry, tol)
+      if (geometry) features.push({ type: 'Feature', properties: { id: region.id }, geometry })
+    }
+  }
+  return { type: 'FeatureCollection', features }
+}

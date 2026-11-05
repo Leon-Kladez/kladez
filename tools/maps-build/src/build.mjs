@@ -9,6 +9,8 @@
 //       С --upload каждый файл сразу уходит в релиз (gh) и удаляется с диска: у раннера мало места.
 //   node src/build.mjs merge --out <dir>
 //       → склеивает manifest-*.json в maps.json.
+//   node src/build.mjs districts --out <file.geojson> [--ne-dir <dir>]
+//       → упрощённая схема федеральных округов России для окна выбора.
 //
 // Нужны в PATH: pmtiles (или PMTILES_BIN), mktorrent, при --upload — gh, при --yandex-bucket — aws.
 import { spawn } from 'node:child_process'
@@ -18,7 +20,7 @@ import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { loadRegions, VARIANT_MAXZOOM } from './regions.mjs'
 import { fetchAdmin1, NE_ADMIN0_PATH } from './geodata.mjs'
-import { regionGeometry } from './geometry.mjs'
+import { districtSchema, regionGeometry } from './geometry.mjs'
 import { assertPartSize, extractArgs, fetchLatestBuild, parseDryRunBytes, runPmtiles } from './extract.mjs'
 import { assetUrl, buildMapsManifest, mergeManifests, mktorrentArgs, packageFilename, sha256File } from './package.mjs'
 
@@ -90,6 +92,12 @@ async function build(o) {
   writeFileSync(join(o.out, `manifest-${o.group}.json`), JSON.stringify(manifest, null, 1))
 }
 
+async function districts(o) {
+  const ne0 = JSON.parse(readFileSync(NE_ADMIN0_PATH, 'utf8'))
+  const ne1 = JSON.parse(readFileSync(await fetchAdmin1(o['ne-dir'] ?? 'out/geodata'), 'utf8'))
+  writeFileSync(o.out, JSON.stringify(districtSchema(loadRegions(REGIONS_PATH), ne0, ne1)) + '\n')
+}
+
 function merge(o) {
   const parts = readdirSync(o.out)
     .filter((f) => /^manifest-.+\.json$/.test(f))
@@ -110,6 +118,7 @@ const { positionals, values } = parseArgs({
     'upload': { type: 'boolean', default: false },
     'yandex-bucket': { type: 'string' },
     'yandex-prefix': { type: 'string' },
+    'ne-dir': { type: 'string' },
   },
 })
 
@@ -118,7 +127,8 @@ try {
   if (cmd === 'latest') console.log(JSON.stringify(await fetchLatestBuild()))
   else if (cmd === 'build') await build(values)
   else if (cmd === 'merge') merge(values)
-  else throw new Error('команда: latest | build | merge')
+  else if (cmd === 'districts') await districts(values)
+  else throw new Error('команда: latest | build | merge | districts')
 } catch (e) {
   console.error(`Ошибка: ${e.message}`)
   process.exit(1)
