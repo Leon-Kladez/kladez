@@ -1,0 +1,61 @@
+{
+  "spec_version": "2026-11-05",
+  "options": [
+    {
+      "id": "none",
+      "name": "Без Википедии",
+      "description": "Не скачивать Википедию",
+      "size_mb": 0,
+      "url": null,
+      "version": null
+    },
+    {
+      "id": "top-mini",
+      "name": "Самое нужное, кратко",
+      "description": "Самые читаемые статьи, только начало каждой. Для слабого компьютера или телефона.",
+      "size_mb": 221,
+      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_top_mini_2026-10.zim",
+      "version": "2026-10"
+    },
+    {
+      "id": "top-nopic",
+      "name": "Популярные статьи без картинок",
+      "description": "Самые читаемые статьи целиком, без картинок.",
+      "size_mb": 1263,
+      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_top_nopic_2026-10.zim",
+      "version": "2026-10"
+    },
+    {
+      "id": "top-maxi",
+      "name": "Популярные статьи с картинками",
+      "description": "Самые читаемые статьи целиком, с картинками. Входит в набор «Аптечка».",
+      "size_mb": 3434,
+      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_top_maxi_2026-10.zim",
+      "version": "2026-10"
+    },
+    {
+      "id": "all-mini",
+      "name": "Вся Википедия, кратко",
+      "description": "Все статьи, только начало каждой.",
+      "size_mb": 5703,
+      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_all_mini_2026-10.zim",
+      "version": "2026-10"
+    },
+    {
+      "id": "all-nopic",
+      "name": "Вся Википедия без картинок",
+      "description": "Все статьи целиком, без картинок. Входит в набор «Библиотека».",
+      "size_mb": 17577,
+      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_all_nopic_2026-10.zim",
+      "version": "2026-10"
+    },
+    {
+      "id": "all-maxi",
+      "name": "Вся Википедия с картинками",
+      "description": "Все статьи с картинками. Входит в набор «Всё».",
+      "size_mb": 35387,
+      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_all_maxi_2026-10.zim",
+      "version": "2026-10"
+    }
+  ]
+}

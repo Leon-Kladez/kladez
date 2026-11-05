@@ -1,0 +1,468 @@
+{
+  "spec_version": "2026-11-05",
+  "categories": [
+    {
+      "name": "Медицина и первая помощь",
+      "slug": "medicine",
+      "icon": "IconStethoscope",
+      "description": "Как помочь себе и близким: болезни, лекарства, первая помощь.",
+      "language": "ru",
+      "tiers": [
+        {
+          "name": "Основное",
+          "slug": "medicine-basic",
+          "description": "Медицинская Википедия с картинками. Начните с этого.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "wikipedia_ru_medicine_maxi",
+              "version": "2026-10",
+              "title": "Медицинская Википедия",
+              "description": "Болезни, лекарства, первая помощь, анатомия — статьи Википедии о медицине с картинками",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_medicine_maxi_2026-10.zim",
+              "size_mb": 306
+            }
+          ]
+        },
+        {
+          "name": "Подробно",
+          "slug": "medicine-full",
+          "description": "Плюс молекулярная биология. Включает «Основное».",
+          "includesTier": "medicine-basic",
+          "resources": [
+            {
+              "id": "wikipedia_ru_molcell_maxi",
+              "version": "2026-10",
+              "title": "Молекулярная биология",
+              "description": "Клетки, гены, белки, вирусы — для тех, кто хочет понять глубже",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_molcell_maxi_2026-10.zim",
+              "size_mb": 110
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Учёба",
+      "slug": "education",
+      "icon": "IconSchool",
+      "description": "Учебники, курсы и опыты для детей и взрослых.",
+      "language": "ru",
+      "tiers": [
+        {
+          "name": "Основное",
+          "slug": "education-basic",
+          "description": "Викиучебник, Викиверситет, опыты PhET, детская энциклопедия.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "wikibooks_ru_all_maxi",
+              "version": "2026-10",
+              "title": "Викиучебник",
+              "description": "Свободные учебники и пособия на русском",
+              "url": "https://lb.download.kiwix.org/zim/wikibooks/wikibooks_ru_all_maxi_2026-10.zim",
+              "size_mb": 125
+            },
+            {
+              "id": "wikiversity_ru_all_maxi",
+              "version": "2026-10",
+              "title": "Викиверситет",
+              "description": "Учебные курсы и материалы для самостоятельной учёбы",
+              "url": "https://lb.download.kiwix.org/zim/wikiversity/wikiversity_ru_all_maxi_2026-10.zim",
+              "size_mb": 40
+            },
+            {
+              "id": "phet_ru_all",
+              "version": "2026-08",
+              "title": "Опыты PhET",
+              "description": "Интерактивные опыты по физике, химии, математике (Университет Колорадо)",
+              "url": "https://lb.download.kiwix.org/zim/phet/phet_ru_all_2026-08.zim",
+              "size_mb": 72
+            },
+            {
+              "id": "vikidia_ru_all_maxi",
+              "version": "2026-09",
+              "title": "Викидия",
+              "description": "Энциклопедия для детей 8–13 лет",
+              "url": "https://lb.download.kiwix.org/zim/vikidia/vikidia_ru_all_maxi_2026-09.zim",
+              "size_mb": 5
+            }
+          ]
+        },
+        {
+          "name": "По предметам с картинками",
+          "slug": "education-subjects",
+          "description": "Плюс Википедия по школьным предметам с картинками. Включает «Основное». Не нужно, если скачана вся Википедия с картинками.",
+          "includesTier": "education-basic",
+          "resources": [
+            {
+              "id": "wikipedia_ru_mathematics_maxi",
+              "version": "2026-10",
+              "title": "Математика",
+              "description": "Статьи Википедии о математике с картинками и формулами",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_mathematics_maxi_2026-10.zim",
+              "size_mb": 299
+            },
+            {
+              "id": "wikipedia_ru_physics_maxi",
+              "version": "2026-10",
+              "title": "Физика",
+              "description": "Статьи Википедии о физике с картинками",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_physics_maxi_2026-10.zim",
+              "size_mb": 254
+            },
+            {
+              "id": "wikipedia_ru_chemistry_maxi",
+              "version": "2026-10",
+              "title": "Химия",
+              "description": "Статьи Википедии о химии с картинками",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_chemistry_maxi_2026-10.zim",
+              "size_mb": 73
+            },
+            {
+              "id": "wikipedia_ru_computer_maxi",
+              "version": "2026-10",
+              "title": "Информатика",
+              "description": "Статьи Википедии о компьютерах и программах с картинками",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_computer_maxi_2026-10.zim",
+              "size_mb": 232
+            },
+            {
+              "id": "wikipedia_ru_history_maxi",
+              "version": "2026-10",
+              "title": "История",
+              "description": "Статьи Википедии об истории с картинками",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_history_maxi_2026-10.zim",
+              "size_mb": 661
+            },
+            {
+              "id": "wikipedia_ru_geography_maxi",
+              "version": "2026-10",
+              "title": "География",
+              "description": "Статьи Википедии о странах, реках, горах с картинками и картами",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_ru_geography_maxi_2026-10.zim",
+              "size_mb": 367
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Книги и словари",
+      "slug": "books",
+      "icon": "IconBooks",
+      "description": "Классическая литература, словари, цитаты.",
+      "language": "ru",
+      "tiers": [
+        {
+          "name": "Основное",
+          "slug": "books-basic",
+          "description": "Русская классика Гутенберга, цитаты, вопросы о языке.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "gutenberg_ru_all",
+              "version": "2026-01",
+              "title": "Библиотека Гутенберга (русская)",
+              "description": "Русская классика, перешедшая в общественное достояние",
+              "url": "https://lb.download.kiwix.org/zim/gutenberg/gutenberg_ru_all_2026-01.zim",
+              "size_mb": 7
+            },
+            {
+              "id": "wikiquote_ru_all_nopic",
+              "version": "2026-10",
+              "title": "Викицитатник",
+              "description": "Цитаты, пословицы и поговорки",
+              "url": "https://lb.download.kiwix.org/zim/wikiquote/wikiquote_ru_all_nopic_2026-10.zim",
+              "size_mb": 142
+            },
+            {
+              "id": "rus.stackexchange.com_mul_all",
+              "version": "2026-10",
+              "title": "Вопросы о русском языке",
+              "description": "Ответы на вопросы о правописании и грамматике",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/rus.stackexchange.com_mul_all_2026-10.zim",
+              "size_mb": 122
+            }
+          ]
+        },
+        {
+          "name": "Со словарём",
+          "slug": "books-dictionary",
+          "description": "Плюс Викисловарь. Включает «Основное».",
+          "includesTier": "books-basic",
+          "resources": [
+            {
+              "id": "wiktionary_ru_all_nopic",
+              "version": "2026-09",
+              "title": "Викисловарь",
+              "description": "Толковый словарь: значения, ударения, склонения, переводы слов",
+              "url": "https://lb.download.kiwix.org/zim/wiktionary/wiktionary_ru_all_nopic_2026-09.zim",
+              "size_mb": 2047
+            }
+          ]
+        },
+        {
+          "name": "Вся библиотека",
+          "slug": "books-all",
+          "description": "Плюс Викитека — сотни тысяч текстов. Включает «Со словарём».",
+          "includesTier": "books-dictionary",
+          "resources": [
+            {
+              "id": "wikisource_ru_all_nopic",
+              "version": "2026-10",
+              "title": "Викитека",
+              "description": "Библиотека: классика, документы, старые книги — сотни тысяч текстов",
+              "url": "https://lb.download.kiwix.org/zim/wikisource/wikisource_ru_all_nopic_2026-10.zim",
+              "size_mb": 3640
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ремонт и техника",
+      "slug": "repair",
+      "icon": "IconTool",
+      "description": "Как починить телефон, технику, машину.",
+      "language": "ru",
+      "tiers": [
+        {
+          "name": "iFixit",
+          "slug": "repair-ifixit",
+          "description": "Инструкции iFixit на русском.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "ifixit_ru_all",
+              "version": "2026-03",
+              "title": "iFixit по-русски",
+              "description": "Пошаговые инструкции по ремонту телефонов, техники, машин",
+              "url": "https://lb.download.kiwix.org/zim/ifixit/ifixit_ru_all_2026-03.zim",
+              "size_mb": 3462
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Компьютеры",
+      "slug": "computing",
+      "icon": "IconCode",
+      "description": "Программирование и работа с компьютером.",
+      "language": "ru",
+      "tiers": [
+        {
+          "name": "Stack Overflow",
+          "slug": "computing-stackoverflow",
+          "description": "Вопросы и ответы программистов на русском.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "ru.stackoverflow.com_mul_all",
+              "version": "2026-10",
+              "title": "Stack Overflow на русском",
+              "description": "Вопросы и ответы программистов",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/ru.stackoverflow.com_mul_all_2026-10.zim",
+              "size_mb": 2567
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Страны и путешествия",
+      "slug": "travel",
+      "icon": "IconWorld",
+      "description": "Путеводитель по странам и городам.",
+      "language": "ru",
+      "tiers": [
+        {
+          "name": "Викигид",
+          "slug": "travel-wikivoyage",
+          "description": "Путеводитель с картинками.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "wikivoyage_ru_all_maxi",
+              "version": "2026-09",
+              "title": "Викигид",
+              "description": "Путеводитель по странам и городам",
+              "url": "https://lb.download.kiwix.org/zim/wikivoyage/wikivoyage_ru_all_maxi_2026-09.zim",
+              "size_mb": 550
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "На английском",
+      "slug": "english",
+      "icon": "IconBook",
+      "description": "Полезное, чего пока нет на русском: выживание, вода, огород, полевая медицина. Нужно знание английского или переводчик.",
+      "language": "en",
+      "tiers": [
+        {
+          "name": "Основное",
+          "slug": "english-basic",
+          "description": "Медицина в полевых условиях, вода, узлы, заготовка еды.",
+          "recommended": true,
+          "resources": [
+            {
+              "id": "zimgit-medicine_en",
+              "version": "2024-08",
+              "title": "Medical Library (англ.)",
+              "description": "Книги по полевой и экстренной медицине",
+              "url": "https://lb.download.kiwix.org/zim/other/zimgit-medicine_en_2024-08.zim",
+              "size_mb": 67
+            },
+            {
+              "id": "zimgit-water_en",
+              "version": "2024-08",
+              "title": "Water Treatment (англ.)",
+              "description": "Как очистить и обеззаразить воду",
+              "url": "https://lb.download.kiwix.org/zim/other/zimgit-water_en_2024-08.zim",
+              "size_mb": 20
+            },
+            {
+              "id": "zimgit-knots_en",
+              "version": "2024-08",
+              "title": "Library of Knots (англ.)",
+              "description": "Узлы: как вязать и для чего",
+              "url": "https://lb.download.kiwix.org/zim/other/zimgit-knots_en_2024-08.zim",
+              "size_mb": 27
+            },
+            {
+              "id": "zimgit-food-preparation_en",
+              "version": "2025-04",
+              "title": "Food for Preppers (англ.)",
+              "description": "Заготовка и хранение еды",
+              "url": "https://lb.download.kiwix.org/zim/other/zimgit-food-preparation_en_2025-04.zim",
+              "size_mb": 93
+            }
+          ]
+        },
+        {
+          "name": "Подробно",
+          "slug": "english-more",
+          "description": "Плюс жизнь после бедствия, простые технологии, огород, радио, медицина. Включает «Основное».",
+          "includesTier": "english-basic",
+          "resources": [
+            {
+              "id": "zimgit-post-disaster_en",
+              "version": "2024-05",
+              "title": "Post Disaster Library (англ.)",
+              "description": "Жизнь после бедствия: укрытие, вода, санитария, энергия",
+              "url": "https://lb.download.kiwix.org/zim/other/zimgit-post-disaster_en_2024-05.zim",
+              "size_mb": 615
+            },
+            {
+              "id": "appropedia_en_all_maxi",
+              "version": "2026-02",
+              "title": "Appropedia (англ.)",
+              "description": "Простые технологии своими руками: печи, фильтры, солнечная энергия",
+              "url": "https://lb.download.kiwix.org/zim/other/appropedia_en_all_maxi_2026-02.zim",
+              "size_mb": 555
+            },
+            {
+              "id": "wikipedia_en_medicine_nopic",
+              "version": "2026-10",
+              "title": "WikiMed (англ.)",
+              "description": "Медицинская Википедия на английском — намного полнее русской",
+              "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_nopic_2026-10.zim",
+              "size_mb": 999
+            },
+            {
+              "id": "outdoors.stackexchange.com_en_all",
+              "version": "2026-10",
+              "title": "Outdoors Q&A (англ.)",
+              "description": "Вопросы и ответы о походах и жизни на природе",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/outdoors.stackexchange.com_en_all_2026-10.zim",
+              "size_mb": 135
+            },
+            {
+              "id": "gardening.stackexchange.com_en_all",
+              "version": "2026-10",
+              "title": "Gardening Q&A (англ.)",
+              "description": "Огород и сад: вопросы и ответы",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/gardening.stackexchange.com_en_all_2026-10.zim",
+              "size_mb": 890
+            },
+            {
+              "id": "sustainability.stackexchange.com_en_all",
+              "version": "2026-10",
+              "title": "Sustainable Living Q&A (англ.)",
+              "description": "Экономное и самостоятельное хозяйство",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/sustainability.stackexchange.com_en_all_2026-10.zim",
+              "size_mb": 26
+            },
+            {
+              "id": "ham.stackexchange.com_en_all",
+              "version": "2026-10",
+              "title": "Amateur Radio Q&A (англ.)",
+              "description": "Любительская радиосвязь",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/ham.stackexchange.com_en_all_2026-10.zim",
+              "size_mb": 74
+            }
+          ]
+        },
+        {
+          "name": "Всё",
+          "slug": "english-all",
+          "description": "Плюс памятки, ремонт дома и машин, сельская жизнь, видео. Включает «Подробно».",
+          "includesTier": "english-more",
+          "resources": [
+            {
+              "id": "ready.gov_en_all",
+              "version": "2026-10",
+              "title": "Ready.gov (англ.)",
+              "description": "Памятки правительства США о подготовке к бедствиям",
+              "url": "https://lb.download.kiwix.org/zim/zimit/ready.gov_en_all_2026-10.zim",
+              "size_mb": 1968
+            },
+            {
+              "id": "mdwiki_en_all_maxi",
+              "version": "2025-11",
+              "title": "MDWiki (англ.)",
+              "description": "Медицинская энциклопедия WikiProjectMed",
+              "url": "https://lb.download.kiwix.org/zim/other/mdwiki_en_all_maxi_2025-11.zim",
+              "size_mb": 2196
+            },
+            {
+              "id": "diy.stackexchange.com_en_all",
+              "version": "2026-10",
+              "title": "Home Improvement Q&A (англ.)",
+              "description": "Ремонт дома: электрика, сантехника, отопление",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/diy.stackexchange.com_en_all_2026-10.zim",
+              "size_mb": 1989
+            },
+            {
+              "id": "mechanics.stackexchange.com_en_all",
+              "version": "2026-10",
+              "title": "Motor Vehicle Q&A (англ.)",
+              "description": "Ремонт машин",
+              "url": "https://lb.download.kiwix.org/zim/stack_exchange/mechanics.stackexchange.com_en_all_2026-10.zim",
+              "size_mb": 326
+            },
+            {
+              "id": "cd3wdproject.org_en_all",
+              "version": "2025-11",
+              "title": "CD3WD (англ.)",
+              "description": "Библиотека знаний для сельской жизни: земледелие, ремёсла, вода",
+              "url": "https://lb.download.kiwix.org/zim/zimit/cd3wdproject.org_en_all_2025-11.zim",
+              "size_mb": 554
+            },
+            {
+              "id": "lrnselfreliance_en_all",
+              "version": "2026-09",
+              "title": "Learning Self-Reliance (англ., видео)",
+              "description": "Видео о самостоятельной жизни на земле",
+              "url": "https://lb.download.kiwix.org/zim/videos/lrnselfreliance_en_all_2026-09.zim",
+              "size_mb": 3790
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

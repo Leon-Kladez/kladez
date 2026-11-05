@@ -1,0 +1,48 @@
+{
+  "spec_version": "2026-11-05",
+  "bundles": [
+    {
+      "id": "aptechka",
+      "name": "Аптечка",
+      "description": "Самое нужное на чёрный день: медицина, популярные статьи Википедии с картинками, учебники, английская полка о выживании.",
+      "wikipedia": "top-maxi",
+      "tiers": [
+        "medicine-basic",
+        "education-basic",
+        "books-basic",
+        "english-basic"
+      ],
+      "size_mb": 4460
+    },
+    {
+      "id": "biblioteka",
+      "name": "Библиотека",
+      "description": "Вся Википедия без картинок, учебники с картинками по предметам, словари и классическая литература.",
+      "wikipedia": "all-nopic",
+      "tiers": [
+        "medicine-full",
+        "education-subjects",
+        "books-all",
+        "travel-wikivoyage",
+        "english-basic"
+      ],
+      "size_mb": 26836
+    },
+    {
+      "id": "vsyo",
+      "name": "Всё",
+      "description": "Вся Википедия с картинками и всё остальное, что есть на русском, плюс полная английская полка.",
+      "wikipedia": "all-maxi",
+      "tiers": [
+        "medicine-full",
+        "education-basic",
+        "books-all",
+        "repair-ifixit",
+        "computing-stackoverflow",
+        "travel-wikivoyage",
+        "english-all"
+      ],
+      "size_mb": 62906
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "spec_version": "2026-11-05",
+  "kiwix": {
+    "catalog": "https://opds.library.kiwix.org/catalog/v2/entries",
+    "primary": "https://download.kiwix.org/zim/",
+    "mirrors": [
+      { "base": "https://ftp.fau.de/kiwix/zim/", "country": "de", "ru_check": "ok" },
+      { "base": "https://mirrors.dotsrc.org/kiwix/zim/", "country": "dk", "ru_check": "ok" },
+      { "base": "https://ftp.nluug.nl/pub/kiwix/zim/", "country": "nl", "ru_check": "ok" },
+      { "base": "https://mirror.accum.se/mirror/kiwix.org/zim/", "country": "se", "ru_check": "ok" },
+      { "base": "https://dumps.wikimedia.org/kiwix/zim/", "country": "us", "ru_check": "ok" },
+      { "base": "https://www.mirrorservice.org/sites/download.kiwix.org/zim/", "country": "gb", "ru_check": "unstable" },
+      { "base": "https://mirror-sites-fr.mblibrary.info/mirror-sites/download.kiwix.org/zim/", "country": "fr", "ru_check": "unstable" },
+      { "base": "https://mirror.download.kiwix.org/zim/", "country": "fr", "ru_check": "timeout" }
+    ]
+  },
+  "docker_registry_mirrors": [
+    { "url": "https://mirror.gcr.io", "source": "проверено сессией части 5 (установщик), 2026-11-05" },
+    { "url": "https://dh-mirror.gitverse.ru", "source": "проверено сессией части 5 (установщик), 2026-11-05" }
+  ]
+}
