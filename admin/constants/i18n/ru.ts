@@ -46,6 +46,14 @@ import { drugRu } from './ru/drug.js'
 import { safetyRu } from './ru/safety.js'
 import { uploadRu } from './ru/upload.js'
 import { homeRu } from './ru/home.js'
+import { easySetupRu } from './ru/easySetup.js'
+import { mapsPageRu } from './ru/mapsPage.js'
+import { zimManagerRu } from './ru/zimManager.js'
+import { appsRu } from './ru/apps.js'
+import { mapsManagerRu } from './ru/mapsManager.js'
+import { explorerRu } from './ru/explorer.js'
+import { depotRu } from './ru/depot.js'
+import { servicesRu } from './ru/services.js'
 
 export const ru: Record<MessageKey, string> = {
   ...testRu,
@@ -94,4 +102,12 @@ export const ru: Record<MessageKey, string> = {
   ...safetyRu,
   ...uploadRu,
   ...homeRu,
+  ...easySetupRu,
+  ...mapsPageRu,
+  ...zimManagerRu,
+  ...appsRu,
+  ...mapsManagerRu,
+  ...explorerRu,
+  ...depotRu,
+  ...servicesRu,
 }

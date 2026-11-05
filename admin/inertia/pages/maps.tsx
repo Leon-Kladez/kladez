@@ -7,6 +7,7 @@ import StyledButton from '~/components/StyledButton'
 import { IconArrowLeft, IconCrosshair, IconMapPin, IconPlaneTilt } from '@tabler/icons-react'
 import { FileEntry } from '../../types/files'
 import Alert from '~/components/Alert'
+import { t } from '../../constants/i18n'
 
 type MapCommand = {
   id: number
@@ -55,16 +56,16 @@ export default function Maps(props: {
   }
 
   const alertMessage = !props.maps.baseAssetsExist
-    ? 'The base map assets have not been installed. Please download them first to enable map functionality.'
+    ? t('mapsPage.noBaseAssets')
     : !props.maps.worldBasemapExists
-    ? 'The world base map has not been downloaded yet, so the map may appear blank outside downloaded regions. Connect this NOMAD to the internet and download it (~15 MB) from Map Settings.'
+    ? t('mapsPage.noWorldBasemap')
     : props.maps.regionFiles.length === 0
-    ? 'No map regions have been downloaded yet. Please download some regions to enable map functionality.'
+    ? t('mapsPage.noRegions')
     : null
 
   return (
     <MapsLayout>
-      <Head title="Maps" />
+      <Head title={t('home.tiles.maps.title')} />
 
       <div className="relative w-full h-screen overflow-hidden">
         {/* Navbar */}
@@ -75,13 +76,13 @@ export default function Maps(props: {
         >
           <Link href="/home" className="flex items-center">
             <IconArrowLeft className="mr-2" size={24} />
-            <p className="text-lg text-text-secondary">Back to Home</p>
+            <p className="text-lg text-text-secondary">{t('nav.backToHome')}</p>
           </Link>
 
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="lat,lng"
+              placeholder={t('mapsPage.coordsPlaceholder')}
               value={coordinateSearch}
               onChange={(event) => setCoordinateSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -94,7 +95,7 @@ export default function Maps(props: {
               type="button"
               onClick={() => handleCoordinateAction('fly')}
               className="rounded border border-border-default bg-surface-primary p-2 text-text-secondary hover:bg-surface-secondary"
-              title="Fly to coordinates"
+              title={t('mapsPage.flyTo')}
             >
               <IconPlaneTilt size={18}/>
             </button>
@@ -103,7 +104,7 @@ export default function Maps(props: {
               type="button"
               onClick={() => handleCoordinateAction('marker')}
               className="rounded border border-border-default bg-surface-primary p-2 text-text-secondary hover:bg-surface-secondary"
-              title="Add marker at coordinates"
+              title={t('mapsPage.addMarker')}
             >
               <IconMapPin size={18}/>
             </button>
@@ -116,14 +117,14 @@ export default function Maps(props: {
                   ? 'bg-desert-green text-white'
                   : 'bg-surface-primary text-text-secondary hover:bg-surface-secondary'
               }`}
-              title={showCoordinatesEnabled ? 'Hide coordinates' : 'Show coordinates'}
+              title={showCoordinatesEnabled ? t('mapsPage.hideCoords') : t('mapsPage.showCoords')}
             >
               <IconCrosshair size={18}/>
             </button>
 
             <Link href="/settings/maps" className="mr-4">
               <StyledButton variant="primary" icon="IconSettings">
-                Manage Map Regions
+                {t('mapsPage.manageRegions')}
               </StyledButton>
             </Link>
           </div>
@@ -143,7 +144,7 @@ export default function Maps(props: {
               className="w-full"
               buttonProps={{
                 variant: 'secondary',
-                children: 'Go to Map Settings',
+                children: t('mapsPage.goToSettings'),
                 icon: 'IconSettings',
                 onClick: () => router.visit('/settings/maps'),
               }}

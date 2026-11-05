@@ -33,4 +33,11 @@ export const commonEn = {
   'common.saving': 'Saving...',
   'common.internalError': 'An internal error occurred. Please try again or check the console for details.',
   'common.remove': 'Remove',
+  'common.open': 'Open',
+  'common.updating': 'Updating...',
+  'common.stop': 'Stop',
+  'common.start': 'Start',
+  'common.restart': 'Restart',
+  'common.back': 'Back',
+  'common.next': 'Next',
 } as const

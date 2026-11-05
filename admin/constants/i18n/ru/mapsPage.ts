@@ -1,0 +1,14 @@
+import type { mapsPageEn } from '../en/mapsPage.js'
+
+export const mapsPageRu: Record<keyof typeof mapsPageEn, string> = {
+  'mapsPage.coordsPlaceholder': 'широта,долгота',
+  'mapsPage.flyTo': 'Перейти к координатам',
+  'mapsPage.addMarker': 'Поставить метку по координатам',
+  'mapsPage.hideCoords': 'Скрыть координаты',
+  'mapsPage.showCoords': 'Показать координаты',
+  'mapsPage.manageRegions': 'Управление картами',
+  'mapsPage.noBaseAssets': 'Основа для карт ещё не установлена. Сначала скачайте её, чтобы карты заработали.',
+  'mapsPage.noWorldBasemap': 'Общая карта мира ещё не скачана, поэтому за пределами скачанных стран карта может быть пустой. Подключите компьютер к интернету и скачайте её (~15 МБ) в настройках карт.',
+  'mapsPage.noRegions': 'Карты стран ещё не скачаны. Скачайте хотя бы одну страну, чтобы пользоваться картами.',
+  'mapsPage.goToSettings': 'Перейти в настройки карт',
+}

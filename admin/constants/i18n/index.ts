@@ -106,6 +106,27 @@ export function countryName(code: string, fallback: string): string {
   }
 }
 
+let LANGUAGE_NAMES: Intl.DisplayNames | null | undefined
+
+/** Название языка по коду ISO 639 (eng → «Английский»); если код не распознан — запасное название. */
+export function languageName(code: string, fallback: string): string {
+  if (LANGUAGE_NAMES === undefined) {
+    try {
+      LANGUAGE_NAMES = new Intl.DisplayNames(['ru'], { type: 'language', fallback: 'none' })
+    } catch {
+      LANGUAGE_NAMES = null
+    }
+  }
+  if (!LANGUAGE_NAMES || !/^[a-z]{2,3}$/i.test(code)) return fallback
+  try {
+    const name = LANGUAGE_NAMES.of(code.toLowerCase())
+    if (!name || name.toLowerCase() === code.toLowerCase()) return fallback
+    return name.charAt(0).toUpperCase() + name.slice(1)
+  } catch {
+    return fallback
+  }
+}
+
 const NUMBER_FORMAT = new Intl.NumberFormat('ru-RU')
 
 /** «1 234 567», «1 234,5» — по-русски. */

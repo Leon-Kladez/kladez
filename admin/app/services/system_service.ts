@@ -34,6 +34,7 @@ import { invalidateAssistantNameCache } from '../../config/inertia.js'
 import { invalidateMinRelevanceCache } from '../utils/rag_relevance.js'
 import { invalidateResponseStyleCache } from '../utils/response_style.js'
 import { KiwixLibraryService } from '#services/kiwix_library_service'
+import { localizeService } from '../utils/service_i18n.js'
 
 @inject()
 export class SystemService {
@@ -330,7 +331,7 @@ export class SystemService {
 
     for (const service of services) {
       const status = statuses.find((s) => s.service_name === service.service_name)
-      toReturn.push({
+      toReturn.push(localizeService({
         id: service.id,
         service_name: service.service_name,
         friendly_name: service.friendly_name,
@@ -352,7 +353,7 @@ export class SystemService {
         is_link_tile: service.is_link_tile,
         link_color: service.link_color,
         category: service.category,
-      })
+      }))
     }
 
     return toReturn

@@ -19,4 +19,6 @@ export const creatorPacksRu: Record<keyof typeof creatorPacksEn, string> = {
   'creatorPacks.uninstallTitle': 'Удалить «{name}»?',
   'creatorPacks.uninstallTitleGeneric': 'Удалить набор автора',
   'creatorPacks.uninstallBody': 'Скачанные видео ({size}) будут удалены с этого компьютера. Набор можно установить снова в любое время.',
+  'creatorPacks.pageIntro': 'Устанавливайте подборки видео от авторов. Наборы скачиваются в фоне и смотрятся без интернета через Kiwix.',
+  'creatorPacks.unavailable': 'В этой сборке наборы авторов недоступны.',
 }

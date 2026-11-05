@@ -46,6 +46,14 @@ import { drugEn } from './en/drug.js'
 import { safetyEn } from './en/safety.js'
 import { uploadEn } from './en/upload.js'
 import { homeEn } from './en/home.js'
+import { easySetupEn } from './en/easySetup.js'
+import { mapsPageEn } from './en/mapsPage.js'
+import { zimManagerEn } from './en/zimManager.js'
+import { appsEn } from './en/apps.js'
+import { mapsManagerEn } from './en/mapsManager.js'
+import { explorerEn } from './en/explorer.js'
+import { depotEn } from './en/depot.js'
+import { servicesEn } from './en/services.js'
 
 export const en = {
   ...testEn,
@@ -94,6 +102,14 @@ export const en = {
   ...safetyEn,
   ...uploadEn,
   ...homeEn,
+  ...easySetupEn,
+  ...mapsPageEn,
+  ...zimManagerEn,
+  ...appsEn,
+  ...mapsManagerEn,
+  ...explorerEn,
+  ...depotEn,
+  ...servicesEn,
 } as const
 
 export type MessageKey = keyof typeof en

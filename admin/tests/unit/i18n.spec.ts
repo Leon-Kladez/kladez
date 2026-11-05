@@ -1,7 +1,7 @@
 import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { en, ru, t, tIn, formatBytes, formatDate, formatDateTime, formatNumber, countryName, LOCALE } from '../../constants/i18n/index.js'
+import { en, ru, t, tIn, formatBytes, formatDate, formatDateTime, formatNumber, countryName, languageName, LOCALE } from '../../constants/i18n/index.js'
 
 test('plural: русские формы', () => {
   assert.equal(t('test.files', { count: 1 }), '1 файл')
@@ -47,6 +47,12 @@ test('countryName: страна по коду ISO — по-русски', () => 
 
 test('countryName: неизвестный код — запасное название', () => {
   assert.equal(countryName('not-a-code', 'Atlantis'), 'Atlantis')
+})
+
+test('languageName: язык по коду — по-русски, с большой буквы', () => {
+  assert.equal(languageName('eng', 'English'), 'Английский')
+  assert.equal(languageName('ru', 'Russian'), 'Русский')
+  assert.equal(languageName('zzz-bad', 'Klingon'), 'Klingon')
 })
 
 test('LOCALE — русский', () => assert.equal(LOCALE, 'ru'))

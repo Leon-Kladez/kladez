@@ -34,4 +34,11 @@ export const commonRu: Record<keyof typeof commonEn, string> = {
   'common.saving': 'Сохраняем…',
   'common.internalError': 'Произошла внутренняя ошибка. Попробуйте ещё раз.',
   'common.remove': 'Убрать',
+  'common.open': 'Открыть',
+  'common.updating': 'Обновляется…',
+  'common.stop': 'Остановить',
+  'common.start': 'Запустить',
+  'common.restart': 'Перезапустить',
+  'common.back': 'Назад',
+  'common.next': 'Далее',
 }

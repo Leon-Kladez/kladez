@@ -1,0 +1,18 @@
+export const zimManagerEn = {
+  'zimManager.confirmDelete': 'Confirm Delete?',
+  'zimManager.deleteQuestion': 'Are you sure you want to delete {name}? This action cannot be undone.',
+  'zimManager.books': '{count} book|{count} books',
+  'zimManager.foundNew': 'Found {found} new. Library now has {total}.',
+  'zimManager.upToDate': 'Library is up to date ({total}).',
+  'zimManager.subtitle': 'Manage your stored content files.',
+  'zimManager.hideUploader': 'Hide Uploader',
+  'zimManager.upload': 'Upload ZIM File',
+  'zimManager.rescanHint': 'Rebuild the Kiwix library index from the files on disk. Use this after manually adding ZIM files outside of NOMAD.',
+  'zimManager.rescan': 'Rescan Library',
+  'zimManager.uploadHint': 'Upload a ZIM file from your browser. Files up to 20 GB are supported. For best results upload from the same machine or over a stable LAN connection. Larger files should be copied directly to the storage volume.',
+  'zimManager.uploadAdded': 'Upload complete. {books} added to the library.',
+  'zimManager.uploadUpToDate': 'Upload complete. Library is up to date.',
+  'zimManager.kiwixMissing': 'The Kiwix application is not installed. Please install it to view downloaded ZIM files',
+  'zimManager.summary': 'Summary',
+  'zimManager.actions': 'Actions',
+} as const

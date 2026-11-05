@@ -84,6 +84,14 @@ const DONE_DIRS: string[] = [
   'inertia/lib/tx.ts',
   'inertia/lib/uppy_ru.ts',
   'inertia/hooks',
+  // Задача 6 — Склад программ, Быстрая настройка, Карты, Библиотека
+  'inertia/pages/supply-depot.tsx',
+  'inertia/pages/easy-setup',
+  'inertia/pages/maps.tsx',
+  'inertia/pages/settings/zim',
+  'inertia/pages/settings/maps.tsx',
+  'inertia/pages/settings/apps.tsx',
+  'inertia/pages/settings/creator-packs.tsx',
 ]
 
 test('нет зашитого английского в готовых папках', () => {

@@ -100,6 +100,17 @@ function scanFile(file: string): Untranslated[] {
   // Строки внутри аргументов уведомлений — вместе с полями объектов вроде { message: '…' }.
   const reportDeep = (node: ts.Node) => {
     if (ts.isCallExpression(node) && calleeName(node.expression) === 't') return
+    // Сравнения вроде x === 'none' — это код, а не текст для человека.
+    if (
+      ts.isBinaryExpression(node) &&
+      [
+        ts.SyntaxKind.EqualsEqualsEqualsToken,
+        ts.SyntaxKind.ExclamationEqualsEqualsToken,
+        ts.SyntaxKind.EqualsEqualsToken,
+        ts.SyntaxKind.ExclamationEqualsToken,
+      ].includes(node.operatorToken.kind)
+    )
+      return
     if (
       ts.isStringLiteral(node) ||
       ts.isNoSubstitutionTemplateLiteral(node) ||

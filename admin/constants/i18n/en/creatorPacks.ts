@@ -17,4 +17,6 @@ export const creatorPacksEn = {
   'creatorPacks.uninstallTitle': 'Uninstall {name}?',
   'creatorPacks.uninstallTitleGeneric': 'Uninstall Creator Pack',
   'creatorPacks.uninstallBody': 'This removes the downloaded videos ({size}) from this NOMAD. You can reinstall the pack anytime.',
+  'creatorPacks.pageIntro': 'Install branded video collections from creators. Packs download in the background and play offline through Kiwix.',
+  'creatorPacks.unavailable': 'Creator Packs aren\'t available on this build.',
 } as const
