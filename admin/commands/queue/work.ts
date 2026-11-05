@@ -13,6 +13,7 @@ import { AutoUpdateJob } from '#jobs/auto_update_job'
 import { AppAutoUpdateJob } from '#jobs/app_auto_update_job'
 import { ContentAutoUpdateJob } from '#jobs/content_auto_update_job'
 import { ResumeDownloadsJob } from '#jobs/resume_downloads_job'
+import { isWikipediaMainFile } from '../../app/utils/wikipedia_file.js'
 import { DownloadDrugDataJob } from '#jobs/download_drug_data_job'
 import { IngestDrugDataJob } from '#jobs/ingest_drug_data_job'
 import { stallOptionsForQueue, type StallOptions } from '../../app/utils/queue_stall_options.js'
@@ -92,7 +93,7 @@ export default class QueueWork extends BaseCommand {
         this.logger.error(`[${queueName}] Job failed: ${job?.id}, Error: ${err.message}`)
 
         // If this was a Wikipedia download, mark it as failed in the DB
-        if (job?.data?.filetype === 'zim' && job?.data?.url?.includes('wikipedia_en_')) {
+        if (job?.data?.filetype === 'zim' && job?.data?.url && isWikipediaMainFile(job.data.url)) {
           try {
             const { DockerService } = await import('#services/docker_service')
             const { ZimService } = await import('#services/zim_service')

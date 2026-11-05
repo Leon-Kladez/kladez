@@ -12,11 +12,13 @@ const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 export function shouldResumeFailedDownload(info: {
   failedReason: string
   unrecoverable: boolean
+  /** The person chose something else, or another job already writes this file. */
+  superseded: boolean
   tmpBytes: number | null
   finishedOn: number
   now: number
 }): boolean {
-  if (info.unrecoverable) return false
+  if (info.unrecoverable || info.superseded) return false
   if (PERMANENT.some((re) => re.test(info.failedReason ?? ''))) return false
   return info.now - info.finishedOn < MAX_AGE_MS
 }

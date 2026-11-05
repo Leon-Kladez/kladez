@@ -15,7 +15,10 @@ const ALLOWED: Array<{ file: string; pattern: RegExp; why: string }> = [
   { file: 'app/services/docker_service.ts', pattern: /install\/wikipedia_en_100_mini/, why: 'starter ZIM — waits for the author to approve the Russian replacement' },
   { file: 'app/services/kiwix_catalog_service.ts', pattern: /project-nomad-maps/, why: 'maps — part 3' },
   { file: 'app/services/map_service.ts', pattern: /project-nomad-maps|project-nomad\//, why: 'maps — part 3' },
+  { file: 'constants/misc.ts', pattern: /api\.projectnomad\.us/, why: 'AI model list (plain GET, no user data) — needs a Kladez-hosted list; open question for the author' },
 ]
+
+const SCANNED = ['app', 'start', 'constants', 'commands']
 
 function* tsFiles(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -25,19 +28,34 @@ function* tsFiles(dir: string): Generator<string> {
   }
 }
 
-test('no string literal points at Project NOMAD servers', () => {
+function literalHits(forbidden: RegExp[], allowed: typeof ALLOWED): string[] {
   const root = process.cwd()
   const hits: string[] = []
-  for (const dir of ['app', 'start']) {
+  for (const dir of SCANNED) {
     for (const file of tsFiles(join(root, dir))) {
       const rel = relative(root, file).replace(/\\/g, '/')
       const src = readFileSync(file, 'utf-8')
       for (const lit of src.match(/(['"`])(?:\\.|(?!\1)[^\\\n])*\1/g) ?? []) {
-        if (!FORBIDDEN.some((re) => re.test(lit))) continue
-        if (ALLOWED.some((a) => a.file === rel && a.pattern.test(lit))) continue
+        if (!forbidden.some((re) => re.test(lit))) continue
+        if (allowed.some((a) => a.file === rel && a.pattern.test(lit))) continue
         hits.push(`${rel}: ${lit}`)
       }
     }
   }
-  assert.deepEqual(hits, [])
+  return hits
+}
+
+test('no string literal points at Project NOMAD servers', () => {
+  assert.deepEqual(literalHits(FORBIDDEN, ALLOWED), [])
+})
+
+// Kladez: the main Wikipedia is Russian; English-only checks silently skip it.
+test('no code checks for the English Wikipedia file prefix', () => {
+  assert.deepEqual(
+    literalHits(
+      [/wikipedia_en_'?$|^'wikipedia_en_'$/],
+      [{ file: 'app/services/docker_service.ts', pattern: /.*/, why: 'starter ZIM — awaiting author' }]
+    ),
+    []
+  )
 })

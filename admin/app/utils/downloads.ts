@@ -6,7 +6,8 @@ import axios from 'axios'
 import { Transform } from 'stream'
 import { deleteFileIfExists, ensureDirectoryExists, getFileStatsIfExists } from './fs.js'
 import { createWriteStream } from 'fs'
-import { rename } from 'fs/promises'
+import { isGatedAuthFailure } from './download_errors.js'
+import { finalizeTmp } from './finalize_download.js'
 import path from 'path'
 import logger from '@adonisjs/core/services/logger'
 
@@ -52,6 +53,7 @@ export async function doResumableDownload({
   forceNew = false,
   allowedMimeTypes,
   requestHeaders,
+  verifyTmp,
 }: DoResumableDownloadParams): Promise<string> {
   const dirname = path.dirname(filepath)
   await ensureDirectoryExists(dirname)
@@ -88,7 +90,7 @@ export async function doResumableDownload({
     // without the entitlement key baked in — i.e. not an official release.
     // failedReason is surfaced verbatim on the downloads UI.
     const status = error?.response?.status
-    if (status === 401 || status === 403) {
+    if (isGatedAuthFailure(status, requestHeaders)) {
       throw new GatedContentAuthError(
         'This content is hosted by Project NOMAD and requires an official release build. ' +
           `The download server rejected this install's credentials (HTTP ${status}).`
@@ -124,7 +126,8 @@ export async function doResumableDownload({
 
   // If .tmp file is already at correct size (complete but never renamed), just rename it
   if (startByte === totalBytes && totalBytes > 0 && !forceNew) {
-    await rename(tempPath, filepath)
+    // Kladez: a complete .tmp left by an interrupted run is verified too.
+    await finalizeTmp(tempPath, filepath, verifyTmp)
     if (onComplete) {
       await onComplete(url, filepath)
     }
@@ -258,8 +261,10 @@ export async function doResumableDownload({
     writeStream.on('finish', async () => {
       clearStallTimer()
       try {
-        // Atomically move the completed .tmp file to the final path
-        await rename(tempPath, filepath)
+        // Atomically move the completed .tmp file to the final path — Kladez:
+        // only after it passed verification (checksum), so Kiwix never sees it
+        // before. A failed check deletes the .tmp and rejects (job retries).
+        await finalizeTmp(tempPath, filepath, verifyTmp)
       } catch (renameError) {
         // A parallel job may have completed the same file first — treat as success
         // if the destination already exists at the expected size.

@@ -14,6 +14,11 @@ export type DoResumableDownloadParams = {
    * resumed downloads. Kept generic so any gated source can reuse it.
    */
   requestHeaders?: Record<string, string>
+  /**
+   * Kladez: checks the finished `.tmp` before it is renamed to the final file;
+   * throwing deletes the `.tmp` and fails the attempt.
+   */
+  verifyTmp?: (tmpPath: string) => Promise<void>
 }
 
 export type DoResumableDownloadWithRetryParams = DoResumableDownloadParams & {
@@ -39,7 +44,7 @@ export type DownloadProgressData = {
 
 export type RunDownloadJobParams = Omit<
   DoResumableDownloadParams,
-  'onProgress' | 'onComplete' | 'signal'
+  'onProgress' | 'onComplete' | 'signal' | 'verifyTmp'
 > & {
   filetype: string
   title?: string

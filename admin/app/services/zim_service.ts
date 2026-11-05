@@ -919,6 +919,12 @@ export class ZimService {
       downloadUrl = resolveZimDownload(asResource, latest).url
     }
 
+    // Kladez: a failed download of the previous choice must not be revived later
+    // by ResumeDownloadsJob; getActiveByUrl removes it when it is terminal.
+    if (currentSelection?.url && currentSelection.url !== downloadUrl) {
+      await RunDownloadJob.getActiveByUrl(currentSelection.url).catch(() => undefined)
+    }
+
     // Check if already downloading
     const existingJob = await RunDownloadJob.getActiveByUrl(downloadUrl)
     if (existingJob) {

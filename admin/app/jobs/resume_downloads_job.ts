@@ -4,6 +4,8 @@ import { QueueService } from '#services/queue_service'
 import { RunDownloadJob } from './run_download_job.js'
 import { shouldResumeFailedDownload } from '../utils/resume_decision.js'
 import { getFileStatsIfExists } from '../utils/fs.js'
+import { isWikipediaMainFile } from '../utils/wikipedia_file.js'
+import { basename } from 'node:path'
 import type { RunDownloadJobParams } from '../../types/downloads.js'
 
 /**
@@ -29,6 +31,14 @@ export class ResumeDownloadsJob {
     const queue = QueueService.getInstance().getQueue(RunDownloadJob.queue)
     const failed = await queue.getFailed()
     const now = Date.now()
+    // Files another job is already writing — reviving a second writer would
+    // append to the same .tmp.
+    const busyPaths = new Set(
+      (await queue.getJobs(['active', 'waiting', 'delayed'])).map((j) => (j.data as RunDownloadJobParams)?.filepath)
+    )
+    // The Wikipedia the person currently wants; an older failed choice stays dead.
+    const { default: WikipediaSelection } = await import('#models/wikipedia_selection')
+    const wantedWikipedia = (await WikipediaSelection.query().first())?.filename ?? null
     let resumed = 0
     for (const job of failed) {
       const data = job.data as RunDownloadJobParams
@@ -37,6 +47,9 @@ export class ResumeDownloadsJob {
         failedReason: job.failedReason ?? '',
         // UnrecoverableError fails a job before its attempts are used up.
         unrecoverable: job.attemptsMade < (job.opts.attempts ?? 1),
+        superseded:
+          busyPaths.has(data?.filepath) ||
+          (isWikipediaMainFile(data?.url ?? '') && basename(data?.filepath ?? '') !== wantedWikipedia),
         tmpBytes: tmp ? Number(tmp.size) : null,
         finishedOn: job.finishedOn ?? now,
         now,
