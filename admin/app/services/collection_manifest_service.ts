@@ -10,6 +10,8 @@ import { QueueService } from './queue_service.js'
 import { RunDownloadJob } from '#jobs/run_download_job'
 import { zimCategoriesSpecSchema, mapsSpecSchema, wikipediaSpecSchema, creatorPacksSpecSchema } from '#validators/curated_collections'
 import { isGatedResource } from '../utils/hosted_content.js'
+import { catalogUrl, mapsCatalogUrl } from '../utils/catalog_source.js'
+import env from '#start/env'
 import {
   ensureDirectoryExists,
   listDirectoryContents,
@@ -28,11 +30,13 @@ import type {
   SpecTier,
 } from '../../types/collections.js'
 
-const SPEC_URLS: Record<ManifestType, string> = {
-  zim_categories: 'https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/collections/kiwix-categories.json',
-  maps: 'https://github.com/Crosstalk-Solutions/project-nomad/raw/refs/heads/main/collections/maps.json',
-  wikipedia: 'https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/collections/wikipedia.json',
-  creator_packs: 'https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/collections/creator-packs.json',
+// Kladez: catalogs come from the Kladez repository (or KLADEZ_CATALOG_BASE_URL);
+// the maps list can be pointed elsewhere via KLADEZ_MAPS_CATALOG_URL (part 3).
+function specUrl(type: ManifestType): string {
+  if (type === 'maps') {
+    return mapsCatalogUrl(env.get('KLADEZ_MAPS_CATALOG_URL'), env.get('KLADEZ_CATALOG_BASE_URL'))
+  }
+  return catalogUrl(type, env.get('KLADEZ_CATALOG_BASE_URL'))
 }
 
 const VALIDATORS: Record<ManifestType, any> = {
@@ -49,7 +53,7 @@ export class CollectionManifestService {
 
   async fetchAndCacheSpec(type: ManifestType): Promise<boolean> {
     try {
-      const response = await axios.get(SPEC_URLS[type], { timeout: 15000 })
+      const response = await axios.get(specUrl(type), { timeout: 15000 })
 
       const validated = await vine.validate({
         schema: VALIDATORS[type],

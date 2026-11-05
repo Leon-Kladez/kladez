@@ -76,4 +76,15 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   CREATOR_PACKS_APP_KEY: Env.schema.string.optional(),
   CREATOR_PACKS_WORKER_BASE: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Kladez: catalog sources
+  |----------------------------------------------------------
+  | KLADEZ_CATALOG_BASE_URL overrides where the curated catalogs are read
+  | from (default: collections-ru/ in the Leon-Kladez/kladez repository).
+  | KLADEZ_MAPS_CATALOG_URL overrides the maps list alone (maps repository).
+  */
+  KLADEZ_CATALOG_BASE_URL: Env.schema.string.optional(),
+  KLADEZ_MAPS_CATALOG_URL: Env.schema.string.optional(),
 })

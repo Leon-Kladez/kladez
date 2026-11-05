@@ -40,11 +40,14 @@ import type { CategoryWithStatus } from '../../types/collections.js'
 import CustomLibrarySource from '#models/custom_library_source'
 import { assertNotPrivateUrl } from '#validators/common'
 import { resolveZimDownload } from '../utils/zim_download_resolution.js'
+import { catalogUrl } from '../utils/catalog_source.js'
+import env from '#start/env'
 import { getHostedContentHeaders } from '../utils/hosted_content_auth.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
 
 const ZIM_MIME_TYPES = ['application/x-zim', 'application/x-openzim', 'application/octet-stream']
-const WIKIPEDIA_OPTIONS_URL = 'https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/collections/wikipedia.json'
+// Kladez: Russian Wikipedia options from the Kladez catalog repository.
+const wikipediaOptionsUrl = () => catalogUrl('wikipedia', env.get('KLADEZ_CATALOG_BASE_URL'))
 
 @inject()
 export class ZimService {
@@ -802,7 +805,7 @@ export class ZimService {
 
   async getWikipediaOptions(): Promise<WikipediaOption[]> {
     try {
-      const response = await axios.get(WIKIPEDIA_OPTIONS_URL)
+      const response = await axios.get(wikipediaOptionsUrl())
       const data = response.data
 
       const validated = await vine.validate({
