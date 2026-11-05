@@ -116,6 +116,14 @@ class API {
     })()
   }
 
+  /** Кладезъ: скачать выбранные пакеты карт; unavailable — неизвестные или ещё не опубликованные. */
+  async downloadMapPackages(ids: string[]): Promise<{ filenames: string[]; unavailable: string[] }> {
+    return catchInternal(async () => {
+      const response = await this.client.post('/maps/download-packages', { ids })
+      return response.data
+    })()
+  }
+
   async downloadMapCollection(slug: string): Promise<{
     message: string
     slug: string

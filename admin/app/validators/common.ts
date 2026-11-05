@@ -160,6 +160,13 @@ export const downloadCollectionValidator = vine.compile(
   })
 )
 
+// Кладезъ: скачать выбранные пакеты карт по id из maps.json.
+export const downloadMapPackagesValidator = vine.compile(
+  vine.object({
+    ids: vine.array(vine.string().regex(/^[a-z0-9-]+$/)).minLength(1).maxLength(200),
+  })
+)
+
 export const downloadCategoryTierValidator = vine.compile(
   vine.object({
     categorySlug: vine.string().trim().minLength(1),
