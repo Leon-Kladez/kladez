@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# «Кладезъ»: start/stop inside the Kladez WSL distro. Called by Kladez.exe and the installer.
+#
+#   kladez-start --first-run --bundle <file> --library <dir> --admin-port N --kiwix-port N
+#   kladez-start --upgrade --bundle <file>
+#   kladez-start --keepalive        start everything, then keep the distro alive
+#   kladez-start --status           prints running/stopped, exit 0/1
+#   kladez-start --stop
+set -euo pipefail
+
+LIB_FILE="${KZ_LIB:-$(dirname "$(readlink -f "$0")")/kladez-lib.sh}"
+[ -f "$LIB_FILE" ] || LIB_FILE=/usr/local/lib/kladez/kladez-lib.sh
+# shellcheck source=kladez-lib.sh
+. "$LIB_FILE"
+
+usage() {
+    sed -n '4,9p' "$0" | sed 's/^# \{0,1\}//' >&2
+    exit 2
+}
+
+mode="" bundle="" library="" admin_port="" kiwix_port=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --first-run|--upgrade|--keepalive|--status|--stop) mode="${1#--}" ;;
+        --bundle) bundle="${2:-}"; shift ;;
+        --library) library="${2:-}"; shift ;;
+        --admin-port) admin_port="${2:-}"; shift ;;
+        --kiwix-port) kiwix_port="${2:-}"; shift ;;
+        *) usage ;;
+    esac
+    shift
+done
+
+start_stack() {
+    kz_make_rshared
+    kz_ensure_dockerd
+}
+
+render_and_up() {
+    kz_ensure_secrets
+    mkdir -p "$LIBRARY_DIR"
+    kz_write_gpu_marker
+    kz_render_compose "$KZ_HOME/compose.template.yaml" "$KZ_COMPOSE"
+    kz_up
+}
+
+case "$mode" in
+    first-run)
+        [ -n "$bundle" ] && [ -n "$library" ] && [ -n "$admin_port" ] && [ -n "$kiwix_port" ] || usage
+        kz_write_conf "$library" "$admin_port" "$kiwix_port"
+        kz_read_conf
+        start_stack
+        [ -f "$KZ_FIRST_RUN_MARKER" ] || kz_load_images "$bundle"
+        render_and_up
+        kz_wait_health "$ADMIN_PORT"
+        touch "$KZ_FIRST_RUN_MARKER"
+        kz_log "first run complete"
+        ;;
+    upgrade)
+        [ -n "$bundle" ] || usage
+        kz_read_conf
+        start_stack
+        kz_load_images "$bundle"
+        render_and_up
+        kz_log "upgrade complete"
+        ;;
+    keepalive)
+        kz_read_conf
+        start_stack
+        [ -f "$KZ_COMPOSE" ] && kz_up
+        kz_log "keepalive: running"
+        exec ${KZ_SLEEP_CMD:-sleep infinity}
+        ;;
+    status)
+        if kz_status; then echo running; else echo stopped; exit 1; fi
+        ;;
+    stop)
+        docker compose -p "$KZ_PROJECT" -f "$KZ_COMPOSE" stop
+        ;;
+    *) usage ;;
+esac

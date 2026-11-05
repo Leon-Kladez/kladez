@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+echo "zstd $*" >> "$STUB_LOG"
+for last; do :; done
+cat "$last"

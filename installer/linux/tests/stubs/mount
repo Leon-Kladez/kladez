@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo "mount $*" >> "$STUB_LOG"

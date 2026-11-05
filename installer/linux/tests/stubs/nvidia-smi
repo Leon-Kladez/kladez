@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo "nvidia-smi $*" >> "$STUB_LOG"
+exit "${STUB_NVIDIA_RC:-1}"

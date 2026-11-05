@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Test stub: records calls; behaviour driven by files in $STUB_STATE.
+echo "docker $*" >> "$STUB_LOG"
+case "$1" in
+  info) [ -f "$STUB_STATE/dockerd-running" ] ;;
+  pull) echo "stub: pull is forbidden" >&2; exit 1 ;;
+  load) cat > "$STUB_STATE/loaded-images"; echo "Loaded image: stub" ;;
+  inspect) [ -f "$STUB_STATE/admin-running" ] && echo true || { echo false; exit 0; } ;;
+  compose)
+    for a in "$@"; do [ "$a" = pull ] && { echo "stub: compose pull is forbidden" >&2; exit 1; }; done
+    exit 0 ;;
+  *) exit 0 ;;
+esac
