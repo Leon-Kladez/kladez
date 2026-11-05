@@ -1,0 +1,116 @@
+# «Кладезъ»: сборка установщика для Windows (план части 5, Задача 11).
+# Запуск вручную (Actions → «Установщик Кладезъ» → Run workflow) или тегом installer-v<версия>.
+name: Установщик Кладезъ
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия установщика (например, 0.1.0)'
+        required: true
+        default: '0.1.0'
+  push:
+    tags: ['installer-v*']
+
+permissions:
+  contents: read
+
+env:
+  VERSION: ${{ github.event.inputs.version || github.ref_name }}
+
+jobs:
+  linux:
+    name: Linux — дистрибутив и образы
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Версия без префикса
+        run: echo "VERSION=${VERSION#installer-v}" >> "$GITHUB_ENV"
+
+      - name: Тесты bash (bats)
+        run: |
+          sudo apt-get update && sudo apt-get install -y bats zstd
+          bats installer/linux/tests/update_watcher.bats installer/linux/tests/compose_template.bats \
+               installer/linux/tests/kladez_start.bats
+
+      - name: Образ admin из этого репозитория
+        run: |
+          docker build -t "ghcr.io/aiglobdata/kladez:${VERSION}" .
+          id=$(docker image inspect -f '{{.Id}}' "ghcr.io/aiglobdata/kladez:${VERSION}")
+          sed -i "s|^admin .*|admin ghcr.io/aiglobdata/kladez:${VERSION}@${id}|" installer/linux/images.lock
+          cat installer/linux/images.lock
+
+      - name: Набор образов
+        run: installer/linux/build-images-bundle.sh
+
+      - name: Дистрибутив Kladez
+        run: installer/linux/build-rootfs.sh
+
+      - name: Проверка дистрибутива и набора
+        run: bats installer/linux/tests/rootfs.bats
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-dist
+          path: |
+            dist/kladez-rootfs.tar.gz
+            dist/kladez-rootfs.sha256
+            dist/kladez-images.tar.zst
+            dist/kladez-images.sha256
+          retention-days: 3
+
+  windows:
+    name: Windows — тесты и установщик
+    needs: linux
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Версия без префикса
+        run: |
+          $v = "$env:VERSION" -replace '^installer-v', ''
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-dist
+          path: dist
+
+      - name: Тесты Pester
+        run: |
+          Install-Module Pester -Scope CurrentUser -MinimumVersion 5.5 -Force -SkipPublisherCheck
+          $r = Invoke-Pester installer/windows/tests -Output Detailed -PassThru
+          if ($r.FailedCount -gt 0) { exit 1 }
+
+      - name: Kladez.exe и его тесты
+        run: |
+          installer/windows/launcher/build-launcher.ps1 -Test
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          installer/windows/launcher/build-launcher.ps1
+
+      - name: Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Установщик и файл обновления
+        run: |
+          installer/build.ps1 -Version $env:VERSION -Download -UpdateLock
+          installer/build.ps1 -Version $env:VERSION -UpdateOnly
+          Get-Content installer/windows/vendor.lock
+          Get-ChildItem dist | Format-Table Name, Length
+
+      # Внимание: у бесплатного тарифа для приватного репозитория хранилище артефактов — 500 МБ,
+      # а установщик весит ~1,5–1,8 ГБ. Пока репозиторий приватный, этот шаг может упасть по квоте.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kladez-installer-${{ env.VERSION }}
+          path: |
+            dist/Кладезъ-*.exe
+            dist/SHA256SUMS.txt
+          retention-days: 3
+          compression-level: 0
