@@ -22,6 +22,7 @@ const kladezResource = {
   torrent: 'https://github.com/o/kladez-maps/releases/download/maps-2026-11/ru-central_2026-11.pmtiles.torrent',
   detail: 'full',
   country: 'RU',
+  countries: ['RU'],
   contents: 'Москва и Московская область',
 }
 

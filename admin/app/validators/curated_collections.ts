@@ -29,6 +29,8 @@ export const specResourceValidator = vine.object({
   detail: vine.enum(['full', 'overview']).optional(),
   // Страна пакета (ISO 3166-1 alpha-2) — по ней окно выбора находит пакеты страны.
   country: vine.string().regex(/^[A-Z]{2}$/).optional(),
+  // Все страны пакета (для пакетов на несколько стран, например «Израиль и Палестина»).
+  countries: vine.array(vine.string().regex(/^[A-Z]{2}$/)).optional(),
   // Что входит в пакет, по-русски (например, перечень субъектов округа).
   contents: vine.string().optional(),
 })

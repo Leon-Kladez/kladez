@@ -35,8 +35,9 @@ permissions:
 env:
   PMTILES_VERSION: 1.31.2
   PMTILES_SHA256: 3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f
-  # По расписанию — настоящая сборка; вручную — как выбрано.
-  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+  # По расписанию — настоящая сборка; вручную — как выбрано. Пока репозиторий карт
+  # не настроен (vars.KLADEZ_MAPS_REPO пуст), всегда только оценка размеров.
+  DRY_RUN: ${{ vars.KLADEZ_MAPS_REPO == '' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
 
 jobs:
   prepare:
@@ -56,9 +57,11 @@ jobs:
           echo "version=$(echo "$info" | jq -r .version)" >> "$GITHUB_OUTPUT"
           echo "tag=maps-$(echo "$info" | jq -r .version)" >> "$GITHUB_OUTPUT"
       - id: groups
+        env:
+          GROUPS_INPUT: ${{ inputs.groups }}
         run: |
-          g='${{ github.event_name == 'workflow_dispatch' && inputs.groups || 'russia,cis,europe,middle-east,north-america' }}'
-          echo "json=$(echo "$g" | jq -R -c 'split(",")')" >> "$GITHUB_OUTPUT"
+          g="${GROUPS_INPUT:-russia,cis,europe,middle-east,north-america}"
+          echo "json=$(echo "$g" | jq -R -c 'split(",") | map(gsub("^\s+|\s+$"; "")) | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
       - name: Создать релиз
         if: env.DRY_RUN != 'true'
         env:
@@ -66,7 +69,7 @@ jobs:
         run: |
           gh release view "${{ steps.latest.outputs.tag }}" --repo "${{ vars.KLADEZ_MAPS_REPO }}" >/dev/null 2>&1 ||
             gh release create "${{ steps.latest.outputs.tag }}" --repo "${{ vars.KLADEZ_MAPS_REPO }}" \
-              --title "Карты ${{ steps.latest.outputs.version }}" \
+              --title "Карты ${{ steps.latest.outputs.version }}" --latest=false \
               --notes "Карты для Кладезя. Данные © участники OpenStreetMap (ODbL), © Protomaps."
 
   build:
@@ -94,9 +97,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ru-central1
+          ONLY_INPUT: ${{ inputs.only }}
         run: |
           args=(build --group "${{ matrix.group }}" --out out --tag "${{ needs.prepare.outputs.tag }}" --repo "${{ vars.KLADEZ_MAPS_REPO }}")
-          [ -n "${{ inputs.only }}" ] && args+=(--only "${{ inputs.only }}")
+          [ -n "$ONLY_INPUT" ] && args+=(--only "$ONLY_INPUT")
           if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); else args+=(--upload); fi
           [ "${{ inputs.yandex }}" = "true" ] && [ "$DRY_RUN" != "true" ] && args+=(--yandex-bucket "${{ vars.YC_BUCKET }}")
           node src/build.mjs "${args[@]}"
@@ -110,7 +114,7 @@ jobs:
 
   publish:
     needs: [prepare, build]
-    if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+    if: vars.KLADEZ_MAPS_REPO != '' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -130,6 +134,7 @@ jobs:
           # Храним две последние версии карт.
           gh release list --repo "$REPO" --limit 100 --json tagName -q '.[].tagName' | grep '^maps-' | sort -r | tail -n +3 |
             while read -r old; do gh release delete "$old" --repo "$REPO" --yes --cleanup-tag; done
+          mkdir -p collections-ru
           cp parts/maps.json collections-ru/maps.json
       - name: PR со встроенной копией списка карт
         env:

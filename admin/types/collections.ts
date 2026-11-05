@@ -35,6 +35,8 @@ export type SpecResource = {
   detail?: 'full' | 'overview'
   /** Страна пакета, ISO 3166-1 alpha-2. */
   country?: string
+  /** Все страны пакета, ISO 3166-1 alpha-2 (включая country). */
+  countries?: string[]
   /** Что входит в пакет, по-русски. */
   contents?: string
 }

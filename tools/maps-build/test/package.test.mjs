@@ -43,6 +43,13 @@ test('buildMapsManifest: ресурсы, размеры, без зеркал', (
   assert.ok(!('mirrors' in full))
 })
 
+test('buildMapsManifest: все страны пакета в countries', () => {
+  const ip = { ...central, id: 'israel-palestine', group: 'middle-east', country: 'IL', contents: undefined, title: 'Израиль и Палестина', source: { countries: ['IL', 'PS'] } }
+  const spec = buildMapsManifest([{ ...results[0], region: ip, filename: 'israel-palestine_2026-11.pmtiles' }], opts)
+  assert.deepEqual(spec.collections[0].resources[0].countries, ['IL', 'PS'])
+  assert.deepEqual(buildMapsManifest(results, opts).collections[0].resources[0].countries, ['RU'])
+})
+
 test('buildMapsManifest: зеркало Яндекса, если задано', () => {
   const spec = buildMapsManifest(results, { ...opts, yandexBase: 'https://storage.yandexcloud.net/kladez-maps/2026-11/' })
   assert.deepEqual(spec.collections[0].resources[0].mirrors, [

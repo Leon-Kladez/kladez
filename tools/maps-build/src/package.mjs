@@ -63,6 +63,8 @@ export function buildMapsManifest(results, opts) {
       torrent: url + '.torrent',
       detail: r.variant,
       country: r.region.country,
+      // Все страны пакета: «Израиль и Палестина» находится и по IL, и по PS.
+      countries: [...new Set([r.region.country, ...(r.region.source.countries ?? [])])],
       ...(r.region.contents ? { contents: r.region.contents } : {}),
     }
     if (!byGroup.has(r.region.group)) byGroup.set(r.region.group, [])

@@ -44,15 +44,20 @@ export function matchesQuery(c: Country, q: string): boolean {
 export function packagesForCountry(spec: MapsSpec | null, code: CountryCode): SpecResource[] {
   if (!spec) return []
   return spec.collections.flatMap((col) =>
-    col.resources.filter((r) => r.country === code && (r.detail ?? 'full') === 'full')
+    col.resources.filter((r) => coversCountry(r, code) && (r.detail ?? 'full') === 'full')
   )
+}
+
+/** Пакет на несколько стран («Израиль и Палестина») находится по каждой из них. */
+function coversCountry(r: SpecResource, code: CountryCode): boolean {
+  return r.country === code || (r.countries ?? []).includes(code)
 }
 
 export type PickerCountry = Country & { hasPackages: boolean }
 
 export function pickerCountries(countries: Country[], spec: MapsSpec | null): PickerCountry[] {
   const withPackages = new Set(
-    (spec?.collections ?? []).flatMap((col) => col.resources.map((r) => r.country)).filter(Boolean)
+    (spec?.collections ?? []).flatMap((col) => col.resources.flatMap((r) => [r.country, ...(r.countries ?? [])])).filter(Boolean)
   )
   return sortForPicker(countries).map((c) => ({ ...c, hasPackages: withPackages.has(c.code) }))
 }
@@ -64,6 +69,6 @@ export type ExtractErrorKey = 'maps.error.protomapsUnreachable' | 'maps.error.ex
  * Protomaps (Cloudflare) недоступна — из России без VPN так и бывает.
  */
 export function explainExtractError(stderr: string): ExtractErrorKey {
-  const network = /timeout|timed out|deadline exceeded|connection reset|ECONN\w*|EAI_AGAIN|ENOTFOUND|no such host|TLS handshake|\b403\b|\b5\d\d\b/i
+  const network = /timeout|timed out|deadline exceeded|connection reset|ECONN\w*|EAI_AGAIN|ENOTFOUND|no such host|TLS handshake|(?:status|HTTP)[\s:]*(?:403|5\d\d)\b/i
   return network.test(stderr) ? 'maps.error.protomapsUnreachable' : 'maps.error.extractFailed'
 }

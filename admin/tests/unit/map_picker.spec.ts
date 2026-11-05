@@ -70,6 +70,13 @@ test('packagesForCountry: 8 округов России без обзорных 
   assert.deepEqual(packagesForCountry(null, 'RU'), [])
 })
 
+test('пакет на две страны находится по обеим (Израиль и Палестина)', () => {
+  const ip: SpecResource = { ...res('israel-palestine', 'IL', 'full'), countries: ['IL', 'PS'] }
+  const s2: MapsSpec = { spec_version: 'x', collections: [{ ...spec.collections[1], resources: [ip] }] }
+  assert.deepEqual(packagesForCountry(s2, 'PS').map((r) => r.id), ['israel-palestine'])
+  assert.deepEqual(pickerCountries([c('PS', 'Palestine', 'Палестина')], s2).map((x) => x.hasPackages), [true])
+})
+
 test('pickerCountries: отметка «есть готовые карты» берётся из списка карт', () => {
   const out = pickerCountries([DE, KZ, RU], spec)
   assert.deepEqual(out.map((x) => [x.code, x.hasPackages]), [['RU', true], ['KZ', true], ['DE', false]])
@@ -86,4 +93,7 @@ test('explainExtractError: недоступность мировой карты 
     assert.equal(explainExtractError(s), 'maps.error.protomapsUnreachable', s)
   }
   assert.equal(explainExtractError('no space left on device'), 'maps.error.extractFailed')
+  // Числа 500–599 в выводе pmtiles (плитки, размеры) — не ошибка сети.
+  assert.equal(explainExtractError('wrote 512 tiles, 550 directories; error: invalid region file'), 'maps.error.extractFailed')
+  assert.equal(explainExtractError('HTTP 503 Service Unavailable'), 'maps.error.protomapsUnreachable')
 })
