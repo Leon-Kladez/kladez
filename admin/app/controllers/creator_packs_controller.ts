@@ -3,6 +3,7 @@ import { DownloadService } from '#services/download_service'
 import { QueueService } from '#services/queue_service'
 import logger from '@adonisjs/core/services/logger'
 import type { HttpContext } from '@adonisjs/core/http'
+import { t } from '../../constants/i18n/index.js'
 
 export default class CreatorPacksController {
   private creatorPackService = new CreatorPackService()
@@ -21,7 +22,7 @@ export default class CreatorPacksController {
       return { configured, packs, downloads }
     } catch (error: any) {
       logger.error('[CreatorPacksController] Failed to list creator packs:', error?.message || error)
-      return response.status(500).send({ message: 'Failed to load creator packs' })
+      return response.status(500).send({ message: t('server.creatorPacksController.failedToLoadCreatorPacks') })
     }
   }
 
@@ -32,18 +33,18 @@ export default class CreatorPacksController {
     switch (result.code) {
       case 'dispatched':
         return response.status(202).send({
-          message: 'Pack download started',
+          message: t('server.creatorPacksController.packDownloadStarted'),
           filename: result.filename,
         })
       case 'already_installed':
-        return { message: 'Pack is already installed' }
+        return { message: t('server.creatorPacksController.packIsAlreadyInstalled') }
       case 'already_downloading':
-        return { message: 'Pack download is already in progress' }
+        return { message: t('server.creatorPacksController.packDownloadIsAlreadyIn') }
       case 'not_found':
-        return response.status(404).send({ message: `Creator pack not found: ${packId}` })
+        return response.status(404).send({ message: t('server.creatorPacksController.creatorPackNotFound', { packId }) })
       case 'not_configured':
         return response.status(503).send({
-          message: 'Creator Packs are not configured on this server',
+          message: t('server.creatorPacksController.creatorPacksAreNotConfigured'),
         })
     }
   }
@@ -54,9 +55,9 @@ export default class CreatorPacksController {
 
     switch (result.code) {
       case 'uninstalled':
-        return { message: 'Pack uninstalled', filename: result.filename }
+        return { message: t('server.creatorPacksController.packUninstalled'), filename: result.filename }
       case 'not_installed':
-        return response.status(404).send({ message: `Creator pack is not installed: ${packId}` })
+        return response.status(404).send({ message: t('server.creatorPacksController.creatorPackIsNotInstalled', { packId }) })
     }
   }
 }

@@ -4,6 +4,7 @@ import { createHash } from 'crypto'
 import { tmpdir } from 'os'
 import logger from '@adonisjs/core/services/logger'
 import type { Country, CountryCode, CountryGroup } from '../../types/maps.js'
+import { t } from '../../constants/i18n/index.js'
 
 interface NEFeature {
   type: 'Feature'
@@ -41,33 +42,33 @@ const GROUP_ORDER = [
 const GROUP_META: Record<string, { id: string; name: string; description: string }> = {
   'North America': {
     id: 'north-america',
-    name: 'North America',
-    description: 'All countries in North America and the Caribbean.',
+    name: t('continent.northAmerica'),
+    description: t('server.countriesService.allCountriesInNorthAmerica'),
   },
   'South America': {
     id: 'south-america',
-    name: 'South America',
-    description: 'All countries in South America.',
+    name: t('continent.southAmerica'),
+    description: t('server.countriesService.allCountriesInSouthAmerica'),
   },
   Europe: {
     id: 'europe',
-    name: 'Europe',
-    description: 'All countries in Europe.',
+    name: t('continent.europe'),
+    description: t('server.countriesService.allCountriesInEurope'),
   },
   Africa: {
     id: 'africa',
-    name: 'Africa',
-    description: 'All countries in Africa.',
+    name: t('continent.africa'),
+    description: t('server.countriesService.allCountriesInAfrica'),
   },
   Asia: {
     id: 'asia',
-    name: 'Asia',
-    description: 'All countries in Asia.',
+    name: t('continent.asia'),
+    description: t('server.countriesService.allCountriesInAsia'),
   },
   Oceania: {
     id: 'oceania',
-    name: 'Oceania',
-    description: 'Australia, New Zealand, and Pacific island nations.',
+    name: t('continent.oceania'),
+    description: t('server.countriesService.australiaNewZealandAndPacific'),
   },
 }
 

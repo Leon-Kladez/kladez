@@ -11,6 +11,8 @@ import { normalize } from 'path'
 import { deleteFileIfExists } from '../utils/fs.js'
 import transmit from '@adonisjs/transmit/services/main'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
+import { humanizeError } from '../utils/user_errors.js'
+import { t } from '../../constants/i18n/index.js'
 
 type FileJobState = 'waiting' | 'active' | 'delayed' | 'failed'
 type TaggedJob = { job: Job; state: FileJobState }
@@ -76,7 +78,7 @@ export class DownloadService {
         totalBytes: parsed.totalBytes || job.data.totalBytes || undefined,
         lastProgressTime: parsed.lastProgressTime,
         status: state,
-        failedReason: job.failedReason || undefined,
+        failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
       }
     })
 
@@ -93,7 +95,7 @@ export class DownloadService {
         totalBytes: parsed.totalBytes || job.data.estimatedBytes || undefined,
         lastProgressTime: parsed.lastProgressTime,
         status: state,
-        failedReason: job.failedReason || undefined,
+        failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
       }
     })
 
@@ -104,7 +106,7 @@ export class DownloadService {
       filepath: job.data.modelName || 'Unknown Model',
       filetype: 'model',
       status: (job.failedReason ? 'failed' : 'active') as 'active' | 'failed',
-      failedReason: job.failedReason || undefined,
+      failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
     }))
 
     // FDA drug dataset — DOWNLOAD phase only, collapsed to ONE card. The job fans
@@ -130,12 +132,12 @@ export class DownloadService {
             progress: parsed.percent,
             filepath: job.data.currentPartName || 'FDA Drug Reference',
             filetype: 'drug-data',
-            title: 'FDA Drug Reference',
+            title: t('server.downloadService.fdaDrugReference'),
             downloadedBytes: parsed.downloadedBytes,
             totalBytes: parsed.totalBytes,
             lastProgressTime: parsed.lastProgressTime,
             status: state,
-            failedReason: job.failedReason || undefined,
+            failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
           }
         })
       : []
@@ -188,7 +190,7 @@ export class DownloadService {
         if (queueName === DownloadModelJob.queue) {
           const modelName = job.data.modelName
           if (!modelName) {
-            return { success: false, message: 'Cannot retry: model name not found in job data' }
+            return { success: false, message: t('server.downloadService.cannotRetryModelNameNot') }
           }
           // Remove the old failed job first, then dispatch a fresh one. The
           // model jobId is a hash of the model name, so dispatching first meant
@@ -197,23 +199,23 @@ export class DownloadService {
           // Matches the file-download branch below.
           await job.remove().catch(() => {})
           await DownloadModelJob.dispatch({ modelName })
-          return { success: true, message: `Retrying download for model ${modelName}` }
+          return { success: true, message: t('server.downloadService.retryingDownloadForModel', { modelName }) }
         }
 
         // For file downloads (zim, map, etc.), re-dispatch with original params
         const params = job.data as RunDownloadJobParams
         if (!params.url || !params.filepath) {
-          return { success: false, message: 'Cannot retry: missing URL or filepath in job data' }
+          return { success: false, message: t('server.downloadService.cannotRetryMissingUrlOr') }
         }
 
         // Remove the old failed job, then dispatch a fresh one
         await job.remove().catch(() => {})
         await RunDownloadJob.dispatch(params)
-        return { success: true, message: `Retrying download for ${params.url}` }
+        return { success: true, message: t('server.downloadService.retryingDownloadFor', { url: params.url }) }
       }
     }
 
-    return { success: false, message: 'Failed job not found. It may have already been dismissed.' }
+    return { success: false, message: t('server.downloadService.failedJobNotFoundIt') }
   }
 
   async cancelJob(jobId: string): Promise<{ success: boolean; message: string }> {
@@ -246,7 +248,7 @@ export class DownloadService {
       return await this._cancelDrugDownloadJob()
     }
 
-    return { success: true, message: 'Job not found (may have already completed)' }
+    return { success: true, message: t('server.downloadService.jobNotFoundMayHave') }
   }
 
   /**
@@ -267,10 +269,10 @@ export class DownloadService {
     const queue = this.queueService.getQueue(DownloadDrugDataJob.queue)
     try {
       await queue.obliterate({ force: true })
-      return { success: true, message: 'Drug data download cancelled' }
+      return { success: true, message: t('server.downloadService.drugDataDownloadCancelled') }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      return { success: false, message: `Could not cancel drug data download: ${msg}` }
+      return { success: false, message: t('server.downloadService.couldNotCancelDrugData', { msg }) }
     }
   }
 
@@ -298,7 +300,7 @@ export class DownloadService {
       }
     }
 
-    return { success: true, message: 'Extract cancelled and partial file deleted' }
+    return { success: true, message: t('server.downloadService.extractCancelledAndPartialFile') }
   }
 
   /** Cancel a content download (zim, map, pmtiles, etc.) */
@@ -344,7 +346,7 @@ export class DownloadService {
       }
     }
 
-    return { success: true, message: 'Download cancelled and partial file deleted' }
+    return { success: true, message: t('server.downloadService.downloadCancelledAndPartialFile') }
   }
 
   /** Cancel an Ollama model download — mirrors the file cancel pattern but skips file cleanup */
@@ -382,7 +384,7 @@ export class DownloadService {
     // expected behavior is to retain partial blobs so a re-pull resumes from where it left
     // off. If the user wants to reclaim that space, they can re-pull and let it complete,
     // or delete the partially-downloaded model from the AI Settings page.
-    return { success: true, message: 'Model download cancelled' }
+    return { success: true, message: t('server.downloadService.modelDownloadCancelled') }
   }
 
   /** Wait up to 4s (250ms intervals) for the job to reach a terminal state */

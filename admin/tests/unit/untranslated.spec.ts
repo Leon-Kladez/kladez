@@ -100,6 +100,13 @@ const DONE_DIRS: string[] = [
   'inertia/pages/conditions',
   'inertia/pages/docs',
   'inertia/lib',
+  // Задача 8 — сообщения сервера (app/data — медицинские материалы, переводятся в части 2)
+  'app/controllers',
+  'app/services',
+  'app/jobs',
+  'app/validators',
+  'config/inertia.ts',
+  'constants/link_tile_colors.ts',
 ]
 
 test('нет зашитого английского в готовых папках', () => {

@@ -1,5 +1,7 @@
 import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { readdirSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 
 import { en, ru, t, tIn, formatBytes, formatDate, formatDateTime, formatNumber, formatDecimal, countryName, languageName, LOCALE } from '../../constants/i18n/index.js'
 
@@ -67,4 +69,18 @@ test('LOCALE — русский', () => assert.equal(LOCALE, 'ru'))
 test('в русском словаре нет пустых переводов, кроме тестового ключа', () => {
   const empty = Object.entries(ru).filter(([k, v]) => v === '' && k !== 'test.untranslated')
   assert.deepEqual(empty, [])
+})
+
+// На Windows node + ts-node падает (Segmentation fault) при загрузке одного .ts-файла крупнее ~30 КБ.
+// Поэтому словарь разбит на небольшие файлы по областям — этот тест не даёт им разрастись.
+test('файлы словаря небольшие (не больше 24 КБ)', () => {
+  const big: string[] = []
+  for (const lang of ['en', 'ru']) {
+    const dir = join(import.meta.dirname, '..', '..', 'constants', 'i18n', lang)
+    for (const name of readdirSync(dir)) {
+      const size = statSync(join(dir, name)).size
+      if (size > 24 * 1024) big.push(`${lang}/${name}: ${size}`)
+    }
+  }
+  assert.deepEqual(big, [])
 })

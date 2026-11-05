@@ -48,7 +48,7 @@ function makeCandidate(overrides: Partial<ContentCandidate> & { id?: string } = 
 test('no available update → not eligible (up to date)', () => {
   const v = svc.resourceEligibility(makeResource(), 72, NOW)
   assert.equal(v.eligible, false)
-  assert.match(v.reason, /up to date/i)
+  assert.match(v.reason, /Новейшая версия/)
 })
 
 test('newer version but still inside cool-off → not eligible', () => {
@@ -61,7 +61,7 @@ test('newer version but still inside cool-off → not eligible', () => {
     NOW
   )
   assert.equal(v.eligible, false)
-  assert.match(v.reason, /cool-off/i)
+  assert.match(v.reason, /выдержк/i)
 })
 
 test('newer version past cool-off → eligible', () => {
@@ -83,7 +83,7 @@ test('null first-seen → not eligible (cool-off pending)', () => {
     NOW
   )
   assert.equal(v.eligible, false)
-  assert.match(v.reason, /cool-off pending/i)
+  assert.match(v.reason, /Ждёт выдержки/)
 })
 
 test('self-disabled resource → not eligible regardless of cool-off', () => {

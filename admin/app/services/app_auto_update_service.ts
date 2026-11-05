@@ -14,6 +14,7 @@ import {
   type Blocker,
   type PreflightResult,
 } from '../utils/image_disk_preflight.js'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * Defaults shared with the core auto-update. App auto-updates intentionally reuse
@@ -125,12 +126,12 @@ export class AppAutoUpdateService {
    */
   appEligibility(service: Service, cooloffHours: number, now: DateTime): AppEligibility {
     if (!service.available_update_version) {
-      return { eligible: false, reason: 'Up to date', cooloffRemainingHours: null }
+      return { eligible: false, reason: t('server.appAutoUpdateService.upToDate'), cooloffRemainingHours: null }
     }
     if (service.auto_update_disabled_reason) {
       return {
         eligible: false,
-        reason: 'Auto-update disabled after repeated failures',
+        reason: t('server.appAutoUpdateService.autoUpdateDisabledAfterRepeated'),
         cooloffRemainingHours: null,
       }
     }
@@ -141,22 +142,22 @@ export class AppAutoUpdateService {
     if (currentTag === 'latest') {
       return {
         eligible: false,
-        reason: 'Pinned to :latest — cannot version-check',
+        reason: t('server.appAutoUpdateService.pinnedToLatestCannotVersion'),
         cooloffRemainingHours: null,
       }
     }
     if (parseMajorVersion(service.available_update_version) !== parseMajorVersion(currentTag)) {
       return {
         eligible: false,
-        reason: 'Major version — manual update required',
+        reason: t('server.appAutoUpdateService.majorVersionManualUpdateRequired'),
         cooloffRemainingHours: null,
       }
     }
     if (!isNewerVersion(service.available_update_version, currentTag)) {
-      return { eligible: false, reason: 'Up to date', cooloffRemainingHours: null }
+      return { eligible: false, reason: t('server.appAutoUpdateService.upToDate'), cooloffRemainingHours: null }
     }
     if (!service.available_update_first_seen_at) {
-      return { eligible: false, reason: 'Cool-off pending', cooloffRemainingHours: cooloffHours }
+      return { eligible: false, reason: t('server.appAutoUpdateService.coolOffPending'), cooloffRemainingHours: cooloffHours }
     }
 
     const ageHours = now.diff(service.available_update_first_seen_at, 'hours').hours
@@ -165,14 +166,14 @@ export class AppAutoUpdateService {
       const rounded = Math.ceil(remaining)
       return {
         eligible: false,
-        reason: `In cool-off (${rounded}h remaining)`,
+        reason: t('server.appAutoUpdateService.inCoolOffHRemaining', { rounded }),
         cooloffRemainingHours: rounded,
       }
     }
 
     return {
       eligible: true,
-      reason: `Eligible → ${service.available_update_version}`,
+      reason: t('server.appAutoUpdateService.eligible', { available_update_version: service.available_update_version }),
       cooloffRemainingHours: 0,
     }
   }
@@ -202,7 +203,7 @@ export class AppAutoUpdateService {
         (d) => !!d.status && ['waiting', 'active', 'delayed'].includes(d.status)
       )
       if (active.length > 0) {
-        blockers.push({ reason: `${active.length} download(s) in progress`, severity: 'skip' })
+        blockers.push({ reason: t('server.appAutoUpdateService.downloadSInProgress', { length: active.length }), severity: 'skip' })
       }
     } catch (error) {
       logger.warn(`[AppAutoUpdateService] Could not check active downloads: ${error.message}`)
@@ -217,7 +218,7 @@ export class AppAutoUpdateService {
 
     if (service.installation_status !== 'idle') {
       blockers.push({
-        reason: `App has an operation in progress (status: ${service.installation_status})`,
+        reason: t('server.appAutoUpdateService.appHasAnOperationIn', { installation_status: service.installation_status }),
         severity: 'skip',
       })
     }
@@ -245,7 +246,7 @@ export class AppAutoUpdateService {
     const now = DateTime.now()
 
     if (!config.enabled) {
-      return { updated: 0, reason: 'App auto-update is disabled' }
+      return { updated: 0, reason: t('server.appAutoUpdateService.appAutoUpdateIsDisabled') }
     }
     if (!isWithinWindow(config.windowStart, config.windowEnd, now)) {
       const reason = `Outside update window (${config.windowStart}-${config.windowEnd})`

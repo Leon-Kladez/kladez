@@ -20,7 +20,7 @@ const ALLOWED_WORDS = new Set(ALLOWLIST.flatMap((s) => s.split(/\s+/)))
 const TEXT_ATTR =
   /^(title|placeholder|alt|aria-label|label|description|text|message|subtitle|heading|tooltip|helperText|helpText|emptyMessage|.+Text|.+Label|.+Title|.+Message|.+Description)$/
 // Свойства объектов с видимым текстом (уведомления, пункты меню, модальные окна).
-const TEXT_PROP = /^(title|message|label|description|placeholder|confirmText|cancelText|subtitle|tooltip|ariaLabel|cta|helperText)$/
+const TEXT_PROP = /^(title|message|label|description|placeholder|confirmText|cancelText|subtitle|tooltip|ariaLabel|cta|helperText|error|reason)$/
 // Вызовы, строковые аргументы которых показываются человеку.
 const NOTIFY_CALL = /^(addNotification|showError|showSuccess|showNotification|toast\w*|alert|confirm)$/
 
@@ -31,6 +31,8 @@ export function looksEnglish(raw: string): boolean {
   if (!text || ALLOWED.has(text)) return false
   if (/[А-Яа-яЁё]/.test(text)) return false
   if (/^(https?:\/\/|\/|#|\.\/|mailto:)/.test(text)) return false
+  // Списки CSS-классов («border-desert-red text-desert-red») — не текст.
+  if (text.split(' ').every((tok) => /^[a-z0-9:/[\]._!-]+$/.test(tok) && tok.includes('-'))) return false
   const words = text.match(/[A-Za-z][A-Za-z0-9'’-]*/g) ?? []
   return words.some((w) => {
     const bare = w.replace(/['’-]+$/, '')

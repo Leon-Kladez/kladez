@@ -25,6 +25,7 @@ import {
   normalizeChatImages,
   type NormalizedChatImage,
 } from '../utils/chat_images.js'
+import { t } from '../../constants/i18n/index.js'
 
 const unknownVisionCompatibilityMessage = (model: string) =>
   `NOMAD cannot confirm that "${model}" accepts images, and this image request failed. Choose a model marked "Supports images", or remove the image and try again.`
@@ -80,13 +81,13 @@ export default class OllamaController {
       const rawPayload = request.input('payload')
       if (typeof rawPayload !== 'string') {
         await cleanupUploadedImages()
-        return response.status(422).send({ message: 'Multipart chat requests require a JSON payload.' })
+        return response.status(422).send({ message: t('server.ollamaController.multipartChatRequestsRequireA') })
       }
       try {
         multipartPayload = JSON.parse(rawPayload)
       } catch {
         await cleanupUploadedImages()
-        return response.status(422).send({ message: 'The multipart chat payload is not valid JSON.' })
+        return response.status(422).send({ message: t('server.ollamaController.theMultipartChatPayloadIs') })
       }
     }
     // A multipart chat carries the collection inside the JSON payload rather than
@@ -130,11 +131,11 @@ export default class OllamaController {
       normalizedImages.length > 0 &&
       !reqData.messages.some((message) => message.role === 'user')
     ) {
-      return response.status(422).send({ message: 'Images require a user message.' })
+      return response.status(422).send({ message: t('server.ollamaController.imagesRequireAUserMessage') })
     }
     if (normalizedImages.length > 0 && modelCapabilities.vision === 'unsupported') {
       return response.status(422).send({
-        message: `The selected model "${reqData.model}" does not support image input.`,
+        message: t('server.ollamaController.theSelectedModelDoesNot', { model: reqData.model }),
       })
     }
 
@@ -411,7 +412,7 @@ export default class OllamaController {
 
     const ollamaService = await Service.query().where('service_name', SERVICE_NAMES.OLLAMA).first()
     if (!ollamaService) {
-      return response.status(404).send({ success: false, message: 'Ollama service record not found.' })
+      return response.status(404).send({ success: false, message: t('server.ollamaController.ollamaServiceRecordNotFound') })
     }
 
     // Clear path: null or empty URL removes remote config. If a local nomad_ollama container
@@ -426,8 +427,8 @@ export default class OllamaController {
       return {
         success: true,
         message: hasLocalContainer
-          ? 'Remote Ollama cleared. Local Ollama container restored.'
-          : 'Remote Ollama configuration cleared.',
+          ? t('server.ollamaController.remoteOllamaClearedLocalOllama')
+          : t('server.ollamaController.remoteOllamaConfigurationCleared'),
       }
     }
 
@@ -436,7 +437,7 @@ export default class OllamaController {
     } catch (err) {
       return response.status(400).send({
         success: false,
-        message: err instanceof Error ? err.message : 'Invalid URL.',
+        message: err instanceof Error ? err.message : t('server.ollamaController.invalidUrl'),
       })
     }
 
@@ -448,13 +449,13 @@ export default class OllamaController {
       if (!testResponse.ok) {
         return response.status(400).send({
           success: false,
-          message: `Could not connect to ${remoteUrl} (HTTP ${testResponse.status}). Make sure the server is running and accessible. For Ollama, start it with OLLAMA_HOST=0.0.0.0.`,
+          message: t('server.ollamaController.couldNotConnectToHttp', { remoteUrl, status: testResponse.status }),
         })
       }
     } catch (error) {
       return response.status(400).send({
         success: false,
-        message: `Could not connect to ${remoteUrl}. Make sure the server is running and reachable. For Ollama, start it with OLLAMA_HOST=0.0.0.0.`,
+        message: t('server.ollamaController.couldNotConnectToMake', { remoteUrl }),
       })
     }
 
@@ -482,7 +483,7 @@ export default class OllamaController {
       logger.error('[OllamaController] Failed to discover Nomad docs:', error)
     })
 
-    return { success: true, message: 'Remote Ollama configured.' }
+    return { success: true, message: t('server.ollamaController.remoteOllamaConfigured') }
   }
 
   private async _stopLocalOllamaContainer(): Promise<void> {
@@ -534,7 +535,7 @@ export default class OllamaController {
     await this.ollamaService.deleteModel(reqData.model)
     return {
       success: true,
-      message: `Model deleted: ${reqData.model}`,
+      message: t('server.ollamaController.modelDeleted', { model: reqData.model }),
     }
   }
 
@@ -543,7 +544,7 @@ export default class OllamaController {
     await this.ollamaService.dispatchModelDownload(reqData.model)
     return {
       success: true,
-      message: `Download job dispatched for model: ${reqData.model}`,
+      message: t('server.ollamaController.downloadJobDispatchedForModel', { model: reqData.model }),
     }
   }
 

@@ -11,6 +11,7 @@ import { OllamaService } from '#services/ollama_service'
 import { EmbedFileJob } from './embed_file_job.js'
 import { basename, join, resolve, sep } from 'node:path'
 import { ZIM_STORAGE_PATH } from '../utils/fs.js'
+import { t } from '../../constants/i18n/index.js'
 
 /** Maps live under `<cwd>/storage/maps/pmtiles`; no shared constant exists. */
 const MAP_STORAGE_PATH = '/storage/maps'
@@ -379,7 +380,7 @@ export class RunDownloadJob {
       return {
         job,
         created: true,
-        message: `Dispatched download job for URL ${params.url}`,
+        message: t('server.runDownloadJob.dispatchedDownloadJobForUrl', { url: params.url }),
       }
     } catch (error) {
       if (error.message.includes('job already exists')) {
@@ -387,7 +388,7 @@ export class RunDownloadJob {
         return {
           job: existing,
           created: false,
-          message: `Job already exists for URL ${params.url}`,
+          message: t('server.runDownloadJob.jobAlreadyExistsForUrl', { url: params.url }),
         }
       }
       throw error

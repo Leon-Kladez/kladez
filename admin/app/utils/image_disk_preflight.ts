@@ -1,6 +1,7 @@
 import logger from '@adonisjs/core/services/logger'
 import type { ContainerRegistryService } from '#services/container_registry_service'
 import type { SystemService } from '#services/system_service'
+import { insufficientDiskMessage } from './user_errors.js'
 
 /**
  * Shared pre-flight primitives for update flows (core app + installed apps).
@@ -34,9 +35,6 @@ export async function getFreeBytes(systemService: SystemService): Promise<number
   return Math.max(...info.fsSize.map((f) => f.available))
 }
 
-function gib(bytes: number): string {
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GiB`
-}
 
 /**
  * Returns a `failure` disk blocker if free space is insufficient for the given
@@ -71,7 +69,7 @@ export async function checkImageDiskSpace(params: {
 
     if (free < required) {
       return {
-        reason: `Insufficient disk space: ${gib(free)} free, ${gib(required)} required`,
+        reason: insufficientDiskMessage(free, required),
         severity: 'failure',
       }
     }

@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from 'fs'
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import KVStore from '#models/kv_store'
+import { t } from '../../constants/i18n/index.js'
 
 interface UpdateStatus {
   stage: 'idle' | 'starting' | 'pulling' | 'pulled' | 'recreating' | 'complete' | 'error'
@@ -35,7 +36,7 @@ export class SystemUpdateService {
       if (currentStatus && !['idle', 'complete', 'error'].includes(currentStatus.stage)) {
         return {
           success: false,
-          message: `Update already in progress (stage: ${currentStatus.stage})`,
+          message: t('server.systemUpdateService.updateAlreadyInProgressStage', { stage: currentStatus.stage }),
         }
       }
 
@@ -58,13 +59,13 @@ export class SystemUpdateService {
 
       return {
         success: true,
-        message: 'System update initiated. The admin container will restart during the process.',
+        message: t('server.systemUpdateService.systemUpdateInitiatedTheAdmin'),
       }
     } catch (error) {
       logger.error({ err: error }, '[SystemUpdateService] Failed to request system update')
       return {
         success: false,
-        message: 'Failed to request system update. Check server logs for details.',
+        message: t('server.systemUpdateService.failedToRequestSystemUpdate'),
       }
     }
   }
@@ -75,7 +76,7 @@ export class SystemUpdateService {
         return {
           stage: 'idle',
           progress: 0,
-          message: 'No update in progress',
+          message: t('server.systemUpdateService.noUpdateInProgress'),
           timestamp: new Date().toISOString(),
         }
       }

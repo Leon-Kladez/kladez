@@ -15,4 +15,10 @@ export const linkTileEn = {
   'linkTile.icon': 'Icon',
   'linkTile.color': 'Color',
   'linkTile.colorHint': 'Links stay outlined rather than filled whichever color you pick, so they are distinguishable from apps NOMAD manages.',
+  'linkTile.colors.green': 'Green',
+  'linkTile.colors.olive': 'Olive',
+  'linkTile.colors.orange': 'Orange',
+  'linkTile.colors.red': 'Red',
+  'linkTile.colors.sand': 'Sand',
+  'linkTile.colors.stone': 'Stone',
 } as const

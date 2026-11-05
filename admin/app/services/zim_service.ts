@@ -42,6 +42,7 @@ import { assertNotPrivateUrl } from '#validators/common'
 import { resolveZimDownload } from '../utils/zim_download_resolution.js'
 import { getHostedContentHeaders } from '../utils/hosted_content_auth.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
+import { t } from '../../constants/i18n/index.js'
 
 const ZIM_MIME_TYPES = ['application/x-zim', 'application/x-openzim', 'application/octet-stream']
 const WIKIPEDIA_OPTIONS_URL = 'https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/collections/wikipedia.json'
@@ -851,7 +852,7 @@ export class ZimService {
 
     // If same as currently installed, no action needed
     if (currentSelection?.option_id === optionId && currentSelection.status === 'installed') {
-      return { success: true, message: 'Already installed' }
+      return { success: true, message: t('server.zimService.alreadyInstalled') }
     }
 
     // Handle "none" option - delete current Wikipedia file and update DB
@@ -889,7 +890,7 @@ export class ZimService {
           logger.error(`[ZimService] Failed to restart Kiwix after Wikipedia removal:`, error)
         })
 
-      return { success: true, message: 'Wikipedia removed' }
+      return { success: true, message: t('server.zimService.wikipediaRemoved') }
     }
 
     // Start download for the new Wikipedia option
@@ -900,7 +901,7 @@ export class ZimService {
     // Check if already downloading
     const existingJob = await RunDownloadJob.getActiveByUrl(selectedOption.url)
     if (existingJob) {
-      return { success: false, message: 'Download already in progress' }
+      return { success: false, message: t('server.zimService.downloadAlreadyInProgress') }
     }
 
     // Extract filename from URL
@@ -955,7 +956,7 @@ export class ZimService {
     return {
       success: true,
       jobId: result.job.id,
-      message: 'Download started',
+      message: t('server.zimService.downloadStarted'),
     }
   }
 

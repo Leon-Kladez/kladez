@@ -71,6 +71,47 @@ import { drugRefEn } from './en/drugRef.js'
 import { drugShowEn } from './en/drugShow.js'
 import { compareEn } from './en/compare.js'
 import { conditionsEn } from './en/conditions.js'
+import { serverErrorEn } from './en/serverError.js'
+import { serverBenchmarkControllerEn } from './en/serverBenchmarkController.js'
+import { serverChatsControllerEn } from './en/serverChatsController.js'
+import { serverConditionsControllerEn } from './en/serverConditionsController.js'
+import { serverCreatorPacksControllerEn } from './en/serverCreatorPacksController.js'
+import { serverDrugReferenceControllerEn } from './en/serverDrugReferenceController.js'
+import { serverMapsControllerEn } from './en/serverMapsController.js'
+import { serverNomadMdControllerEn } from './en/serverNomadMdController.js'
+import { serverOllamaControllerEn } from './en/serverOllamaController.js'
+import { serverRagControllerEn } from './en/serverRagController.js'
+import { serverSettingsControllerEn } from './en/serverSettingsController.js'
+import { serverSystemControllerEn } from './en/serverSystemController.js'
+import { serverZimControllerEn } from './en/serverZimController.js'
+import { serverAppAutoUpdateServiceEn } from './en/serverAppAutoUpdateService.js'
+import { serverAutoUpdateServiceEn } from './en/serverAutoUpdateService.js'
+import { serverBenchmarkServiceEn } from './en/serverBenchmarkService.js'
+import { serverChatServiceEn } from './en/serverChatService.js'
+import { serverCollectionUpdateServiceEn } from './en/serverCollectionUpdateService.js'
+import { serverContentAutoUpdateServiceEn } from './en/serverContentAutoUpdateService.js'
+import { serverCountriesServiceEn } from './en/serverCountriesService.js'
+import { serverDockerServiceEn } from './en/serverDockerService.js'
+import { serverDownloadServiceEn } from './en/serverDownloadService.js'
+import { serverDrugReferenceServiceEn } from './en/serverDrugReferenceService.js'
+import { serverMapServiceEn } from './en/serverMapService.js'
+import { serverOllamaServiceEn } from './en/serverOllamaService.js'
+import { serverRagServiceEn } from './en/serverRagService.js'
+import { serverSystemServiceEn } from './en/serverSystemService.js'
+import { serverSystemUpdateServiceEn } from './en/serverSystemUpdateService.js'
+import { serverZimExtractionServiceEn } from './en/serverZimExtractionService.js'
+import { serverZimServiceEn } from './en/serverZimService.js'
+import { serverDownloadDrugDataJobEn } from './en/serverDownloadDrugDataJob.js'
+import { serverDownloadModelJobEn } from './en/serverDownloadModelJob.js'
+import { serverEmbedFileJobEn } from './en/serverEmbedFileJob.js'
+import { serverIngestDrugDataJobEn } from './en/serverIngestDrugDataJob.js'
+import { serverRunBenchmarkJobEn } from './en/serverRunBenchmarkJob.js'
+import { serverRunDownloadJobEn } from './en/serverRunDownloadJob.js'
+import { serverRunExtractPmtilesJobEn } from './en/serverRunExtractPmtilesJob.js'
+import { serverBenchmarkStageEn } from './en/serverBenchmarkStage.js'
+import { serverBenchmarkMsgEn } from './en/serverBenchmarkMsg.js'
+import { serverPreflightEn } from './en/serverPreflight.js'
+import { serverCustomAppGuardEn } from './en/serverCustomAppGuard.js'
 
 export const en = {
   ...testEn,
@@ -144,6 +185,47 @@ export const en = {
   ...drugShowEn,
   ...compareEn,
   ...conditionsEn,
+  ...serverErrorEn,
+  ...serverBenchmarkControllerEn,
+  ...serverChatsControllerEn,
+  ...serverConditionsControllerEn,
+  ...serverCreatorPacksControllerEn,
+  ...serverDrugReferenceControllerEn,
+  ...serverMapsControllerEn,
+  ...serverNomadMdControllerEn,
+  ...serverOllamaControllerEn,
+  ...serverRagControllerEn,
+  ...serverSettingsControllerEn,
+  ...serverSystemControllerEn,
+  ...serverZimControllerEn,
+  ...serverAppAutoUpdateServiceEn,
+  ...serverAutoUpdateServiceEn,
+  ...serverBenchmarkServiceEn,
+  ...serverChatServiceEn,
+  ...serverCollectionUpdateServiceEn,
+  ...serverContentAutoUpdateServiceEn,
+  ...serverCountriesServiceEn,
+  ...serverDockerServiceEn,
+  ...serverDownloadServiceEn,
+  ...serverDrugReferenceServiceEn,
+  ...serverMapServiceEn,
+  ...serverOllamaServiceEn,
+  ...serverRagServiceEn,
+  ...serverSystemServiceEn,
+  ...serverSystemUpdateServiceEn,
+  ...serverZimExtractionServiceEn,
+  ...serverZimServiceEn,
+  ...serverDownloadDrugDataJobEn,
+  ...serverDownloadModelJobEn,
+  ...serverEmbedFileJobEn,
+  ...serverIngestDrugDataJobEn,
+  ...serverRunBenchmarkJobEn,
+  ...serverRunDownloadJobEn,
+  ...serverRunExtractPmtilesJobEn,
+  ...serverBenchmarkStageEn,
+  ...serverBenchmarkMsgEn,
+  ...serverPreflightEn,
+  ...serverCustomAppGuardEn,
 } as const
 
 export type MessageKey = keyof typeof en

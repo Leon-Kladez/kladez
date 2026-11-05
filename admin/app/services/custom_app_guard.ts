@@ -1,5 +1,6 @@
 import { dirname, normalize } from 'node:path'
 import env from '#start/env'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * Security guardrails for user-defined ("custom app") containers.
@@ -58,11 +59,11 @@ export function evaluateBindMounts(
     const host = normalizeHostPath(hostPath)
 
     if (!hostPath.startsWith('/')) {
-      blocked.push(`Volume host path "${hostPath}" must be an absolute path.`)
+      blocked.push(t('server.customAppGuard.volumeHostPathMustBe', { hostPath }))
       continue
     }
     if (!containerPath.startsWith('/')) {
-      blocked.push(`Volume container path "${containerPath}" must be an absolute path.`)
+      blocked.push(t('server.customAppGuard.volumeContainerPathMustBe', { containerPath }))
       continue
     }
 
@@ -71,28 +72,28 @@ export function evaluateBindMounts(
     // the checks below can't be bypassed by a parse-differential. (The validator blocks this too;
     // this keeps the guard self-defending for any caller that skips validation.)
     if (hostPath.includes(':') || containerPath.includes(':')) {
-      blocked.push(`Volume paths must not contain a colon (":"): "${hostPath}" → "${containerPath}".`)
+      blocked.push(t('server.customAppGuard.volumePathsMustNotContain', { hostPath, containerPath }))
       continue
     }
 
     // The Docker socket is the most dangerous mount of all — full control of the host daemon.
     if (host.endsWith('docker.sock') || /\/docker\.sock$/.test(host)) {
       blocked.push(
-        `Mounting the Docker socket ("${hostPath}") is not allowed — it grants full host control.`
+        t('server.customAppGuard.mountingTheDockerSocketIs', { hostPath })
       )
       continue
     }
 
     // Core system directories.
     if (host === '/' || SYSTEM_BLOCK_PREFIXES.some((p) => isWithin(host, p))) {
-      blocked.push(`Mounting system directory "${hostPath}" is not allowed.`)
+      blocked.push(t('server.customAppGuard.mountingSystemDirectoryIsNot', { hostPath }))
       continue
     }
 
     // At or above project-nomad's own install tree (covers `/`, `/opt`, `/opt/project-nomad`).
     if (host === installRoot || isWithin(installRoot, host)) {
       blocked.push(
-        `Mounting "${hostPath}" would expose project-nomad's own files and is not allowed.`
+        t('server.customAppGuard.mountingWouldExposeProjectNomad', { hostPath })
       )
       continue
     }
@@ -100,7 +101,7 @@ export function evaluateBindMounts(
     // Anything outside the managed storage root is allowed but flagged.
     if (!isWithin(host, storageRoot)) {
       warnings.push(
-        `Volume "${hostPath}" is outside the managed storage root (${storageRoot}). Make sure you trust this image with access to that path.`
+        t('server.customAppGuard.volumeIsOutsideTheManaged', { hostPath, storageRoot })
       )
     }
   }
@@ -119,7 +120,7 @@ export function evaluateImageReference(image: string): GuardEvaluation {
   const ref = image.trim()
   // Loose validity check: no whitespace/control chars, and a sane character set for an image ref.
   if (!ref || /\s/.test(ref) || !/^[\w./:@-]+$/.test(ref)) {
-    blocked.push(`"${image}" is not a valid image reference.`)
+    blocked.push(t('server.customAppGuard.isNotAValidImage', { image }))
     return { blocked, warnings }
   }
 
@@ -132,7 +133,7 @@ export function evaluateImageReference(image: string): GuardEvaluation {
 
   if (!TRUSTED_REGISTRIES.includes(registry)) {
     warnings.push(
-      `Image is from "${registry}", which is outside project-nomad's trusted registries. Only install images you trust.`
+      t('server.customAppGuard.imageIsFromWhichIs', { registry })
     )
   }
 
@@ -142,7 +143,7 @@ export function evaluateImageReference(image: string): GuardEvaluation {
   const hasDigest = ref.includes('@sha256:')
   if (!hasDigest && (!tag || tag === 'latest')) {
     warnings.push(
-      `Image "${image}" uses a moving tag (${tag ? ':latest' : 'no tag'}). Pin a specific version for reproducible installs.`
+      t('server.customAppGuard.imageUsesAMovingTag', { image, tag: tag ? ':latest' : t('server.customAppGuard.noTag') })
     )
   }
 

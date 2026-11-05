@@ -39,6 +39,8 @@ import { SERVICE_NAMES } from '../../constants/service_names.js'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import { BenchmarkTelemetrySampler } from './benchmark_telemetry.js'
 import Dockerode from 'dockerode'
+import { t, formatBytes } from '../../constants/i18n/index.js'
+import { humanizeError } from '../utils/user_errors.js'
 
 // HMAC secret for signing submissions to the benchmark repository
 // This provides basic protection against casual API abuse.
@@ -512,7 +514,7 @@ export class BenchmarkService {
    * Detect system hardware information
    */
   async getHardwareInfo(): Promise<HardwareInfo> {
-    this._updateStatus('detecting_hardware', 'Detecting system hardware...')
+    this._updateStatus('detecting_hardware', t('server.benchmarkMsg.detecting'))
 
     try {
       const [cpu, mem, diskLayout, graphics] = await Promise.all([
@@ -671,7 +673,7 @@ export class BenchmarkService {
     this.telemetry = new BenchmarkTelemetrySampler(this.currentBenchmarkId)
     this.telemetry.start()
 
-    this._updateStatus('starting', 'Starting benchmark...')
+    this._updateStatus('starting', t('server.benchmarkMsg.starting'))
 
     try {
       // Fail fast: if this run will download the (large) AI model, make sure there's
@@ -706,7 +708,7 @@ export class BenchmarkService {
           if (aiScores.ai_tokens_per_second !== undefined && aiScores.ai_tokens_per_second !== null) {
             this._emitPartialResult({
               status: 'running_ai',
-              label: 'AI',
+              label: t('easySetup.step.ai'),
               value: Math.round(aiScores.ai_tokens_per_second),
               unit: 'tok/s',
             })
@@ -727,7 +729,7 @@ export class BenchmarkService {
       const sysbenchDigest = systemRaws ? await this._resolveSysbenchDigest() : null
 
       // Calculate NOMAD scores (v1 legacy + v2 uncapped)
-      this._updateStatus('calculating_score', 'Calculating NOMAD score...')
+      this._updateStatus('calculating_score', t('server.benchmarkMsg.calculating'))
       const nomadScore = this._calculateNomadScore(systemScores, aiScores)
 
       // v2 requires a complete run of every channel (system raws + AI). Only a
@@ -793,13 +795,13 @@ export class BenchmarkService {
         os_version: env.os_version,
       })
 
-      this._updateStatus('completed', 'Benchmark completed successfully')
+      this._updateStatus('completed', t('server.benchmarkMsg.completed'))
       this.currentStatus = 'idle'
       this.currentBenchmarkId = null
 
       return result
     } catch (error: any) {
-      this._updateStatus('error', `Benchmark failed: ${error.message}`)
+      this._updateStatus('error', t('server.benchmarkMsg.failed', { error: humanizeError(error) }))
       this.currentStatus = 'idle'
       this.currentBenchmarkId = null
       throw error
@@ -825,37 +827,37 @@ export class BenchmarkService {
     await this._ensureSysbenchImage()
 
     // Run CPU benchmarks: single-thread then all-thread.
-    this._updateStatus('running_cpu', 'Running CPU benchmark (single-thread)...')
+    this._updateStatus('running_cpu', t('server.benchmarkMsg.cpuSingle'))
     const cpuSingle = await this._runSysbenchCpu(1)
 
-    this._updateStatus('running_cpu', `Running CPU benchmark (${multiThreads}-thread)...`)
+    this._updateStatus('running_cpu', t('server.benchmarkMsg.cpuMulti', { n: multiThreads }))
     const cpuMulti = await this._runSysbenchCpu(multiThreads)
 
     // Run memory benchmark
-    this._updateStatus('running_memory', 'Running memory benchmark...')
+    this._updateStatus('running_memory', t('server.benchmarkMsg.memory'))
     const memoryResult = await this._runSysbenchMemory()
     this._emitPartialResult({
       status: 'running_memory',
-      label: 'Memory',
+      label: t('server.benchmarkService.memory'),
       value: Math.round(memoryResult.operations_per_second),
       unit: 'ops/s',
     })
 
     // Run disk benchmarks
-    this._updateStatus('running_disk_read', 'Running disk read benchmark...')
+    this._updateStatus('running_disk_read', t('server.benchmarkMsg.diskRead'))
     const diskReadResult = await this._runSysbenchDiskRead()
     this._emitPartialResult({
       status: 'running_disk_read',
-      label: 'Read',
+      label: t('server.benchmarkService.read'),
       value: Math.round(diskReadResult.read_mb_per_sec),
       unit: 'MB/s',
     })
 
-    this._updateStatus('running_disk_write', 'Running disk write benchmark...')
+    this._updateStatus('running_disk_write', t('server.benchmarkMsg.diskWrite'))
     const diskWriteResult = await this._runSysbenchDiskWrite()
     this._emitPartialResult({
       status: 'running_disk_write',
-      label: 'Write',
+      label: t('server.benchmarkService.write'),
       value: Math.round(diskWriteResult.write_mb_per_sec),
       unit: 'MB/s',
     })
@@ -955,7 +957,7 @@ export class BenchmarkService {
       // Live GPU-util overlay poller. Side-effect-only: it feeds telemetry frames
       // and is cleared in the finally below so it never outlives the AI stage.
 
-      this._updateStatus('running_ai', 'Running AI benchmark...')
+      this._updateStatus('running_ai', t('server.benchmarkMsg.ai'))
 
       const ollamaAPIURL = await this.dockerService.getServiceURL(SERVICE_NAMES.OLLAMA)
       if (!ollamaAPIURL) {
@@ -1024,7 +1026,7 @@ export class BenchmarkService {
       // reproducibility guarantee did not actually apply indistinguishable from
       // a clean one after the fact. Matches _unloadResidentModels, the sibling
       // best-effort helper, which already warns on every swallowed error.
-      this._updateStatus('running_ai', 'Warming up AI model...')
+      this._updateStatus('running_ai', t('server.benchmarkMsg.warmup'))
       await this._runSingleAIInference(ollamaAPIURL).catch((error) => {
         logger.warn(
           `[BenchmarkService] AI warm-up failed (${error?.message ?? error}); the first timed run may be cold.`
@@ -1040,7 +1042,7 @@ export class BenchmarkService {
       // inference.
       const runs: { tps: number; ttft: number }[] = []
       for (let i = 0; i < AI_BENCHMARK_RUNS; i++) {
-        this._updateStatus('running_ai', `Running AI benchmark (${i + 1}/${AI_BENCHMARK_RUNS})...`)
+        this._updateStatus('running_ai', t('server.benchmarkMsg.aiRun', { i: i + 1, total: AI_BENCHMARK_RUNS }))
         runs.push(await this._runSingleAIInference(ollamaAPIURL))
       }
 
@@ -1151,11 +1153,12 @@ export class BenchmarkService {
     if (freeBytes === null) return
 
     if (freeBytes < AI_BENCHMARK_MODEL_MIN_FREE_BYTES) {
-      const gib = (b: number) => `${(b / 1024 / 1024 / 1024).toFixed(1)} GB`
       throw new Error(
-        `Not enough free disk space to download the AI benchmark model (${AI_BENCHMARK_MODEL}). ` +
-          `About ${gib(AI_BENCHMARK_MODEL_MIN_FREE_BYTES)} is required but only ${gib(freeBytes)} is free. ` +
-          `Free up some space and try again.`
+        t('server.benchmarkMsg.noSpace', {
+          model: AI_BENCHMARK_MODEL,
+          required: formatBytes(AI_BENCHMARK_MODEL_MIN_FREE_BYTES),
+          free: formatBytes(freeBytes),
+        })
       )
     }
   }
@@ -1360,7 +1363,7 @@ export class BenchmarkService {
     try {
       await this.dockerService.docker.getImage(SYSBENCH_IMAGE).inspect()
     } catch {
-      this._updateStatus('starting', `Pulling sysbench image...`)
+      this._updateStatus('starting', t('server.benchmarkMsg.pulling'))
       await this.dockerService.pullImage(SYSBENCH_IMAGE)
     }
   }
@@ -1779,18 +1782,18 @@ export class BenchmarkService {
    */
   private _getStageLabel(status: BenchmarkStatus): string {
     const labelMap: Record<BenchmarkStatus, string> = {
-      idle: 'Idle',
-      starting: 'Starting',
-      detecting_hardware: 'Detecting Hardware',
-      running_cpu: 'CPU Benchmark',
-      running_memory: 'Memory Benchmark',
-      running_disk_read: 'Disk Read Test',
-      running_disk_write: 'Disk Write Test',
-      downloading_ai_model: 'Downloading AI Model',
-      running_ai: 'AI Inference Test',
-      calculating_score: 'Calculating Score',
-      completed: 'Complete',
-      error: 'Error',
+      idle: t('server.benchmarkStage.idle'),
+      starting: t('server.benchmarkStage.starting'),
+      detecting_hardware: t('server.benchmarkStage.detectingHardware'),
+      running_cpu: t('server.benchmarkStage.runningCpu'),
+      running_memory: t('server.benchmarkStage.runningMemory'),
+      running_disk_read: t('server.benchmarkStage.runningDiskRead'),
+      running_disk_write: t('server.benchmarkStage.runningDiskWrite'),
+      downloading_ai_model: t('server.benchmarkStage.downloadingAiModel'),
+      running_ai: t('server.benchmarkStage.runningAi'),
+      calculating_score: t('server.benchmarkStage.calculatingScore'),
+      completed: t('server.benchmarkStage.completed'),
+      error: t('server.benchmarkService.error'),
     }
     return labelMap[status] || status
   }

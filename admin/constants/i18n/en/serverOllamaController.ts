@@ -1,0 +1,15 @@
+export const serverOllamaControllerEn = {
+  'server.ollamaController.multipartChatRequestsRequireA': 'Multipart chat requests require a JSON payload.',
+  'server.ollamaController.theMultipartChatPayloadIs': 'The multipart chat payload is not valid JSON.',
+  'server.ollamaController.imagesRequireAUserMessage': 'Images require a user message.',
+  'server.ollamaController.theSelectedModelDoesNot': 'The selected model "{model}" does not support image input.',
+  'server.ollamaController.ollamaServiceRecordNotFound': 'Ollama service record not found.',
+  'server.ollamaController.remoteOllamaClearedLocalOllama': 'Remote Ollama cleared. Local Ollama container restored.',
+  'server.ollamaController.remoteOllamaConfigurationCleared': 'Remote Ollama configuration cleared.',
+  'server.ollamaController.invalidUrl': 'Invalid URL.',
+  'server.ollamaController.couldNotConnectToHttp': 'Could not connect to {remoteUrl} (HTTP {status}). Make sure the server is running and accessible. For Ollama, start it with OLLAMA_HOST=0.0.0.0.',
+  'server.ollamaController.couldNotConnectToMake': 'Could not connect to {remoteUrl}. Make sure the server is running and reachable. For Ollama, start it with OLLAMA_HOST=0.0.0.0.',
+  'server.ollamaController.remoteOllamaConfigured': 'Remote Ollama configured.',
+  'server.ollamaController.modelDeleted': 'Model deleted: {model}',
+  'server.ollamaController.downloadJobDispatchedForModel': 'Download job dispatched for model: {model}',
+} as const

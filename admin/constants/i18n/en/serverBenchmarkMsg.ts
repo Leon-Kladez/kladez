@@ -1,0 +1,17 @@
+export const serverBenchmarkMsgEn = {
+  'server.benchmarkMsg.detecting': 'Detecting system hardware...',
+  'server.benchmarkMsg.starting': 'Starting benchmark...',
+  'server.benchmarkMsg.calculating': 'Calculating NOMAD score...',
+  'server.benchmarkMsg.completed': 'Benchmark completed successfully',
+  'server.benchmarkMsg.failed': 'Benchmark failed: {error}',
+  'server.benchmarkMsg.cpuSingle': 'Running CPU benchmark (single-thread)...',
+  'server.benchmarkMsg.cpuMulti': 'Running CPU benchmark ({n}-thread)...',
+  'server.benchmarkMsg.memory': 'Running memory benchmark...',
+  'server.benchmarkMsg.diskRead': 'Running disk read benchmark...',
+  'server.benchmarkMsg.diskWrite': 'Running disk write benchmark...',
+  'server.benchmarkMsg.ai': 'Running AI benchmark...',
+  'server.benchmarkMsg.warmup': 'Warming up AI model...',
+  'server.benchmarkMsg.aiRun': 'Running AI benchmark ({i}/{total})...',
+  'server.benchmarkMsg.pulling': 'Pulling sysbench image...',
+  'server.benchmarkMsg.noSpace': 'Not enough free disk space to download the AI benchmark model ({model}). About {required} is required but only {free} is free. Free up some space and try again.',
+} as const

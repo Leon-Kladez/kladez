@@ -17,4 +17,10 @@ export const linkTileRu: Record<keyof typeof linkTileEn, string> = {
   'linkTile.icon': 'Значок',
   'linkTile.color': 'Цвет',
   'linkTile.colorHint': 'Ссылки всегда показываются контуром, а не заливкой, — так их легко отличить от приложений, которыми управляет Кладезъ.',
+  'linkTile.colors.green': 'Зелёный',
+  'linkTile.colors.olive': 'Оливковый',
+  'linkTile.colors.orange': 'Оранжевый',
+  'linkTile.colors.red': 'Красный',
+  'linkTile.colors.sand': 'Песочный',
+  'linkTile.colors.stone': 'Серый',
 }

@@ -35,6 +35,7 @@ import { invalidateMinRelevanceCache } from '../utils/rag_relevance.js'
 import { invalidateResponseStyleCache } from '../utils/response_style.js'
 import { KiwixLibraryService } from '#services/kiwix_library_service'
 import { localizeService } from '../utils/service_i18n.js'
+import { t, formatBytes } from '../../constants/i18n/index.js'
 
 @inject()
 export class SystemService {
@@ -727,7 +728,7 @@ export class SystemService {
         updateAvailable: false,
         currentVersion: '',
         latestVersion: '',
-        message: `Failed to check latest version: ${error instanceof Error ? error.message : error}`,
+        message: t('server.systemService.failedToCheckLatestVersion', { error: error instanceof Error ? error.message : error }),
       }
     }
   }
@@ -743,19 +744,19 @@ export class SystemService {
       if (response.status === 200) {
         return {
           success: true,
-          message: 'Successfully subscribed to release notes',
+          message: t('server.systemService.successfullySubscribedToReleaseNotes'),
         }
       }
 
       return {
         success: false,
-        message: `Failed to subscribe: ${response.statusText}`,
+        message: t('server.systemService.failedToSubscribe', { statusText: response.statusText }),
       }
     } catch (error) {
       logger.error('Error subscribing to release notes:', error)
       return {
         success: false,
-        message: `Failed to subscribe: ${error instanceof Error ? error.message : error}`,
+        message: t('server.systemService.failedToSubscribe2', { error: error instanceof Error ? error.message : error }),
       }
     }
   }
@@ -1086,7 +1087,7 @@ export class SystemService {
       const availableMB = Math.floor(mem.available / 1024 / 1024)
       if (availableMB < minMemoryMB) {
         warnings.push(
-          `Low memory: ${availableMB} MB available, this app recommends at least ${minMemoryMB} MB free.`
+          t('server.preflight.lowMemory', { available: formatBytes(availableMB * 1024 * 1024), min: formatBytes(minMemoryMB * 1024 * 1024) })
         )
       }
     } catch (err: any) {
@@ -1105,7 +1106,7 @@ export class SystemService {
         const availableDiskMB = Math.floor((fs.size - fs.used) / 1024 / 1024)
         if (availableDiskMB < minDiskMB) {
           warnings.push(
-            `Low disk space: ${availableDiskMB} MB available on ${fs.mount}, this app recommends at least ${minDiskMB} MB free.`
+            t('server.preflight.lowDisk', { available: formatBytes(availableDiskMB * 1024 * 1024), mount: fs.mount, min: formatBytes(minDiskMB * 1024 * 1024) })
           )
         }
       }

@@ -6,6 +6,7 @@ import KVStore from '#models/kv_store'
 import { SystemService } from '#services/system_service'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
 import logger from '@adonisjs/core/services/logger'
+import { t } from '../../constants/i18n/index.js'
 
 @inject()
 export default class ChatsController {
@@ -14,7 +15,7 @@ export default class ChatsController {
   async inertia({ inertia, response }: HttpContext) {
     const aiAssistantInstalled = await this.systemService.checkServiceInstalled(SERVICE_NAMES.OLLAMA)
     if (!aiAssistantInstalled) {
-      return response.status(404).json({ error: 'AI Assistant service not installed' })
+      return response.status(404).json({ error: t('server.chatsController.aiAssistantServiceNotInstalled') })
     }
     
     const chatSuggestionsEnabled = await KVStore.getValue('chat.suggestionsEnabled')
@@ -34,7 +35,7 @@ export default class ChatsController {
     const session = await this.chatService.getSession(sessionId)
 
     if (!session) {
-      return response.status(404).json({ error: 'Session not found' })
+      return response.status(404).json({ error: t('server.chatsController.sessionNotFound') })
     }
 
     return session
@@ -48,7 +49,7 @@ export default class ChatsController {
     } catch (error) {
       logger.error({ err: error }, '[ChatsController] Failed to create session')
       return response.status(500).json({
-        error: 'Failed to create session',
+        error: t('server.chatsController.failedToCreateSession'),
       })
     }
   }
@@ -60,7 +61,7 @@ export default class ChatsController {
     } catch (error) {
       logger.error({ err: error }, '[ChatsController] Failed to get suggestions')
       return response.status(500).json({
-        error: 'Failed to get suggestions',
+        error: t('server.chatsController.failedToGetSuggestions'),
       })
     }
   }
@@ -74,7 +75,7 @@ export default class ChatsController {
     } catch (error) {
       logger.error({ err: error }, '[ChatsController] Failed to update session')
       return response.status(500).json({
-        error: 'Failed to update session',
+        error: t('server.chatsController.failedToUpdateSession'),
       })
     }
   }
@@ -87,7 +88,7 @@ export default class ChatsController {
     } catch (error) {
       logger.error({ err: error }, '[ChatsController] Failed to delete session')
       return response.status(500).json({
-        error: 'Failed to delete session',
+        error: t('server.chatsController.failedToDeleteSession'),
       })
     }
   }
@@ -101,7 +102,7 @@ export default class ChatsController {
     } catch (error) {
       logger.error({ err: error }, '[ChatsController] Failed to add message')
       return response.status(500).json({
-        error: 'Failed to add message',
+        error: t('server.chatsController.failedToAddMessage'),
       })
     }
   }
@@ -113,7 +114,7 @@ export default class ChatsController {
     } catch (error) {
       logger.error({ err: error }, '[ChatsController] Failed to delete all sessions')
       return response.status(500).json({
-        error: 'Failed to delete all sessions',
+        error: t('server.chatsController.failedToDeleteAllSessions'),
       })
     }
   }

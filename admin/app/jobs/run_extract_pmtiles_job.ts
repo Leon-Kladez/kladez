@@ -8,6 +8,7 @@ import logger from '@adonisjs/core/services/logger'
 import { DownloadProgressData } from '../../types/downloads.js'
 import { PMTILES_BINARY_PATH, buildPmtilesExtractArgs } from '../../constants/map_regions.js'
 import { deleteFileIfExists } from '../utils/fs.js'
+import { t } from '../../constants/i18n/index.js'
 
 export interface RunExtractPmtilesJobParams {
   sourceUrl: string
@@ -266,7 +267,7 @@ export class RunExtractPmtilesJob {
         return {
           job: existing,
           created: false,
-          message: `Extract job already exists for these params`,
+          message: t('server.runExtractPmtilesJob.extractJobAlreadyExistsFor'),
         }
       }
       // Stale (completed/failed) — remove so we can re-dispatch under the same deterministic id
@@ -288,7 +289,7 @@ export class RunExtractPmtilesJob {
     return {
       job,
       created: true,
-      message: `Dispatched pmtiles extract job`,
+      message: t('server.runExtractPmtilesJob.dispatchedPmtilesExtractJob'),
     }
   }
 }

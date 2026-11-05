@@ -71,6 +71,47 @@ import { drugRefRu } from './ru/drugRef.js'
 import { drugShowRu } from './ru/drugShow.js'
 import { compareRu } from './ru/compare.js'
 import { conditionsRu } from './ru/conditions.js'
+import { serverErrorRu } from './ru/serverError.js'
+import { serverBenchmarkControllerRu } from './ru/serverBenchmarkController.js'
+import { serverChatsControllerRu } from './ru/serverChatsController.js'
+import { serverConditionsControllerRu } from './ru/serverConditionsController.js'
+import { serverCreatorPacksControllerRu } from './ru/serverCreatorPacksController.js'
+import { serverDrugReferenceControllerRu } from './ru/serverDrugReferenceController.js'
+import { serverMapsControllerRu } from './ru/serverMapsController.js'
+import { serverNomadMdControllerRu } from './ru/serverNomadMdController.js'
+import { serverOllamaControllerRu } from './ru/serverOllamaController.js'
+import { serverRagControllerRu } from './ru/serverRagController.js'
+import { serverSettingsControllerRu } from './ru/serverSettingsController.js'
+import { serverSystemControllerRu } from './ru/serverSystemController.js'
+import { serverZimControllerRu } from './ru/serverZimController.js'
+import { serverAppAutoUpdateServiceRu } from './ru/serverAppAutoUpdateService.js'
+import { serverAutoUpdateServiceRu } from './ru/serverAutoUpdateService.js'
+import { serverBenchmarkServiceRu } from './ru/serverBenchmarkService.js'
+import { serverChatServiceRu } from './ru/serverChatService.js'
+import { serverCollectionUpdateServiceRu } from './ru/serverCollectionUpdateService.js'
+import { serverContentAutoUpdateServiceRu } from './ru/serverContentAutoUpdateService.js'
+import { serverCountriesServiceRu } from './ru/serverCountriesService.js'
+import { serverDockerServiceRu } from './ru/serverDockerService.js'
+import { serverDownloadServiceRu } from './ru/serverDownloadService.js'
+import { serverDrugReferenceServiceRu } from './ru/serverDrugReferenceService.js'
+import { serverMapServiceRu } from './ru/serverMapService.js'
+import { serverOllamaServiceRu } from './ru/serverOllamaService.js'
+import { serverRagServiceRu } from './ru/serverRagService.js'
+import { serverSystemServiceRu } from './ru/serverSystemService.js'
+import { serverSystemUpdateServiceRu } from './ru/serverSystemUpdateService.js'
+import { serverZimExtractionServiceRu } from './ru/serverZimExtractionService.js'
+import { serverZimServiceRu } from './ru/serverZimService.js'
+import { serverDownloadDrugDataJobRu } from './ru/serverDownloadDrugDataJob.js'
+import { serverDownloadModelJobRu } from './ru/serverDownloadModelJob.js'
+import { serverEmbedFileJobRu } from './ru/serverEmbedFileJob.js'
+import { serverIngestDrugDataJobRu } from './ru/serverIngestDrugDataJob.js'
+import { serverRunBenchmarkJobRu } from './ru/serverRunBenchmarkJob.js'
+import { serverRunDownloadJobRu } from './ru/serverRunDownloadJob.js'
+import { serverRunExtractPmtilesJobRu } from './ru/serverRunExtractPmtilesJob.js'
+import { serverBenchmarkStageRu } from './ru/serverBenchmarkStage.js'
+import { serverBenchmarkMsgRu } from './ru/serverBenchmarkMsg.js'
+import { serverPreflightRu } from './ru/serverPreflight.js'
+import { serverCustomAppGuardRu } from './ru/serverCustomAppGuard.js'
 
 export const ru: Record<MessageKey, string> = {
   ...testRu,
@@ -144,4 +185,45 @@ export const ru: Record<MessageKey, string> = {
   ...drugShowRu,
   ...compareRu,
   ...conditionsRu,
+  ...serverErrorRu,
+  ...serverBenchmarkControllerRu,
+  ...serverChatsControllerRu,
+  ...serverConditionsControllerRu,
+  ...serverCreatorPacksControllerRu,
+  ...serverDrugReferenceControllerRu,
+  ...serverMapsControllerRu,
+  ...serverNomadMdControllerRu,
+  ...serverOllamaControllerRu,
+  ...serverRagControllerRu,
+  ...serverSettingsControllerRu,
+  ...serverSystemControllerRu,
+  ...serverZimControllerRu,
+  ...serverAppAutoUpdateServiceRu,
+  ...serverAutoUpdateServiceRu,
+  ...serverBenchmarkServiceRu,
+  ...serverChatServiceRu,
+  ...serverCollectionUpdateServiceRu,
+  ...serverContentAutoUpdateServiceRu,
+  ...serverCountriesServiceRu,
+  ...serverDockerServiceRu,
+  ...serverDownloadServiceRu,
+  ...serverDrugReferenceServiceRu,
+  ...serverMapServiceRu,
+  ...serverOllamaServiceRu,
+  ...serverRagServiceRu,
+  ...serverSystemServiceRu,
+  ...serverSystemUpdateServiceRu,
+  ...serverZimExtractionServiceRu,
+  ...serverZimServiceRu,
+  ...serverDownloadDrugDataJobRu,
+  ...serverDownloadModelJobRu,
+  ...serverEmbedFileJobRu,
+  ...serverIngestDrugDataJobRu,
+  ...serverRunBenchmarkJobRu,
+  ...serverRunDownloadJobRu,
+  ...serverRunExtractPmtilesJobRu,
+  ...serverBenchmarkStageRu,
+  ...serverBenchmarkMsgRu,
+  ...serverPreflightRu,
+  ...serverCustomAppGuardRu,
 }

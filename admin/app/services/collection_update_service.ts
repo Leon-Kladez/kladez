@@ -11,6 +11,7 @@ import type {
 } from '../../types/collections.js'
 import { KiwixCatalogService, reconcileResourceUpdateState } from './kiwix_catalog_service.js'
 import { CollectionManifestService } from './collection_manifest_service.js'
+import { t } from '../../constants/i18n/index.js'
 
 const MAP_STORAGE_PATH = '/storage/maps'
 
@@ -90,7 +91,7 @@ export class CollectionUpdateService {
       return {
         updates: [],
         checked_at: new Date().toISOString(),
-        error: 'Failed to check for content updates. Please try again later.',
+        error: t('server.collectionUpdateService.failedToCheckForContent'),
       }
     }
   }
@@ -111,7 +112,7 @@ export class CollectionUpdateService {
     if (existingJob) {
       return {
         success: false,
-        error: `A download is already in progress for ${update.resource_id}`,
+        error: t('server.collectionUpdateService.aDownloadIsAlreadyIn', { resource_id: update.resource_id }),
       }
     }
 
@@ -136,7 +137,7 @@ export class CollectionUpdateService {
     })
 
     if (!result || !result.job) {
-      return { success: false, error: 'Failed to dispatch download job' }
+      return { success: false, error: t('server.collectionUpdateService.failedToDispatchDownloadJob') }
     }
 
     logger.info(

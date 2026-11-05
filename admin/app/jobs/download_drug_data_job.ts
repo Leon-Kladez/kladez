@@ -10,6 +10,7 @@ import type {
   DownloadStateMarker,
   DrugDatasetResourceMeta,
 } from '../../types/drug_reference.js'
+import { t } from '../../constants/i18n/index.js'
 
 /** Where all part zips are staged on the bind-mounted storage volume. */
 export const STORAGE_BASE = '/app/storage/drug-data'
@@ -62,7 +63,7 @@ export class DownloadDrugDataJob {
     if (existing) {
       const state = await existing.getState()
       if (state === 'active' || state === 'waiting' || state === 'delayed') {
-        return { job: existing, created: false, message: 'Drug data download already running' }
+        return { job: existing, created: false, message: t('server.downloadDrugDataJob.drugDataDownloadAlreadyRunning') }
       }
       try {
         await existing.remove()
@@ -83,12 +84,12 @@ export class DownloadDrugDataJob {
           removeOnFail: { count: 5 },
         }
       )
-      return { job, created: true, message: 'Drug data download dispatched' }
+      return { job, created: true, message: t('server.downloadDrugDataJob.drugDataDownloadDispatched') }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       if (msg.includes('job already exists')) {
         const stillThere = await queue.getJob(this.jobId)
-        return { job: stillThere, created: false, message: 'Drug data download already running' }
+        return { job: stillThere, created: false, message: t('server.downloadDrugDataJob.drugDataDownloadAlreadyRunning') }
       }
       throw error
     }

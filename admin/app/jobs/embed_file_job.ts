@@ -9,6 +9,7 @@ import { createHash } from 'crypto'
 import logger from '@adonisjs/core/services/logger'
 import fs from 'node:fs/promises'
 import { ZIM_BATCH_SIZE } from '../../constants/zim_extraction.js'
+import { t } from '../../constants/i18n/index.js'
 
 export interface EmbedFileJobParams {
   filePath: string
@@ -235,7 +236,7 @@ export class EmbedFileJob {
           chunks: result.chunks,
           hasMoreBatches: true,
           nextOffset,
-          message: `Batch embedded ${result.chunks} chunks, next batch queued`,
+          message: t('server.embedFileJob.batchEmbeddedChunksNextBatch', { chunks: result.chunks ?? 0 }),
         }
       }
 
@@ -274,7 +275,7 @@ export class EmbedFileJob {
         fileName,
         filePath,
         chunks: result.chunks,
-        message: `Successfully embedded ${result.chunks} chunks`,
+        message: t('server.embedFileJob.successfullyEmbeddedChunks', { chunks: result.chunks ?? 0 }),
       }
     } catch (error) {
       // A chunk that still exceeds the model's context after OllamaService's truncate-and-retry is
@@ -298,7 +299,7 @@ export class EmbedFileJob {
         ...job.data,
         status: 'failed',
         failedAt: Date.now(),
-        error: normalizedError instanceof Error ? normalizedError.message : 'Unknown error',
+        error: normalizedError instanceof Error ? normalizedError.message : t('server.embedFileJob.unknownError'),
       })
 
       // Only persist `failed` for unrecoverable errors. Retryable errors get
@@ -405,7 +406,7 @@ export class EmbedFileJob {
             job: existing,
             created: false,
             jobId: initialJobId,
-            message: `Embedding job already exists for: ${params.fileName}`,
+            message: t('server.embedFileJob.embeddingJobAlreadyExistsFor', { fileName: params.fileName }),
           }
         }
         try {
@@ -432,7 +433,7 @@ export class EmbedFileJob {
         job,
         created: true,
         jobId: job.id ?? initialJobId,
-        message: `File queued for embedding: ${params.fileName}`,
+        message: t('server.embedFileJob.fileQueuedForEmbedding', { fileName: params.fileName }),
       }
     } catch (error) {
       if (
@@ -447,7 +448,7 @@ export class EmbedFileJob {
           job: existing,
           created: false,
           jobId: initialJobId,
-          message: `Embedding job already exists for: ${params.fileName}`,
+          message: t('server.embedFileJob.embeddingJobAlreadyExistsFor', { fileName: params.fileName }),
         }
       }
       throw error

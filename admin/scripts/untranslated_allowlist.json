@@ -106,5 +106,6 @@
   "Copyright 2024-2026 Crosstalk Solutions, LLC",
   "OLLAMA_HOST=0.0.0.0",
   "sysbench",
-  "set_id:"
+  "set_id:",
+  "embedAndStoreText returned null"
 ]

@@ -54,6 +54,7 @@ import {
   RAGResult,
   RerankedRAGResult,
 } from '../../types/rag.js'
+import { t } from '../../constants/i18n/index.js'
 
 export type EmbedSingleFileFailureCode =
   | 'not_found'
@@ -135,7 +136,7 @@ export class RagService {
       return {
         online: false,
         message:
-          'Qdrant vector database is offline. Restart the AI Assistant service in Settings to restore the Knowledge Base.',
+          t('server.ragService.qdrantVectorDatabaseIsOffline'),
       }
     }
   }
@@ -707,8 +708,8 @@ export class RagService {
     return {
       success: true,
       message: hasMoreBatches
-        ? 'ZIM batch processed successfully. More batches remain.'
-        : 'ZIM file processed and embedded successfully with enhanced metadata.',
+        ? t('server.ragService.zimBatchProcessedSuccessfullyMore')
+        : t('server.ragService.zimFileProcessedAndEmbedded'),
       chunks: totalChunks,
       hasMoreBatches,
       // MUST be the consumed count: EmbedFileJob advances the next batch offset by this
@@ -824,7 +825,7 @@ export class RagService {
     if (!extractedText || extractedText.trim().length === 0) {
       return {
         success: false,
-        message: 'Process completed succesfully, but no text was found to embed.',
+        message: t('server.ragService.processCompletedSuccesfullyButNo'),
       }
     }
 
@@ -838,7 +839,7 @@ export class RagService {
     )
 
     if (!embedResult) {
-      return { success: false, message: 'Failed to embed and store the extracted text.' }
+      return { success: false, message: t('server.ragService.failedToEmbedAndStore') }
     }
 
     if (deleteAfterEmbedding) {
@@ -848,7 +849,7 @@ export class RagService {
 
     return {
       success: true,
-      message: 'File processed and embedded successfully.',
+      message: t('server.ragService.fileProcessedAndEmbeddedSuccessfully'),
       chunks: embedResult.chunks,
     }
   }
@@ -872,13 +873,13 @@ export class RagService {
       logger.debug(`[RAG] Processing file: ${filepath} (detected type: ${fileType})`)
 
       if (fileType === 'unknown') {
-        return { success: false, message: 'Unsupported file type.' }
+        return { success: false, message: t('server.ragService.unsupportedFileType') }
       }
 
       // Read file buffer (not needed for ZIM as it reads directly)
       const fileBuffer = fileType !== 'zim' ? await getFile(filepath, 'buffer') : null
       if (fileType !== 'zim' && !fileBuffer) {
-        return { success: false, message: 'Failed to read the uploaded file.' }
+        return { success: false, message: t('server.ragService.failedToReadTheUploaded') }
       }
 
       // Process based on file type
@@ -924,7 +925,7 @@ export class RagService {
       )
     } catch (error) {
       logger.error('[RAG] Error processing and embedding file:', error)
-      return { success: false, message: 'Error processing and embedding file.' }
+      return { success: false, message: t('server.ragService.errorProcessingAndEmbeddingFile') }
     }
   }
 
@@ -1474,11 +1475,11 @@ export class RagService {
 
       return {
         success: true,
-        message: collection ? `Moved to "${collection}".` : 'Moved to Uncategorized.',
+        message: collection ? t('server.ragService.movedTo', { collection }) : t('server.ragService.movedToUncategorized'),
       }
     } catch (error) {
       logger.error('[RAG] Error updating file collection:', error)
-      return { success: false, message: 'Error updating file collection.' }
+      return { success: false, message: t('server.ragService.errorUpdatingFileCollection') }
     }
   }
 
@@ -1543,10 +1544,10 @@ export class RagService {
         throw error
       }
 
-      return { success: true, message: active ? 'File is now active.' : 'File is now inactive.' }
+      return { success: true, message: active ? t('server.ragService.fileIsNowActive') : t('server.ragService.fileIsNowInactive') }
     } catch (error) {
       logger.error('[RAG] Error updating file active state:', error)
-      return { success: false, message: 'Error updating file active state.' }
+      return { success: false, message: t('server.ragService.errorUpdatingFileActiveState') }
     }
   }
 
@@ -1614,18 +1615,19 @@ export class RagService {
         throw error
       }
 
-      const label = collection ?? 'Uncategorized'
-      const verb = active ? 'Turned on' : 'Turned off'
+      const label = collection ?? t('server.ragService.uncategorized')
       return {
         success: true,
-        message: `${verb} ${affectedCount} file${affectedCount === 1 ? '' : 's'} in "${label}".`,
+        message: active
+          ? t('server.ragService.turnedOn', { count: affectedCount, label })
+          : t('server.ragService.turnedOff', { count: affectedCount, label }),
         affectedCount,
       }
     } catch (error) {
       logger.error('[RAG] Error updating KB collection active state:', error)
       return {
         success: false,
-        message: 'Error updating collection active state.',
+        message: t('server.ragService.errorUpdatingCollectionActiveState'),
         affectedCount: 0,
       }
     }
@@ -1642,7 +1644,7 @@ export class RagService {
   ): Promise<{ success: boolean; message: string }> {
     try {
       if (!oldName || !newName || oldName === newName) {
-        return { success: false, message: 'Invalid collection names.' }
+        return { success: false, message: t('server.ragService.invalidCollectionNames') }
       }
       await this._ensureCollection(
         RagService.CONTENT_COLLECTION_NAME,
@@ -1656,10 +1658,10 @@ export class RagService {
 
       await KbIngestState.query().where('collection', oldName).update({ collection: newName })
 
-      return { success: true, message: `Renamed "${oldName}" to "${newName}".` }
+      return { success: true, message: t('server.ragService.renamedTo', { oldName, newName }) }
     } catch (error) {
       logger.error('[RAG] Error renaming knowledge collection:', error)
-      return { success: false, message: 'Error renaming collection.' }
+      return { success: false, message: t('server.ragService.errorRenamingCollection') }
     }
   }
 
@@ -1674,7 +1676,7 @@ export class RagService {
   ): Promise<{ success: boolean; message: string }> {
     try {
       if (!name) {
-        return { success: false, message: 'Invalid collection name.' }
+        return { success: false, message: t('server.ragService.invalidCollectionName') }
       }
       await this._ensureCollection(
         RagService.CONTENT_COLLECTION_NAME,
@@ -1688,10 +1690,10 @@ export class RagService {
 
       await KbIngestState.query().where('collection', name).update({ collection: null })
 
-      return { success: true, message: `"${name}" removed. Files moved to Uncategorized.` }
+      return { success: true, message: t('server.ragService.removedFilesMovedToUncategorized', { name }) }
     } catch (error) {
       logger.error('[RAG] Error deleting knowledge collection:', error)
-      return { success: false, message: 'Error deleting collection.' }
+      return { success: false, message: t('server.ragService.errorDeletingCollection') }
     }
   }
 
@@ -1956,10 +1958,10 @@ export class RagService {
       // path that no longer exists in storage and try to re-embed nothing.
       await KbIngestState.remove(source)
 
-      return { success: true, message: 'File removed from knowledge base.' }
+      return { success: true, message: t('server.ragService.fileRemovedFromKnowledgeBase') }
     } catch (error) {
       logger.error('[RAG] Error deleting file from knowledge base:', error)
-      return { success: false, message: 'Error deleting file from knowledge base.' }
+      return { success: false, message: t('server.ragService.errorDeletingFileFromKnowledge') }
     }
   }
 
@@ -2077,7 +2079,7 @@ export class RagService {
         logger.info('[RAG] Nomad docs have already been discovered and queued. Skipping.')
         return {
           success: true,
-          message: 'Nomad docs have already been discovered and queued. Skipping.',
+          message: t('server.ragService.nomadDocsHaveAlreadyBeen'),
         }
       }
 
@@ -2119,11 +2121,11 @@ export class RagService {
 
       return {
         success: true,
-        message: `Nomad docs discovery completed. Dispatched ${filesToEmbed.length} embedding jobs.`,
+        message: t('server.ragService.nomadDocsDiscoveryCompletedDispatched', { length: filesToEmbed.length }),
       }
     } catch (error) {
       logger.error('Error discovering Nomad docs:', error)
-      return { success: false, message: 'Error discovering Nomad docs.' }
+      return { success: false, message: t('server.ragService.errorDiscoveringNomadDocs') }
     }
   }
 
@@ -2274,7 +2276,7 @@ export class RagService {
         return {
           success: false,
           code: 'not_found',
-          message: 'File is not a tracked knowledge-base source.',
+          message: t('server.ragService.fileIsNotATracked'),
         }
       }
     }
@@ -2288,7 +2290,7 @@ export class RagService {
         success: false,
         code: 'inflight',
         message:
-          'A job for this file is already in progress. Wait for it to finish before re-queuing.',
+          t('server.ragService.aJobForThisFile'),
       }
     }
 
@@ -2300,7 +2302,7 @@ export class RagService {
         return {
           success: false,
           code: 'delete_failed',
-          message: 'Failed to clear prior embeddings before re-embed.',
+          message: t('server.ragService.failedToClearPriorEmbeddings'),
         }
       }
     }
@@ -2310,12 +2312,12 @@ export class RagService {
       return {
         success: false,
         code: 'dispatch_failed',
-        message: 'Failed to dispatch embed job for this file.',
+        message: t('server.ragService.failedToDispatchEmbedJob'),
       }
     }
     return {
       success: true,
-      message: force ? 'Re-embed queued for this file.' : 'Indexing queued for this file.',
+      message: force ? t('server.ragService.reEmbedQueuedForThis') : t('server.ragService.indexingQueuedForThisFile'),
     }
   }
 
@@ -2560,29 +2562,29 @@ export class RagService {
         .join('')
       const orphanNote =
         (orphansPurged > 0
-          ? `; purged ${orphansPurged} orphaned source${orphansPurged !== 1 ? 's' : ''}`
+          ? t('server.ragService.purged', { count: orphansPurged })
           : '') + withheldNote
 
       if (filesToEmbed.length === 0) {
         return {
           success: true,
-          message: `Knowledge base is already in sync${orphanNote}`,
+          message: t('server.ragService.knowledgeBaseIsAlreadyIn', { orphanNote }),
           filesScanned: filesInStorage.length,
           filesQueued: 0,
         }
       }
 
       const { queuedCount, dedupedCount } = await this._dispatchEmbedJobsFor(filesToEmbed)
-      const dedupeNote = dedupedCount > 0 ? ` (${dedupedCount} already queued)` : ''
+      const dedupeNote = dedupedCount > 0 ? t('server.ragService.dedupe', { n: dedupedCount }) : ''
       return {
         success: true,
-        message: `Scanned ${filesInStorage.length} files, queued ${queuedCount} for embedding${dedupeNote}${orphanNote}`,
+        message: t('server.ragService.scannedFilesQueuedForEmbedding', { length: filesInStorage.length, queuedCount, dedupeNote, orphanNote }),
         filesScanned: filesInStorage.length,
         filesQueued: queuedCount,
       }
     } catch (error) {
       logger.error('[RAG] Error scanning and syncing knowledge base:', error)
-      return { success: false, message: 'Error scanning and syncing knowledge base' }
+      return { success: false, message: t('server.ragService.errorScanningAndSyncingKnowledge') }
     }
   }
 
@@ -2607,7 +2609,7 @@ export class RagService {
         return {
           success: false,
           message:
-            'Embed jobs are already in progress. Wait for the queue to drain (or clean up failed jobs) before triggering a bulk re-embed.',
+            t('server.ragService.embedJobsAreAlreadyIn'),
         }
       }
 
@@ -2673,13 +2675,13 @@ export class RagService {
 
       const failureSuffix =
         failedPaths.length > 0
-          ? ` ${failedPaths.length} file${failedPaths.length === 1 ? '' : 's'} failed to dispatch and are temporarily unindexed — run a sync rescan to recover.`
+          ? ' ' + t('server.ragService.failedToDispatch', { count: failedPaths.length })
           : ''
 
       return {
         success: failedPaths.length === 0,
         message:
-          `Re-embedding ${queuedCount} file${queuedCount === 1 ? '' : 's'}. Existing points were replaced.` +
+          t('server.ragService.reembedding', { count: queuedCount }) +
           failureSuffix,
         filesScanned: filesInStorage.length,
         filesQueued: queuedCount,
@@ -2687,7 +2689,7 @@ export class RagService {
       }
     } catch (error) {
       logger.error('[RAG] Error during re-embed:', error)
-      return { success: false, message: 'Error during re-embed' }
+      return { success: false, message: t('server.ragService.errorDuringReEmbed') }
     }
   }
 
@@ -2711,7 +2713,7 @@ export class RagService {
         return {
           success: false,
           message:
-            'Embed jobs are already in progress. Wait for the queue to drain (or clean up failed jobs) before triggering a reset.',
+            t('server.ragService.embedJobsAreAlreadyIn2'),
         }
       }
 
@@ -2756,13 +2758,13 @@ export class RagService {
       // the count + paths so the operator can rerun a sync rescan to recover.
       const failureSuffix =
         failedPaths.length > 0
-          ? ` ${failedPaths.length} file${failedPaths.length === 1 ? '' : 's'} failed to dispatch and are temporarily unindexed — run a sync rescan to recover.`
+          ? ' ' + t('server.ragService.failedToDispatch', { count: failedPaths.length })
           : ''
 
       return {
         success: failedPaths.length === 0,
         message:
-          `Collection wiped. Queued ${queuedCount} file${queuedCount === 1 ? '' : 's'} for a full rebuild.` +
+          t('server.ragService.wiped', { count: queuedCount }) +
           failureSuffix,
         filesScanned: filesInStorage.length,
         filesQueued: queuedCount,
@@ -2770,7 +2772,7 @@ export class RagService {
       }
     } catch (error) {
       logger.error('[RAG] Error during reset & rebuild:', error)
-      return { success: false, message: 'Error during reset & rebuild' }
+      return { success: false, message: t('server.ragService.errorDuringResetRebuild') }
     }
   }
 }
