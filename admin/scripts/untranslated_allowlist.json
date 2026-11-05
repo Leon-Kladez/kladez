@@ -99,5 +99,12 @@
   "KEY=value",
   "--restart=unless-stopped",
   "Radeon 780M / 760M (gfx1103): 11.0.0",
-  "OTC"
+  "OTC",
+  "storage/NOMAD.md",
+  "nomad_knowledge_base",
+  "RESET",
+  "Copyright 2024-2026 Crosstalk Solutions, LLC",
+  "OLLAMA_HOST=0.0.0.0",
+  "sysbench",
+  "set_id:"
 ]

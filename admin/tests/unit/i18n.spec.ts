@@ -1,7 +1,7 @@
 import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { en, ru, t, tIn, formatBytes, formatDate, formatDateTime, formatNumber, countryName, languageName, LOCALE } from '../../constants/i18n/index.js'
+import { en, ru, t, tIn, formatBytes, formatDate, formatDateTime, formatNumber, formatDecimal, countryName, languageName, LOCALE } from '../../constants/i18n/index.js'
 
 test('plural: русские формы', () => {
   assert.equal(t('test.files', { count: 1 }), '1 файл')
@@ -53,6 +53,13 @@ test('languageName: язык по коду — по-русски, с больш�
   assert.equal(languageName('eng', 'English'), 'Английский')
   assert.equal(languageName('ru', 'Russian'), 'Русский')
   assert.equal(languageName('zzz-bad', 'Klingon'), 'Klingon')
+})
+
+test('formatDecimal: фиксированное число знаков после запятой', () => {
+  assert.equal(formatDecimal(85.34), '85,3')
+  assert.equal(formatDecimal(1234.5, 1), '1 234,5')
+  assert.equal(formatDecimal(12, 1), '12,0')
+  assert.equal(formatDecimal(0.456, 0), '0')
 })
 
 test('LOCALE — русский', () => assert.equal(LOCALE, 'ru'))

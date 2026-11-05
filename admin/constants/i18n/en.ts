@@ -54,6 +54,23 @@ import { mapsManagerEn } from './en/mapsManager.js'
 import { explorerEn } from './en/explorer.js'
 import { depotEn } from './en/depot.js'
 import { servicesEn } from './en/services.js'
+import { chatEn } from './en/chat.js'
+import { kbPolicyEn } from './en/kbPolicy.js'
+import { nomadMdEn } from './en/nomadMd.js'
+import { visionEn } from './en/vision.js'
+import { kbFilesEn } from './en/kbFiles.js'
+import { collectionsEn } from './en/collections.js'
+import { advancedEn } from './en/advanced.js'
+import { supportEn } from './en/support.js'
+import { systemEn } from './en/system.js'
+import { legalEn } from './en/legal.js'
+import { updateEn } from './en/update.js'
+import { modelsEn } from './en/models.js'
+import { benchEn } from './en/bench.js'
+import { drugRefEn } from './en/drugRef.js'
+import { drugShowEn } from './en/drugShow.js'
+import { compareEn } from './en/compare.js'
+import { conditionsEn } from './en/conditions.js'
 
 export const en = {
   ...testEn,
@@ -110,6 +127,23 @@ export const en = {
   ...explorerEn,
   ...depotEn,
   ...servicesEn,
+  ...chatEn,
+  ...kbPolicyEn,
+  ...nomadMdEn,
+  ...visionEn,
+  ...kbFilesEn,
+  ...collectionsEn,
+  ...advancedEn,
+  ...supportEn,
+  ...systemEn,
+  ...legalEn,
+  ...updateEn,
+  ...modelsEn,
+  ...benchEn,
+  ...drugRefEn,
+  ...drugShowEn,
+  ...compareEn,
+  ...conditionsEn,
 } as const
 
 export type MessageKey = keyof typeof en

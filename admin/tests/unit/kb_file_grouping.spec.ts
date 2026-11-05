@@ -61,7 +61,7 @@ test('groupAndSortKbFiles collapses all admin docs into a single row', () => {
   assert.equal(groups.length, 1)
   assert.equal(groups[0].bucket, 'admin_docs')
   assert.equal(groups[0].count, 4)
-  assert.equal(groups[0].displayName, 'Project NOMAD documentation · 4 files')
+  assert.equal(groups[0].displayName, 'Справка Кладезя · 4 файла')
   assert.deepEqual(groups[0].members.sort(), [
     '/app/README.md',
     '/app/docs/getting-started.md',
@@ -103,7 +103,7 @@ test('groupAndSortKbFiles alphabetizes within a bucket', () => {
 
 test('groupAndSortKbFiles uses singular noun when only one admin doc exists', () => {
   const groups = groupAndSortKbFiles(asInfos(['/app/docs/release-notes.md']))
-  assert.equal(groups[0].displayName, 'Project NOMAD documentation · 1 file')
+  assert.equal(groups[0].displayName, 'Справка Кладезя · 1 файл')
 })
 
 test('groupAndSortKbFiles handles empty input', () => {
@@ -362,7 +362,7 @@ test('groupAndSortKbFiles orders KB-collection headers alphabetically with Uncat
 test('groupAndSortKbFiles labels the null-collection header "Uncategorized" with a file count', () => {
   const groups = groupAndSortKbFiles(collectioned)
   const header = groups.find((g) => g.collection === null)
-  assert.equal(header?.displayName, 'Uncategorized · 1 file')
+  assert.equal(header?.displayName, 'Без раздела · 1 файл')
 })
 
 test('groupAndSortKbFiles computes all-active, all-inactive, and mixed aggregate state per header', () => {

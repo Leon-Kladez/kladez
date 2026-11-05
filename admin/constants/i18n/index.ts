@@ -129,6 +129,14 @@ export function languageName(code: string, fallback: string): string {
 
 const NUMBER_FORMAT = new Intl.NumberFormat('ru-RU')
 
+/** Число с заданным количеством знаков после запятой: formatDecimal(85.34) → «85,3» (замена toFixed). */
+export function formatDecimal(n: number, digits = 1): string {
+  return new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(n)
+}
+
 /** «1 234 567», «1 234,5» — по-русски. */
 export function formatNumber(n: number): string {
   return NUMBER_FORMAT.format(n)

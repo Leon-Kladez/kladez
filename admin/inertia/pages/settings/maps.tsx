@@ -105,7 +105,7 @@ export default function MapsManager(props: {
 
       const res = await api.downloadBaseMapAssets()
       if (!res) {
-        throw new Error('An unknown error occurred while downloading base assets.')
+        throw new Error(t('mapsManager.assetsFailed'))
       }
 
       if (res.success) {

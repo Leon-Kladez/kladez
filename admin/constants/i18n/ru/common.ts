@@ -41,4 +41,6 @@ export const commonRu: Record<keyof typeof commonEn, string> = {
   'common.restart': 'Перезапустить',
   'common.back': 'Назад',
   'common.next': 'Далее',
+  'common.yes': 'Да',
+  'common.no': 'Нет',
 }

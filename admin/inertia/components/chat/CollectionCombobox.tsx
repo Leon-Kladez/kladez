@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { t } from '../../../constants/i18n'
 
 interface CollectionComboboxProps {
   /** Current value. Empty string means "Uncategorized". */
@@ -165,7 +166,7 @@ export default function CollectionCombobox({
               className="block w-full text-left px-2 py-1.5 text-sm text-text-secondary hover:bg-surface-secondary"
               onClick={() => commit('')}
             >
-              Uncategorized
+              {t('chat.collections.uncategorized')}
             </button>
           )}
           {filtered.map((opt) => (
@@ -184,11 +185,11 @@ export default function CollectionCombobox({
               className="block w-full text-left px-2 py-1.5 text-sm text-desert-green font-medium hover:bg-surface-secondary border-t border-border-subtle"
               onClick={() => commit(query.trim().toLowerCase())}
             >
-              + Create "{query.trim().toLowerCase()}"
+              {t('chat.collections.create', { name: query.trim().toLowerCase() })}
             </button>
           )}
           {filtered.length === 0 && !showCreateOption && (
-            <div className="px-2 py-1.5 text-sm text-text-muted">No matches</div>
+            <div className="px-2 py-1.5 text-sm text-text-muted">{t('chat.collections.noMatches')}</div>
           )}
         </div>,
         document.body

@@ -1,5 +1,6 @@
 import type { KbIngestStateValue } from '../../types/kb_ingest_state.js'
 import type { StoredFileInfo } from '../../types/rag.js'
+import { t } from '../../constants/i18n/index.js'
 
 /**
  * Knowledge-base files come back as a list of `{source, state, chunksEmbedded}`
@@ -162,7 +163,7 @@ export function groupAndSortKbFiles(
       groups.push({
         bucket,
         source: '__admin_docs_group__',
-        displayName: `Project NOMAD documentation · ${members.length} file${members.length === 1 ? '' : 's'}`,
+        displayName: `${t('kbFiles.docs')} · ${t('kbFiles.files', { count: members.length })}`,
         count: members.length,
         members: members.map((m) => m.source),
         state: null,
@@ -197,7 +198,7 @@ export function groupAndSortKbFiles(
       for (const key of collectionKeys) {
         const groupMembers = byCollection.get(key)!
         const collectionName = key === UNCATEGORIZED_COLLECTION_KEY ? null : key
-        const label = collectionName ?? 'Uncategorized'
+        const label = collectionName ?? t('chat.collections.uncategorized')
         const activeCount = groupMembers.filter((m) => m.active).length
         const collectionActiveState: KbFileGroup['collectionActiveState'] =
           activeCount === 0
@@ -209,7 +210,7 @@ export function groupAndSortKbFiles(
         groups.push({
           bucket,
           source: collectionHeaderKey(key),
-          displayName: `${label} · ${groupMembers.length} file${groupMembers.length === 1 ? '' : 's'}`,
+          displayName: `${label} · ${t('kbFiles.files', { count: groupMembers.length })}`,
           count: groupMembers.length,
           members: groupMembers.map((m) => m.source),
           state: null,

@@ -92,6 +92,14 @@ const DONE_DIRS: string[] = [
   'inertia/pages/settings/maps.tsx',
   'inertia/pages/settings/apps.tsx',
   'inertia/pages/settings/creator-packs.tsx',
+  // Задача 7 — остальные настройки, ИИ-помощник, справочник лекарств
+  'inertia/pages/settings',
+  'inertia/pages/chat.tsx',
+  'inertia/components/chat',
+  'inertia/pages/drug-reference',
+  'inertia/pages/conditions',
+  'inertia/pages/docs',
+  'inertia/lib',
 ]
 
 test('нет зашитого английского в готовых папках', () => {

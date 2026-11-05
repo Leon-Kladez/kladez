@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react'
 import { useEffect } from 'react'
 import MarkdocRenderer from '~/components/MarkdocRenderer'
 import DocsLayout from '~/layouts/DocsLayout'
+import { t } from '../../../constants/i18n'
 
 export default function Show({ content }: { content: any; }) {
   // Deep-link support: when arriving at /docs/<slug>#<anchor> (e.g. from a Supply Depot app's
@@ -19,7 +20,7 @@ export default function Show({ content }: { content: any; }) {
 
   return (
     <DocsLayout>
-      <Head title={'Documentation'} />
+      <Head title={t('nav.docs.title')} />
       <div className="xl:pl-80 pt-14 xl:pt-8 pb-8 px-6 sm:px-8 lg:px-12">
         <div className="max-w-4xl">
           <MarkdocRenderer content={content} />

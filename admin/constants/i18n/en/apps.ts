@@ -29,4 +29,5 @@ export const appsEn = {
   'apps.subtitle': 'Manage the applications that are available in your Project NOMAD instance. Nightly update checks will automatically detect when new versions of these apps are available.',
   'apps.col.name': 'Name',
   'apps.col.location': 'Location',
+  'apps.updateFailedShort': 'Update failed',
 } as const

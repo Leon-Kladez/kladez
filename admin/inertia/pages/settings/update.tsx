@@ -16,6 +16,7 @@ import CoreAutoUpdateSection from '~/components/updates/CoreAutoUpdateSection'
 import AppAutoUpdateSection from '~/components/updates/AppAutoUpdateSection'
 import ContentAutoUpdateSection from '~/components/updates/ContentAutoUpdateSection'
 import ContentUpdatesSection from '~/components/updates/ContentUpdatesSection'
+import { t } from '../../../constants/i18n'
 
 type Props = {
   updateAvailable: boolean
@@ -25,13 +26,13 @@ type Props = {
 }
 
 const STAGE_LABELS: Record<SystemUpdateStatus['stage'], string> = {
-  idle: 'Preparing Update',
-  starting: 'Starting Update',
-  pulling: 'Pulling Images',
-  pulled: 'Images Pulled',
-  recreating: 'Recreating Containers',
-  complete: 'Update Complete',
-  error: 'Update Failed',
+  idle: t('update.stage.idle'),
+  starting: t('update.stage.starting'),
+  pulling: t('update.stage.pulling'),
+  pulled: t('update.stage.pulled'),
+  recreating: t('update.stage.recreating'),
+  complete: t('update.stage.complete'),
+  error: t('update.failed'),
 }
 
 const ADVANCED_STAGES: ReadonlySet<SystemUpdateStatus['stage']> = new Set([
@@ -73,7 +74,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
       try {
         const response = await api.getSystemUpdateStatus()
         if (!response) {
-          throw new Error('Failed to fetch update status')
+          throw new Error(t('update.statusFailed'))
         }
         setUpdateStatus(response)
 
@@ -126,11 +127,11 @@ export default function SystemUpdatePage(props: { system: Props }) {
       setIsUpdating(true)
       const response = await api.startSystemUpdate()
       if (!response || !response.success) {
-        throw new Error('Failed to start update')
+        throw new Error(t('update.startFailed'))
       }
     } catch (err: any) {
       setIsUpdating(false)
-      setError(err.response?.data?.error || err.message || 'Failed to start update')
+      setError(err.response?.data?.error || err.message || t('update.startFailed'))
     }
   }
 
@@ -138,12 +139,12 @@ export default function SystemUpdatePage(props: { system: Props }) {
     try {
       const response = await api.getSystemUpdateLogs()
       if (!response) {
-        throw new Error('Failed to fetch update logs')
+        throw new Error(t('update.logsFailed'))
       }
       setLogs(response.logs)
       setShowLogs(true)
     } catch (err) {
-      setError('Failed to fetch update logs')
+      setError(t('update.logsFailed'))
     }
   }
 
@@ -160,16 +161,16 @@ export default function SystemUpdatePage(props: { system: Props }) {
         if (data.updateAvailable) {
           addNotification({
             type: 'success',
-            message: `Update available: ${data.latestVersion}`,
+            message: t('update.available', { version: data.latestVersion }),
           })
         } else {
-          addNotification({ type: 'success', message: 'System is up to date' })
+          addNotification({ type: 'success', message: t('update.upToDateShort') })
         }
         setError(null)
       }
     },
     onError: (error: any) => {
-      const errorMessage = error?.message || 'Failed to check for updates'
+      const errorMessage = error?.message || t('update.checkFailed')
       setError(errorMessage)
       addNotification({ type: 'error', message: errorMessage })
     },
@@ -197,7 +198,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
       return await api.updateSetting(key, value)
     },
     onSuccess: () => {
-      addNotification({ message: 'Setting updated successfully.', type: 'success' })
+      addNotification({ message: t('advanced.saved'), type: 'success' })
       earlyAccessSetting.refetch()
       // Toggling Early Access changes which versions are eligible, so re-evaluate
       // immediately rather than making the user click Check Again.
@@ -205,7 +206,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
     },
     onError: (error) => {
       console.error('Error updating setting:', error)
-      addNotification({ message: 'There was an error updating the setting. Please try again.', type: 'error' })
+      addNotification({ message: t('update.settingFailed'), type: 'error' })
     },
   })
 
@@ -214,33 +215,32 @@ export default function SystemUpdatePage(props: { system: Props }) {
     mutationFn: (email: string) => api.subscribeToReleaseNotes(email),
     onSuccess: (data) => {
       if (data && data.success) {
-        addNotification({ type: 'success', message: 'Successfully subscribed to release notes!' })
+        addNotification({ type: 'success', message: t('update.subscribed') })
         setEmail('')
       } else {
         addNotification({
           type: 'error',
-          message: `Failed to subscribe: ${data?.message || 'Unknown error'}`,
+          message: t('update.subscribeFailed', { error: data?.message || t('common.unknownError') }),
         })
       }
     },
     onError: (error: any) => {
       addNotification({
         type: 'error',
-        message: `Error subscribing to release notes: ${error.message || 'Unknown error'}`,
+        message: t('update.subscribeFailed', { error: error.message || t('common.unknownError') }),
       })
     },
   })
 
   return (
     <SettingsLayout>
-      <Head title="System Update" />
+      <Head title={t('update.title')} />
       <div className="xl:pl-72 w-full">
         <main className="px-6 lg:px-12 py-6 lg:py-8">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-desert-green mb-2">System Update</h1>
+            <h1 className="text-4xl font-bold text-desert-green mb-2">{t('update.title')}</h1>
             <p className="text-desert-stone-dark">
-              Keep your Project NOMAD instance up to date with the latest features and
-              improvements.
+              {t('update.subtitle')}
             </p>
           </div>
 
@@ -248,7 +248,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
             <div className="mb-6">
               <Alert
                 type="error"
-                title="Update Failed"
+                title={t('update.failed')}
                 message={error}
                 variant="bordered"
                 dismissible
@@ -260,8 +260,8 @@ export default function SystemUpdatePage(props: { system: Props }) {
             <div className="mb-6">
               <Alert
                 type="info"
-                title="Container Restarting"
-                message="The admin container is restarting. This page will reload automatically when the update is complete."
+                title={t('update.restarting')}
+                message={t('update.restartingText')}
                 variant="solid"
               />
             </div>
@@ -270,8 +270,8 @@ export default function SystemUpdatePage(props: { system: Props }) {
             <div className="mb-6">
               <Alert
                 type="info"
-                title="Connection Temporarily Lost (Expected)"
-                message="You may see error notifications while the backend restarts during the update. This is completely normal and expected. Connection should be restored momentarily."
+                title={t('update.connectionLost')}
+                message={t('update.connectionLostText')}
                 variant="solid"
               />
             </div>
@@ -283,12 +283,12 @@ export default function SystemUpdatePage(props: { system: Props }) {
               {!isUpdating && (
                 <>
                   <h2 className="text-2xl font-bold text-desert-green mb-2">
-                    {versionInfo.updateAvailable ? 'Update Available' : 'System Up to Date'}
+                    {versionInfo.updateAvailable ? t('update.availableTitle') : t('update.upToDateTitle')}
                   </h2>
                   <p className="text-desert-stone-dark mb-6">
                     {versionInfo.updateAvailable
-                      ? `A new version (${versionInfo.latestVersion}) is available for your Project NOMAD instance.`
-                      : 'Your system is running the latest version!'}
+                      ? t('update.newVersion', { version: versionInfo.latestVersion })
+                      : t('update.latestRunning')}
                   </p>
                 </>
               )}
@@ -304,7 +304,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
 
               <div className="flex justify-center gap-8 mb-6">
                 <div className="text-center">
-                  <p className="text-sm text-desert-stone mb-1">Current Version</p>
+                  <p className="text-sm text-desert-stone mb-1">{t('update.current')}</p>
                   <p className="text-xl font-bold text-desert-green">
                     {versionInfo.currentVersion}
                   </p>
@@ -327,7 +327,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
                       </svg>
                     </div>
                     <div className="text-center">
-                      <p className="text-sm text-desert-stone mb-1">Latest Version</p>
+                      <p className="text-sm text-desert-stone mb-1">{t('update.latest')}</p>
                       <p className="text-xl font-bold text-desert-olive">
                         {versionInfo.latestVersion}
                       </p>
@@ -344,7 +344,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     />
                   </div>
                   <p className="text-sm text-desert-stone mt-2">
-                    {updateStatus.progress}% complete
+                    {t('update.progress', { pct: updateStatus.progress })}
                   </p>
                 </div>
               )}
@@ -357,7 +357,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     onClick={handleStartUpdate}
                     disabled={!versionInfo.updateAvailable}
                   >
-                    {versionInfo.updateAvailable ? 'Start Update' : 'No Update Available'}
+                    {versionInfo.updateAvailable ? t('update.start') : t('update.none')}
                   </StyledButton>
                   <StyledButton
                     variant="ghost"
@@ -366,14 +366,14 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     onClick={() => checkVersionMutation.mutate()}
                     loading={checkVersionMutation.isPending}
                   >
-                    Check Again
+                    {t('update.checkAgain')}
                   </StyledButton>
                 </div>
               )}
             </div>
             <div className="border-t bg-surface-primary p-6">
               <h3 className="text-lg font-semibold text-desert-green mb-4">
-                What happens during an update?
+                {t('update.whatHappens')}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
@@ -381,9 +381,9 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     1
                   </div>
                   <div>
-                    <p className="font-medium text-desert-stone-dark">Pull Latest Images</p>
+                    <p className="font-medium text-desert-stone-dark">{t('update.step1')}</p>
                     <p className="text-sm text-desert-stone">
-                      Downloads the newest Docker images for all core containers
+                      {t('update.step1Text')}
                     </p>
                   </div>
                 </div>
@@ -392,9 +392,9 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     2
                   </div>
                   <div>
-                    <p className="font-medium text-desert-stone-dark">Recreate Containers</p>
+                    <p className="font-medium text-desert-stone-dark">{t('update.step2')}</p>
                     <p className="text-sm text-desert-stone">
-                      Safely stops and recreates all core containers with the new images
+                      {t('update.step2Text')}
                     </p>
                   </div>
                 </div>
@@ -403,9 +403,9 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     3
                   </div>
                   <div>
-                    <p className="font-medium text-desert-stone-dark">Automatic Reload</p>
+                    <p className="font-medium text-desert-stone-dark">{t('update.step3')}</p>
                     <p className="text-sm text-desert-stone">
-                      This page will automatically reload when the update is complete
+                      {t('update.step3Text')}
                     </p>
                   </div>
                 </div>
@@ -420,7 +420,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     onClick={handleViewLogs}
                     fullWidth
                   >
-                    View Update Logs
+                    {t('update.viewLogs')}
                   </StyledButton>
                 </div>
               )}
@@ -429,18 +429,18 @@ export default function SystemUpdatePage(props: { system: Props }) {
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <Alert
               type="info"
-              title="Backup Reminder"
-              message="While updates are designed to be safe, it's always recommended to backup any critical data before proceeding."
+              title={t('update.backup')}
+              message={t('update.backupText')}
               variant="solid"
             />
             <Alert
               type="warning"
-              title="Temporary Downtime"
-              message="Services will be briefly unavailable during the update process. This typically takes 2-5 minutes depending on your internet connection."
+              title={t('update.downtime')}
+              message={t('update.downtimeText')}
               variant="solid"
             />
           </div>
-          <StyledSectionHeader title="Early Access" className="mt-8" />
+          <StyledSectionHeader title={t('update.earlyAccess')} className="mt-8" />
           <div className="bg-surface-primary rounded-lg border shadow-md overflow-hidden mt-6 p-6">
             <Switch
               checked={earlyAccessSetting.data?.value || false}
@@ -448,8 +448,8 @@ export default function SystemUpdatePage(props: { system: Props }) {
                 updateSettingMutation.mutate({ key: 'system.earlyAccess', value: newVal })
               }}
               disabled={updateSettingMutation.isPending}
-              label="Enable Early Access"
-              description="Receive release candidate (RC) versions before they are officially released. Note: RC versions may contain bugs and are not recommended for environments where stability and data integrity are critical."
+              label={t('update.earlyAccessLabel')}
+              description={t('update.earlyAccessText')}
             />
           </div>
           <CoreAutoUpdateSection />
@@ -460,8 +460,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
             <div className="flex flex-col md:flex-row justify-between items-center p-8 gap-y-8 md:gap-y-0 gap-x-8">
               <div>
                 <h2 className="max-w-xl text-lg font-bold text-desert-green sm:text-xl lg:col-span-7">
-                  Want to stay updated with the latest from Project NOMAD? Subscribe to receive
-                  release notes directly to your inbox. Unsubscribe anytime.
+                  {t('update.newsletter')}
                 </h2>
               </div>
               <div className="flex flex-col">
@@ -470,7 +469,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     name="email"
                     label=""
                     type="email"
-                    placeholder="Your email address"
+                    placeholder={t('update.email')}
                     disabled={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -483,12 +482,11 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     onClick={() => subscribeToReleaseNotesMutation.mutateAsync(email)}
                     loading={subscribeToReleaseNotesMutation.isPending}
                   >
-                    Subscribe
+                    {t('update.subscribe')}
                   </StyledButton>
                 </div>
                 <p className="mt-2 text-sm text-desert-stone-dark">
-                  We care about your privacy. Project NOMAD will never share your email with
-                  third parties or send you spam.
+                  {t('update.privacy')}
                 </p>
               </div>
             </div>
@@ -498,7 +496,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-surface-primary rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] flex flex-col">
                 <div className="p-6 border-b border-desert-stone-light flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-desert-green">Update Logs</h3>
+                  <h3 className="text-xl font-bold text-desert-green">{t('update.logs')}</h3>
                   <button
                     onClick={() => setShowLogs(false)}
                     className="text-desert-stone hover:text-desert-green transition-colors"
@@ -515,12 +513,12 @@ export default function SystemUpdatePage(props: { system: Props }) {
                 </div>
                 <div className="p-6 overflow-auto flex-1">
                   <pre className="bg-black text-green-400 p-4 rounded text-xs font-mono whitespace-pre-wrap">
-                    {logs || 'No logs available yet...'}
+                    {logs || t('update.noLogs')}
                   </pre>
                 </div>
                 <div className="p-6 border-t border-desert-stone-light">
                   <StyledButton variant="secondary" onClick={() => setShowLogs(false)} fullWidth>
-                    Close
+                    {t('common.close')}
                   </StyledButton>
                 </div>
               </div>

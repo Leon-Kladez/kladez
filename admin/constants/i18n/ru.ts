@@ -54,6 +54,23 @@ import { mapsManagerRu } from './ru/mapsManager.js'
 import { explorerRu } from './ru/explorer.js'
 import { depotRu } from './ru/depot.js'
 import { servicesRu } from './ru/services.js'
+import { chatRu } from './ru/chat.js'
+import { kbPolicyRu } from './ru/kbPolicy.js'
+import { nomadMdRu } from './ru/nomadMd.js'
+import { visionRu } from './ru/vision.js'
+import { kbFilesRu } from './ru/kbFiles.js'
+import { collectionsRu } from './ru/collections.js'
+import { advancedRu } from './ru/advanced.js'
+import { supportRu } from './ru/support.js'
+import { systemRu } from './ru/system.js'
+import { legalRu } from './ru/legal.js'
+import { updateRu } from './ru/update.js'
+import { modelsRu } from './ru/models.js'
+import { benchRu } from './ru/bench.js'
+import { drugRefRu } from './ru/drugRef.js'
+import { drugShowRu } from './ru/drugShow.js'
+import { compareRu } from './ru/compare.js'
+import { conditionsRu } from './ru/conditions.js'
 
 export const ru: Record<MessageKey, string> = {
   ...testRu,
@@ -110,4 +127,21 @@ export const ru: Record<MessageKey, string> = {
   ...explorerRu,
   ...depotRu,
   ...servicesRu,
+  ...chatRu,
+  ...kbPolicyRu,
+  ...nomadMdRu,
+  ...visionRu,
+  ...kbFilesRu,
+  ...collectionsRu,
+  ...advancedRu,
+  ...supportRu,
+  ...systemRu,
+  ...legalRu,
+  ...updateRu,
+  ...modelsRu,
+  ...benchRu,
+  ...drugRefRu,
+  ...drugShowRu,
+  ...compareRu,
+  ...conditionsRu,
 }

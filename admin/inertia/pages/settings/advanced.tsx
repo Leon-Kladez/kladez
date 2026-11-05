@@ -8,6 +8,7 @@ import Input from '~/components/inputs/Input'
 import { useNotifications } from '~/context/NotificationContext'
 import { useMutation } from '@tanstack/react-query'
 import api from '~/lib/api'
+import { t } from '../../../constants/i18n'
 
 export default function AdvancedPage(props: {
   advanced: {
@@ -30,7 +31,7 @@ export default function AdvancedPage(props: {
     try {
       const url = new URL(value)
       if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-        return 'Test URL must use http or https.'
+        return t('advanced.urlScheme')
       }
     } catch {
       return 'Test URL must be a valid URL (e.g. "https://example.com").'
@@ -43,7 +44,7 @@ export default function AdvancedPage(props: {
       return await api.updateSetting('system.internetStatusTestUrl', value)
     },
     onSuccess: () => {
-      addNotification({ message: 'Setting updated successfully.', type: 'success' })
+      addNotification({ message: t('advanced.saved'), type: 'success' })
     },
     onError: (error: any) => {
       const msg =
@@ -68,29 +69,26 @@ export default function AdvancedPage(props: {
 
   return (
     <SettingsLayout>
-      <Head title="Advanced Settings | Project NOMAD" />
+      <Head title={t('nav.settings.advanced')} />
       <div className="xl:pl-72 w-full">
         <main className="px-12 py-6">
-          <h1 className="text-4xl font-semibold mb-4">Advanced</h1>
+          <h1 className="text-4xl font-semibold mb-4">{t('nav.settings.advanced')}</h1>
           <p className="text-text-muted mb-4">
-            Advanced configuration for operators. These settings are optional — the defaults work
-            for most deployments.
+            {t('advanced.subtitle')}
           </p>
 
-          <StyledSectionHeader title="Connectivity" className="mt-8 mb-4" />
+          <StyledSectionHeader title={t('advanced.connectivity')} className="mt-8 mb-4" />
           <div className="bg-surface-primary rounded-lg border-2 border-border-subtle p-6">
             <p className="text-sm text-text-secondary mb-4">
-              NOMAD periodically checks whether it can reach the internet. By default it probes
-              Cloudflare's utility endpoint with a few fallbacks. Set a custom endpoint below if your
-              network blocks the defaults. Leave blank to use the built-in defaults.
+              {t('advanced.connectivityText')}
             </p>
 
             {internetStatusTestUrlEnvOverride && (
               <Alert
                 type="info"
                 variant="bordered"
-                title="Managed by environment variable"
-                message="The INTERNET_STATUS_TEST_URL environment variable is set and takes precedence over this setting. Remove it to manage the test URL here."
+                title={t('advanced.envTitle')}
+                message={t('advanced.envMessage')}
                 className="!mb-4"
               />
             )}
@@ -99,8 +97,8 @@ export default function AdvancedPage(props: {
               <div className="flex-1">
                 <Input
                   name="internetStatusTestUrl"
-                  label="Internet Status Test URL"
-                  helpText="A single http(s) URL used to check connectivity. Any HTTP response counts as online."
+                  label={t('advanced.testUrl')}
+                  helpText={t('advanced.testUrlHelp')}
                   placeholder="https://1.1.1.1/cdn-cgi/trace"
                   value={internetStatusTestUrl}
                   disabled={internetStatusTestUrlEnvOverride}
@@ -119,7 +117,7 @@ export default function AdvancedPage(props: {
                 disabled={updateTestUrlMutation.isPending || internetStatusTestUrlEnvOverride}
                 className="mb-0.5"
               >
-                Save
+                {t('common.save')}
               </StyledButton>
             </div>
           </div>

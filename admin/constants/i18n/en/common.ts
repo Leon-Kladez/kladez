@@ -40,4 +40,6 @@ export const commonEn = {
   'common.restart': 'Restart',
   'common.back': 'Back',
   'common.next': 'Next',
+  'common.yes': 'Yes',
+  'common.no': 'No',
 } as const

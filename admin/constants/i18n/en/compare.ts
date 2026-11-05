@@ -1,0 +1,17 @@
+export const compareEn = {
+  'compare.intro': 'View each drug\'s FDA-labeled interaction warnings side by side. Select up to {count} drugs.',
+  'compare.warnStrong': 'This shows each drug\'s own FDA-labeled interaction warnings, individually.',
+  'compare.warnText': 'It is {not1} a cross-drug interaction checker and is {not2} a substitute for professional medical review. Absence of text here does not mean a drug is safe to combine.',
+  'compare.not': 'not',
+  'compare.noDataText': 'Download the openFDA drug-label dataset to enable offline search and comparison.',
+  'compare.goDownload': 'Go to Drug Reference to download data',
+  'compare.select': 'Select drugs to compare',
+  'compare.max': 'Maximum {count} drugs reached',
+  'compare.removeId': 'Remove drug {id}',
+  'compare.searchPlaceholder': 'Search for a drug to add…',
+  'compare.noResults': 'No results for "{query}"',
+  'compare.selectHint': 'Select drugs above to compare their labeled interaction warnings.',
+  'compare.source': '{label} U.S. Food & Drug Administration drug labeling, via {openfda} — public domain (CC0 1.0). NOMAD is not affiliated with or endorsed by the FDA. Label data is provided as-is; do not rely on it for medical decisions.',
+  'compare.added': 'Added',
+  'compare.add': 'Add',
+} as const

@@ -31,4 +31,5 @@ export const appsRu: Record<keyof typeof appsEn, string> = {
   'apps.subtitle': 'Программы, доступные в Кладезе. Каждую ночь программа сама проверяет, не вышли ли их новые версии.',
   'apps.col.name': 'Название',
   'apps.col.location': 'Адрес',
+  'apps.updateFailedShort': 'Обновить не удалось',
 }
