@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Как пройти предупреждение Windows — «Кладезъ»</title>
+<style>
+  :root { --ink: #5a3b12; --paper: #f6efe0; --soft: #ead9b8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 20px/1.55 "Segoe UI", Arial, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 22px 60px; }
+  h1 { font-size: 34px; margin: 0 0 6px; }
+  h2 { font-size: 26px; margin: 38px 0 10px; border-top: 2px solid var(--soft); padding-top: 22px; }
+  .lead { font-size: 22px; }
+  .note { background: #fff8e6; border-left: 6px solid #d9a441; padding: 12px 16px; margin: 16px 0; }
+  code { background: #fff; border: 1px solid var(--soft); padding: 2px 6px; border-radius: 4px; font-size: 18px; }
+  pre { background: #fff; border: 1px solid var(--soft); padding: 12px; overflow-x: auto; font-size: 18px; }
+  figure { margin: 16px 0; }
+  figure svg { width: 100%; height: auto; display: block; border: 1px solid var(--soft); background: #fff; }
+  figcaption { font-size: 17px; margin-top: 6px; }
+  ol li { margin-bottom: 8px; }
+  @page { size: A4; margin: 14mm; }
+  @media print { body { font-size: 14pt; background: #fff; } figure { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Как пройти предупреждение Windows</h1>
+<p class="lead">Когда вы запускаете установщик «Кладезъ», Windows или браузер могут предупредить: «файл может навредить». Так бывает со всеми программами, у которых нет платной электронной «подписи». «Кладезъ» — бесплатный проект, подписи у него пока нет.</p>
+<div class="note">Предупреждение не значит, что в файле вирус: Windows просто не знает этого издателя. Чтобы убедиться, что файл настоящий, сверьте его контрольную сумму (раздел в конце страницы).</div>
+
+<h2>1. Синее окно «Windows защитила ваш компьютер»</h2>
+<ol>
+  <li>Нажмите на слова <b>«Подробнее»</b> (они написаны мелко, под текстом).</li>
+  <li>Внизу появится кнопка <b>«Выполнить в любом случае»</b> — нажмите её.</li>
+  <li>Windows спросит разрешение на изменения — нажмите <b>«Да»</b>.</li>
+</ol>
+<figure>
+<svg viewBox="0 0 760 330" role="img" aria-label="Схема окна SmartScreen: сначала нажмите Подробнее, затем кнопку Выполнить в любом случае">
+  <rect x="10" y="10" width="740" height="310" fill="#1f5fa8"/>
+  <g font-family="Segoe UI, Arial" fill="#fff">
+    <text x="40" y="70" font-size="30">Windows защитила ваш компьютер</text>
+    <text x="40" y="120" font-size="19">Фильтр SmartScreen Microsoft Defender предотвратил запуск</text>
+    <text x="40" y="146" font-size="19">неопознанного приложения…</text>
+    <text x="40" y="196" font-size="20" text-decoration="underline">Подробнее</text>
+  </g>
+  <rect x="30" y="172" width="130" height="34" fill="none" stroke="#ffd34d" stroke-width="4"/>
+  <text x="175" y="196" font-size="20" fill="#ffd34d" font-family="Segoe UI, Arial">← 1. сначала сюда</text>
+  <rect x="380" y="250" width="200" height="44" fill="none" stroke="#fff" stroke-width="2"/>
+  <text x="480" y="279" font-size="18" fill="#fff" text-anchor="middle" font-family="Segoe UI, Arial">Выполнить в любом случае</text>
+  <rect x="374" y="244" width="212" height="56" fill="none" stroke="#ffd34d" stroke-width="4"/>
+  <rect x="600" y="250" width="130" height="44" fill="#fff"/>
+  <text x="665" y="279" font-size="18" fill="#1f5fa8" text-anchor="middle" font-family="Segoe UI, Arial">Не выполнять</text>
+  <text x="250" y="279" font-size="20" fill="#ffd34d" text-anchor="middle" font-family="Segoe UI, Arial">2. потом сюда →</text>
+</svg>
+<figcaption>Рисунок 1. Синее окно SmartScreen (упрощённая схема; настоящий снимок экрана будет добавлен после проверки на чистой Windows).</figcaption>
+</figure>
+<figure>
+<svg viewBox="0 0 760 260" role="img" aria-label="Схема окна контроля учётных записей: Разрешить этому приложению вносить изменения на вашем устройстве? Нажмите Да">
+  <rect x="10" y="10" width="740" height="240" fill="#f0f0f0" stroke="#999"/>
+  <rect x="10" y="10" width="740" height="56" fill="#2b2b2b"/>
+  <g font-family="Segoe UI, Arial">
+    <text x="40" y="46" font-size="20" fill="#fff">Контроль учётных записей</text>
+    <text x="40" y="104" font-size="22" fill="#222">Разрешить этому приложению вносить изменения</text>
+    <text x="40" y="132" font-size="22" fill="#222">на вашем устройстве?</text>
+    <text x="40" y="170" font-size="18" fill="#555">Кладезъ-установка.exe · Издатель: неизвестно</text>
+    <rect x="360" y="192" width="170" height="44" fill="#2b6cb0"/>
+    <text x="445" y="221" font-size="20" fill="#fff" text-anchor="middle">Да</text>
+    <rect x="354" y="186" width="182" height="56" fill="none" stroke="#d9a441" stroke-width="4"/>
+    <rect x="560" y="192" width="170" height="44" fill="#ddd"/>
+    <text x="645" y="221" font-size="20" fill="#222" text-anchor="middle">Нет</text>
+  </g>
+</svg>
+<figcaption>Рисунок 2. Окно «Разрешить этому приложению вносить изменения?» — нажмите «Да» (упрощённая схема).</figcaption>
+</figure>
+
+<h2>2. Предупреждение браузера при скачивании</h2>
+<p>Иногда браузер не сразу сохраняет файл, потому что его «редко скачивают».</p>
+<ul>
+  <li><b>Microsoft Edge</b>: в списке загрузок наведите на файл, нажмите «…» → <b>«Сохранить»</b>. Если спросит ещё раз — «Показать больше» → <b>«Всё равно сохранить»</b>.</li>
+  <li><b>Google Chrome</b>: в списке загрузок нажмите на стрелку или «…» рядом с файлом → <b>«Сохранить»</b> (или «Всё равно скачать»).</li>
+  <li><b>Яндекс Браузер</b>: в загрузках нажмите <b>«Продолжить скачивание»</b> или «Всё равно скачать». Если браузер пишет, что файл «может быть опасен», — сверьте контрольную сумму после скачивания.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 760 200" role="img" aria-label="Схема списка загрузок браузера: нажмите на три точки рядом с файлом и выберите Сохранить">
+  <rect x="10" y="10" width="740" height="180" fill="#f3f3f3" stroke="#ccc"/>
+  <g font-family="Segoe UI, Arial">
+    <text x="40" y="50" font-size="20" fill="#333">Загрузки</text>
+    <rect x="30" y="70" width="560" height="70" fill="#fff" stroke="#ccc"/>
+    <text x="50" y="100" font-size="19" fill="#333">Кладезъ-установка.exe</text>
+    <text x="50" y="126" font-size="16" fill="#b00">Этот файл редко скачивают</text>
+    <text x="560" y="112" font-size="26" fill="#333">…</text>
+    <circle cx="566" cy="104" r="22" fill="none" stroke="#d9a441" stroke-width="4"/>
+    <rect x="600" y="80" width="140" height="44" fill="#fff" stroke="#d9a441" stroke-width="4"/>
+    <text x="670" y="109" font-size="19" text-anchor="middle" fill="#333">Сохранить</text>
+  </g>
+</svg>
+<figcaption>Рисунок 3. Загрузки в браузере (упрощённая схема).</figcaption>
+</figure>
+
+<h2>3. Защитник Windows</h2>
+<p>Изредка <b>Защитник Windows</b> может по ошибке отправить установщик «на карантин». Если файл пропал сразу после скачивания:</p>
+<ol>
+  <li>Откройте «Пуск» → «Параметры» → «Обновление и безопасность» (в Windows 11 — «Конфиденциальность и защита») → «Безопасность Windows» → «Защита от вирусов и угроз» → <b>«Журнал защиты»</b>.</li>
+  <li>Найдите строку с «Кладезъ-установка», нажмите <b>«Действия» → «Восстановить»</b>.</li>
+</ol>
+<p>Делайте это, только если контрольная сумма файла совпала (см. ниже).</p>
+
+<h2>Как проверить, что файл настоящий</h2>
+<p>У каждого файла есть «отпечаток» — контрольная сумма SHA-256. Если в файле изменили хоть один байт, отпечаток будет другим. Настоящий отпечаток опубликован рядом со ссылкой на скачивание (файл <code>SHA256SUMS.txt</code>).</p>
+<ol>
+  <li>Откройте папку «Загрузки», где лежит установщик.</li>
+  <li>Нажмите на адресную строку папки, сотрите текст, напишите <code>cmd</code> и нажмите Enter — откроется чёрное окно.</li>
+  <li>Напишите в нём (имя файла можно не печатать целиком: начните и нажмите Tab):
+<pre>certutil -hashfile Кладезъ-установка-0.1.0.exe SHA256</pre></li>
+  <li>Сравните длинную строку из букв и цифр с той, что опубликована. Совпадает — файл настоящий.</li>
+</ol>
+</main>
+</body>
+</html>
