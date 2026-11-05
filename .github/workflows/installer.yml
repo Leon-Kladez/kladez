@@ -35,11 +35,15 @@ jobs:
           bats installer/linux/tests/update_watcher.bats installer/linux/tests/compose_template.bats \
                installer/linux/tests/kladez_start.bats
 
-      - name: Образ admin из этого репозитория
+      # admin и updater собираются из этого репозитория (в updater — наш адрес реестра);
+      # в images.lock для них стоят нули вместо отпечатка: настоящий Id подставляется здесь.
+      - name: Образы admin и updater из этого репозитория
         run: |
-          docker build -t "ghcr.io/aiglobdata/kladez:${VERSION}" .
-          id=$(docker image inspect -f '{{.Id}}' "ghcr.io/aiglobdata/kladez:${VERSION}")
-          sed -i "s|^admin .*|admin ghcr.io/aiglobdata/kladez:${VERSION}@${id}|" installer/linux/images.lock
+          docker build -t "ghcr.io/leon-kladez/kladez:${VERSION}" .
+          docker build -t "ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}" install/sidecar-updater
+          id=$(docker image inspect -f '{{.Id}}' "ghcr.io/leon-kladez/kladez:${VERSION}")
+          uid=$(docker image inspect -f '{{.Id}}' "ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}")
+          sed -i -e "s|^admin .*|admin ghcr.io/leon-kladez/kladez:${VERSION}@${id}|"                  -e "s|^updater .*|updater ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}@${uid}|" installer/linux/images.lock
           cat installer/linux/images.lock
 
       - name: Набор образов

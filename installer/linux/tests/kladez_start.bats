@@ -43,8 +43,8 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   grep -qx 'KIWIX_PORT=8090' "$KZ_ROOT/etc/kladez.conf"
   run grep '@@' "$KZ_ROOT/opt/project-nomad/compose.yml"
   [ "$status" -eq 1 ]
-  grep -q 'image: ghcr.io/crosstalk-solutions/project-nomad:1.35.1$' "$KZ_ROOT/opt/project-nomad/compose.yml"
-  grep -q 'ADMIN_IMAGE_REPO=ghcr.io/crosstalk-solutions/project-nomad$' "$KZ_ROOT/opt/project-nomad/compose.yml"
+  grep -q 'image: ghcr.io/leon-kladez/kladez:0.1.0$' "$KZ_ROOT/opt/project-nomad/compose.yml"
+  grep -q 'ADMIN_IMAGE_REPO=ghcr.io/leon-kladez/kladez$' "$KZ_ROOT/opt/project-nomad/compose.yml"
   [ -d "$LIB" ]
 }
 

@@ -11,7 +11,7 @@ setup() {
       -e 's|@@ADMIN_IMAGE@@|kladez-admin:test|g' -e 's|@@UPDATER_IMAGE@@|kladez-updater:test|g' \
       -e 's|@@DISK_COLLECTOR_IMAGE@@|kladez-disk:test|g' -e 's|@@MYSQL_IMAGE@@|mysql:8.0|g' \
       -e 's|@@REDIS_IMAGE@@|redis:7-alpine|g' -e 's|@@DOZZLE_IMAGE@@|amir20/dozzle:v10.0|g' \
-      -e 's|@@REGISTRY_MIRRORS@@|https://mirror.gcr.io|g' -e 's|@@IMAGE_REPO@@|ghcr.io/aiglobdata/kladez|g' \
+      -e 's|@@REGISTRY_MIRRORS@@|https://mirror.gcr.io|g' -e 's|@@IMAGE_REPO@@|ghcr.io/leon-kladez/kladez|g' \
       "$LINUX_DIR/compose.template.yaml" > "$OUT"
 }
 
@@ -52,9 +52,17 @@ services() { awk '/^services:/{s=1;next} /^[a-z]/{s=0} s && /^  [a-z-]+:$/' "$OU
 }
 
 @test "own registry and mirrors reach admin and updater" {
-  grep -q 'KLADEZ_IMAGE_REPO=ghcr.io/aiglobdata/kladez' "$OUT"
+  grep -q 'KLADEZ_IMAGE_REPO=ghcr.io/leon-kladez/kladez' "$OUT"
   grep -q 'KLADEZ_REGISTRY_MIRRORS=https://mirror.gcr.io' "$OUT"
-  grep -q 'ADMIN_IMAGE_REPO=ghcr.io/aiglobdata/kladez' "$OUT"
+  grep -q 'ADMIN_IMAGE_REPO=ghcr.io/leon-kladez/kladez' "$OUT"
+}
+
+@test "images.lock: admin is the Кладезъ image, not NOMAD" {
+  grep -qE '^admin ghcr.io/leon-kladez/kladez:[0-9]+[.][0-9]+[.][0-9]+@sha256:[0-9a-f]{64}$' "$LINUX_DIR/images.lock"
+}
+
+@test "images.lock: updater is built from this repo (its script knows our registry)" {
+  grep -qE '^updater ghcr.io/leon-kladez/kladez-sidecar-updater:[0-9]+[.][0-9]+[.][0-9]+@sha256:[0-9a-f]{64}$' "$LINUX_DIR/images.lock"
 }
 
 @test "images.lock pins every bundled image by digest" {

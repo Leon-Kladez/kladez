@@ -8,8 +8,8 @@ STATUS_FILE="${SHARED_DIR}/update-status"
 LOG_FILE="${SHARED_DIR}/update-log"
 COMPOSE_FILE="/opt/project-nomad/compose.yml"
 COMPOSE_PROJECT_NAME="project-nomad"
-# Кладезъ: repository of the admin image (own registry); upstream NOMAD by default.
-ADMIN_IMAGE_REPO="${ADMIN_IMAGE_REPO:-ghcr.io/crosstalk-solutions/project-nomad}"
+# Кладезъ: repository of the admin image (own registry by default).
+ADMIN_IMAGE_REPO="${ADMIN_IMAGE_REPO:-ghcr.io/leon-kladez/kladez}"
 
 # Set the admin image tag in a compose file. Fails if the repo is not found there.
 apply_image_tag() {

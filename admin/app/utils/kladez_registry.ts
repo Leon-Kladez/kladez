@@ -7,7 +7,8 @@
  * mirror.gcr.io, dh-mirror.gitverse.ru and dockerhub.timeweb.cloud, all anonymously.
  */
 
-export const UPSTREAM_IMAGE_REPO = 'ghcr.io/crosstalk-solutions/project-nomad'
+/** Own image registry of Кладезъ — the same project whose releases the update check reads. */
+export const DEFAULT_IMAGE_REPO = 'ghcr.io/leon-kladez/kladez'
 
 const DOCKER_HUB_REGISTRY = 'registry-1.docker.io'
 
@@ -46,10 +47,10 @@ export function registryCandidates(registry: string, mirrors: string[]): string[
   return result
 }
 
-/** Repository of the admin image: KLADEZ_IMAGE_REPO if set and safe, otherwise upstream. */
+/** Repository of the admin image: KLADEZ_IMAGE_REPO if set and safe, otherwise Кладезъ's own. */
 export function resolveNomadImageRepo(envValue: string | undefined): string {
   const value = envValue?.trim()
-  if (!value || !SAFE_REPO.test(value)) return UPSTREAM_IMAGE_REPO
+  if (!value || !SAFE_REPO.test(value)) return DEFAULT_IMAGE_REPO
   return value
 }
 

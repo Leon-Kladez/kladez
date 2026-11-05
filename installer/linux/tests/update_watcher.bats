@@ -9,26 +9,26 @@ setup() {
   cat > "$COMPOSE" <<'YAML'
 services:
   admin:
-    image: ghcr.io/aiglobdata/kladez:1.0.0
+    image: ghcr.io/leon-kladez/kladez:1.0.0
   updater:
-    image: ghcr.io/aiglobdata/kladez-sidecar-updater:1.0.0
+    image: ghcr.io/leon-kladez/kladez-sidecar-updater:1.0.0
 YAML
 }
 
 @test "apply_image_tag rewrites the admin image of ADMIN_IMAGE_REPO only" {
-  export ADMIN_IMAGE_REPO=ghcr.io/aiglobdata/kladez
+  export ADMIN_IMAGE_REPO=ghcr.io/leon-kladez/kladez
   source "$REPO_ROOT/install/sidecar-updater/update-watcher.sh"
   apply_image_tag "$COMPOSE" 1.2.3
-  grep -q 'image: ghcr.io/aiglobdata/kladez:1.2.3$' "$COMPOSE"
-  grep -q 'image: ghcr.io/aiglobdata/kladez-sidecar-updater:1.0.0$' "$COMPOSE"
+  grep -q 'image: ghcr.io/leon-kladez/kladez:1.2.3$' "$COMPOSE"
+  grep -q 'image: ghcr.io/leon-kladez/kladez-sidecar-updater:1.0.0$' "$COMPOSE"
 }
 
-@test "apply_image_tag defaults to the upstream NOMAD repo" {
+@test "apply_image_tag defaults to the Кладезъ registry" {
   unset ADMIN_IMAGE_REPO
-  printf 'services:\n  admin:\n    image: ghcr.io/crosstalk-solutions/project-nomad:latest\n' > "$COMPOSE"
+  printf 'services:\n  admin:\n    image: ghcr.io/leon-kladez/kladez:0.1.0\n' > "$COMPOSE"
   source "$REPO_ROOT/install/sidecar-updater/update-watcher.sh"
-  apply_image_tag "$COMPOSE" 1.36.0
-  grep -q 'image: ghcr.io/crosstalk-solutions/project-nomad:1.36.0$' "$COMPOSE"
+  apply_image_tag "$COMPOSE" 0.2.0
+  grep -q 'image: ghcr.io/leon-kladez/kladez:0.2.0$' "$COMPOSE"
 }
 
 @test "apply_image_tag fails when the repo is not in the compose file" {

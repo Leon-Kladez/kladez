@@ -20,7 +20,7 @@ import {
 
 /**
  * Docker image repository for the admin/core image (tag applied per-release).
- * Кладезъ: KLADEZ_IMAGE_REPO points this at our own registry; unset → upstream NOMAD.
+ * Кладезъ: our own registry (ghcr.io/leon-kladez/kladez); KLADEZ_IMAGE_REPO can override it.
  */
 const NOMAD_IMAGE_REPO = resolveNomadImageRepo(process.env.KLADEZ_IMAGE_REPO)
 const RELEASES_URL = 'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases'

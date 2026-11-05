@@ -1,5 +1,5 @@
-admin ghcr.io/crosstalk-solutions/project-nomad:1.35.1@sha256:1445a3eaba19801ce27435b7edc57fce74d9543601808d719b432e3bc7468ea1
-updater ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater:latest@sha256:5e3f09b1b056a5c1e96ff2a47a25d9137c5975010691686728174e04545da6c7
+admin ghcr.io/leon-kladez/kladez:0.1.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+updater ghcr.io/leon-kladez/kladez-sidecar-updater:0.1.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
 disk_collector ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest@sha256:154a5549fb13b7b3858838fca7ed87d5385c1c7cf9d72d65e6dd59e76952fd8c
 mysql mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
 redis redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f

@@ -78,13 +78,13 @@ STUB
 @test "bundle: locally built admin is used without pulling" {
   bundle_stub
   d=sha256:$(printf 'a%.0s' {1..64})
-  echo "$d" > "$STATE/ghcr.io_aiglobdata_kladez_1.0.0"
-  echo "admin ghcr.io/aiglobdata/kladez:1.0.0@$d" > "$BATS_TEST_TMPDIR/lock"
+  echo "$d" > "$STATE/ghcr.io_leon-kladez_kladez_1.0.0"
+  echo "admin ghcr.io/leon-kladez/kladez:1.0.0@$d" > "$BATS_TEST_TMPDIR/lock"
   run "$LINUX_DIR/build-images-bundle.sh" "$BATS_TEST_TMPDIR/lock"
   [ "$status" -eq 0 ]
   run grep 'docker pull' "$LOG"
   [ "$status" -eq 1 ]
-  grep -q 'docker save ghcr.io/aiglobdata/kladez:1.0.0' "$LOG"
+  grep -q 'docker save ghcr.io/leon-kladez/kladez:1.0.0' "$LOG"
 }
 
 @test "bundle: Docker Hub refusal falls back to a mirror and tags without digest" {

@@ -5,7 +5,7 @@ import {
   registryCandidates,
   parseMirrorList,
   resolveNomadImageRepo,
-  UPSTREAM_IMAGE_REPO,
+  DEFAULT_IMAGE_REPO,
 } from '../../app/utils/kladez_registry.js'
 
 // ── registryCandidates ───────────────────────────────────────────────────────
@@ -52,19 +52,20 @@ test('parseMirrorList splits KLADEZ_REGISTRY_MIRRORS on commas and trims', () =>
 // ── resolveNomadImageRepo ────────────────────────────────────────────────────
 
 test('admin image repo comes from KLADEZ_IMAGE_REPO', () => {
-  assert.equal(resolveNomadImageRepo('ghcr.io/aiglobdata/kladez'), 'ghcr.io/aiglobdata/kladez')
+  assert.equal(resolveNomadImageRepo('ghcr.io/someone/fork'), 'ghcr.io/someone/fork')
 })
 
-test('admin image repo falls back to upstream when KLADEZ_IMAGE_REPO is unset or blank', () => {
-  assert.equal(UPSTREAM_IMAGE_REPO, 'ghcr.io/crosstalk-solutions/project-nomad')
-  assert.equal(resolveNomadImageRepo(undefined), UPSTREAM_IMAGE_REPO)
-  assert.equal(resolveNomadImageRepo('   '), UPSTREAM_IMAGE_REPO)
+test('admin image repo defaults to the Кладезъ registry when KLADEZ_IMAGE_REPO is unset or blank', () => {
+  // Same project as the release check (part 2: releases of Leon-Kladez/kladez).
+  assert.equal(DEFAULT_IMAGE_REPO, 'ghcr.io/leon-kladez/kladez')
+  assert.equal(resolveNomadImageRepo(undefined), DEFAULT_IMAGE_REPO)
+  assert.equal(resolveNomadImageRepo('   '), DEFAULT_IMAGE_REPO)
 })
 
 test('admin image repo rejects values that could break the updater sed', () => {
   // The repo is interpolated into a sed expression in update-watcher.sh; only plain
-  // registry/path characters are allowed, anything else falls back to upstream.
-  assert.equal(resolveNomadImageRepo('ghcr.io/x|y'), UPSTREAM_IMAGE_REPO)
-  assert.equal(resolveNomadImageRepo('ghcr.io/x y'), UPSTREAM_IMAGE_REPO)
-  assert.equal(resolveNomadImageRepo('ghcr.io/x:latest'), UPSTREAM_IMAGE_REPO)
+  // registry/path characters are allowed, anything else falls back to the default.
+  assert.equal(resolveNomadImageRepo('ghcr.io/x|y'), DEFAULT_IMAGE_REPO)
+  assert.equal(resolveNomadImageRepo('ghcr.io/x y'), DEFAULT_IMAGE_REPO)
+  assert.equal(resolveNomadImageRepo('ghcr.io/x:latest'), DEFAULT_IMAGE_REPO)
 })
