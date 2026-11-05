@@ -13,7 +13,7 @@ import {
   getFile,
   ensureDirectoryExists,
 } from '../utils/fs.js'
-import { join, resolve, sep } from 'path'
+import { basename, join, resolve, sep } from 'path'
 import urlJoin from 'url-join'
 import { RunDownloadJob } from '#jobs/run_download_job'
 import { RunExtractPmtilesJob } from '#jobs/run_extract_pmtiles_job'
@@ -35,7 +35,13 @@ import {
   buildPmtilesExtractArgs,
   BUNDLED_BASE_ASSETS_PATH,
 } from '../../constants/map_regions.js'
-import { downloadableResources, pickBaseAssetsSource } from '../utils/map_packages.js'
+import {
+  buildPackageDownloadParams,
+  downloadableResources,
+  findPackages,
+  pickBaseAssetsSource,
+  siblingVariantId,
+} from '../utils/map_packages.js'
 import { copyFile } from 'fs/promises'
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
@@ -144,20 +150,38 @@ export class MapService implements IMapService {
     const collection = spec.collections.find((c) => c.slug === slug)
     if (!collection) return null
 
-    // Filter out already installed
+    const ids = downloadableResources(collection.resources).map((r) => r.id)
+    const filenames = await this.dispatchPackages(spec, ids)
+    return filenames.length > 0 ? filenames : null
+  }
+
+  /**
+   * Кладезъ: скачать выбранные пакеты карт (по id из maps.json). Зеркала и сумма
+   * берутся из каталога; уже установленные и ещё не опубликованные пропускаются.
+   */
+  async downloadPackages(ids: string[]): Promise<{ filenames: string[]; unavailable: string[] }> {
+    const manifestService = new CollectionManifestService()
+    const spec = await manifestService.getSpecWithFallback<MapsSpec>('maps')
+    const { unavailable } = findPackages(spec, ids)
+    const filenames = spec ? await this.dispatchPackages(spec, ids) : []
+    return { filenames, unavailable }
+  }
+
+  private async dispatchPackages(spec: MapsSpec, ids: string[]): Promise<string[]> {
+    const { found } = findPackages(spec, ids)
+    if (found.length === 0) return []
+
     const installed = await InstalledResource.query().where('resource_type', 'map')
     const installedIds = new Set(installed.map((r) => r.resource_id))
-    const toDownload = downloadableResources(collection.resources).filter((r) => !installedIds.has(r.id))
-
-    if (toDownload.length === 0) return null
-
+    const pmtilesDir = join(process.cwd(), this.mapStoragePath, 'pmtiles')
     const downloadFilenames: string[] = []
 
-    for (const resource of toDownload) {
+    for (const { resource, collectionSlug } of found) {
+      if (installedIds.has(resource.id)) continue
       try {
-        assertNotPrivateUrl(resource.url)
+        for (const u of [resource.url, ...(resource.mirrors ?? [])]) assertNotPrivateUrl(u)
       } catch {
-        logger.warn(`[MapService] Blocked download from private/loopback URL: ${resource.url}`)
+        logger.warn(`[MapService] Blocked download from private/loopback URL for ${resource.id}`)
         continue
       }
 
@@ -167,32 +191,29 @@ export class MapService implements IMapService {
         continue
       }
 
-      const filename = resource.url.split('/').pop()
-      if (!filename) {
-        logger.warn(`[MapService] Could not determine filename from URL ${resource.url}, skipping.`)
-        continue
-      }
-
-      downloadFilenames.push(filename)
-      const filepath = join(process.cwd(), this.mapStoragePath, 'pmtiles', filename)
-
-      await RunDownloadJob.dispatch({
-        url: resource.url,
-        filepath,
-        timeout: 30000,
-        allowedMimeTypes: PMTILES_MIME_TYPES,
-        forceNew: true,
-        filetype: 'map',
-        title: (resource as any).title || undefined,
-        resourceMetadata: {
-          resource_id: resource.id,
-          version: resource.version,
-          collection_ref: slug,
-        },
-      })
+      const params = buildPackageDownloadParams(resource, collectionSlug, pmtilesDir)
+      downloadFilenames.push(basename(params.filepath))
+      await RunDownloadJob.dispatch(params)
     }
 
-    return downloadFilenames.length > 0 ? downloadFilenames : null
+    return downloadFilenames
+  }
+
+  /** Удаляет установленный соседний вариант (подробно ↔ обзорно) того же региона. */
+  private async removeSiblingVariant(resourceId: string, pmtilesDir: string): Promise<void> {
+    const sibling = await InstalledResource.query()
+      .where('resource_id', siblingVariantId(resourceId))
+      .where('resource_type', 'map')
+      .first()
+    if (!sibling) return
+    try {
+      const target = sibling.file_path ? resolve(sibling.file_path) : null
+      if (target && target.startsWith(resolve(pmtilesDir) + sep)) await deleteFileIfExists(target)
+      await sibling.delete()
+      logger.info(`[MapService] Removed sibling map variant ${sibling.resource_id}`)
+    } catch (err) {
+      logger.warn(`[MapService] Failed to remove sibling map variant ${sibling.resource_id}:`, err)
+    }
   }
 
   async downloadRemoteSuccessCallback(urls: string[], _: boolean) {
@@ -228,6 +249,9 @@ export class MapService implements IMapService {
           }
         )
         logger.info(`[MapService] Created InstalledResource entry for: ${parsed.resource_id}`)
+
+        // Кладезъ: подробный и обзорный варианты одного региона не держим вместе.
+        if (stats) await this.removeSiblingVariant(parsed.resource_id, pmtilesDir)
 
         // Remove the superseded prior version's pmtiles file if every safety
         // rail passes (see decideSupersededDeletion). Maps have no library index,

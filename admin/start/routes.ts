@@ -34,6 +34,7 @@ import {
   remoteDownloadValidatorOptional,
   filenameParamValidator,
   downloadCollectionValidator,
+  downloadMapPackagesValidator,
   downloadCategoryTierValidator,
   selectWikipediaValidator,
   applyContentUpdateValidator,
@@ -207,6 +208,11 @@ router
       summary: 'Preflight a remote map download',
       tags: ['maps'],
       request: remoteDownloadValidator,
+    })
+    documented(router.post('/download-packages', [MapsController, 'downloadPackages']), {
+      summary: 'Download selected map packages',
+      tags: ['maps'],
+      request: downloadMapPackagesValidator,
     })
     documented(router.post('/download-collection', [MapsController, 'downloadCollection']), {
       summary: 'Download a map collection',

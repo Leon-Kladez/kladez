@@ -3,6 +3,7 @@ import MapMarker from '#models/map_marker'
 import {
   assertNotPrivateUrl,
   downloadCollectionValidator,
+  downloadMapPackagesValidator,
   filenameParamValidator,
   mapExtractPreflightValidator,
   mapExtractValidator,
@@ -76,6 +77,11 @@ export default class MapsController {
       slug: payload.slug,
       resources,
     }
+  }
+
+  async downloadPackages({ request }: HttpContext) {
+    const payload = await request.validateUsing(downloadMapPackagesValidator)
+    return this.mapService.downloadPackages(payload.ids)
   }
 
   // For providing a "preflight" check in the UI before actually starting a background download
