@@ -1,4 +1,5 @@
-import type { Bundle, SpecTier, ZimCategoriesSpec } from '../../types/collections.js'
+import type { Bundle, BundleStatus, SpecTier, ZimCategoriesSpec } from '../../types/collections.js'
+export type { BundleStatus }
 
 /**
  * Kladez: a bundle (Аптечка / Библиотека / Всё) is one Wikipedia option plus a
@@ -27,7 +28,6 @@ export function bundleSizeMb(bundle: Bundle, spec: ZimCategoriesSpec, wikipediaS
   return wikipediaSizeMb + [...ids.values()].reduce((a, b) => a + b, 0)
 }
 
-export type BundleStatus = 'installed' | 'downloading' | 'partial' | 'none'
 
 /**
  * Status of a bundle from what is on disk: its Wikipedia option and, per

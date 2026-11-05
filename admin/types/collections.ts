@@ -157,6 +157,9 @@ export type Bundle = {
   size_mb: number
 }
 
+export type BundleStatus = 'installed' | 'downloading' | 'partial' | 'none'
+export type BundleWithStatus = Bundle & { status: BundleStatus }
+
 export type BundlesSpec = {
   spec_version: string
   bundles: Bundle[]

@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import StyledTable from '~/components/StyledTable'
 import SettingsLayout from '~/layouts/SettingsLayout'
 import { NomadOllamaModel } from '../../../types/ollama'
+import RussianLanguageBadge from '~/components/RussianLanguageBadge'
 import StyledButton from '~/components/StyledButton'
 import useServiceInstalledStatus from '~/hooks/useServiceInstalledStatus'
 import Alert from '~/components/Alert'
@@ -578,6 +579,7 @@ export default function ModelsPage(props: {
                     <div className="flex flex-col">
                       <p className="text-lg font-semibold">{record.name}</p>
                       <p className="text-sm text-text-muted">{record.description}</p>
+                      <RussianLanguageBadge ru={record.ru} className="mt-1 self-start" />
                     </div>
                   )
                 },

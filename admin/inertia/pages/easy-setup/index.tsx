@@ -10,6 +10,8 @@ import CategoryCard from '~/components/CategoryCard'
 import CreatorPackCard from '~/components/CreatorPackCard'
 import TierSelectionModal from '~/components/TierSelectionModal'
 import WikipediaSelector from '~/components/WikipediaSelector'
+import BundlePicker from '~/components/BundlePicker'
+import RussianLanguageBadge from '~/components/RussianLanguageBadge'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import Alert from '~/components/Alert'
 import { IconCheck, IconCpu, IconBooks } from '@tabler/icons-react'
@@ -20,7 +22,7 @@ import useCreatorPacks from '~/hooks/useCreatorPacks'
 import { useSystemInfo } from '~/hooks/useSystemInfo'
 import { getPrimaryDiskInfo } from '~/hooks/useDiskDisplayData'
 import classNames from 'classnames'
-import type { CategoryWithStatus, SpecTier, SpecResource } from '../../../types/collections'
+import type { BundleWithStatus, CategoryWithStatus, SpecTier, SpecResource } from '../../../types/collections'
 import { resolveTierResources } from '~/lib/collections'
 import { SERVICE_NAMES } from '../../../constants/service_names'
 import { tx } from '~/lib/tx'
@@ -181,6 +183,13 @@ export default function EasySetupWizard(props: {
     refetchOnWindowFocus: false,
   })
 
+  // Kladez: ready-made sets (Аптечка / Библиотека / Всё)
+  const { data: bundles } = useQuery({
+    queryKey: ['kladez-bundles'],
+    queryFn: () => api.listBundles(),
+    refetchOnWindowFocus: false,
+  })
+
   // Fetch Wikipedia options and current state
   const { data: wikipediaState, isLoading: isLoadingWikipedia } = useQuery({
     queryKey: [WIKIPEDIA_STATE_KEY],
@@ -258,6 +267,35 @@ export default function EasySetupWizard(props: {
       }
       return newMap
     })
+  }
+
+  // Kladez: a set is "chosen" exactly when the current picks equal its contents,
+  // so hand edits below simply un-highlight it — no separate state to drift.
+  const selectedBundleId = useMemo(() => {
+    const match = (bundles ?? []).find(
+      (b) =>
+        b.wikipedia === selectedWikipedia &&
+        b.tiers.length === selectedTiers.size &&
+        b.tiers.every((slug) => [...selectedTiers.values()].some((tier) => tier.slug === slug))
+    )
+    return match?.id ?? null
+  }, [bundles, selectedWikipedia, selectedTiers])
+
+  const handleBundleSelect = (bundle: BundleWithStatus) => {
+    if (!isOnline) return
+    if (selectedBundleId === bundle.id) {
+      setSelectedWikipedia(null)
+      setSelectedTiers(new Map())
+      return
+    }
+    const next = new Map<string, SpecTier>()
+    for (const slug of bundle.tiers) {
+      const category = categories?.find((c) => c.tiers.some((tier) => tier.slug === slug))
+      const tier = category?.tiers.find((tr) => tr.slug === slug)
+      if (category && tier) next.set(category.slug, tier)
+    }
+    setSelectedWikipedia(bundle.wikipedia)
+    setSelectedTiers(next)
   }
 
   const closeTierModal = () => {
@@ -932,6 +970,20 @@ export default function EasySetupWizard(props: {
           </p>
         </div>
 
+        {/* Kladez: ready-made sets pre-fill the picks below */}
+        {isInformationSelected && bundles && bundles.length > 0 && (
+          <>
+            <BundlePicker
+              bundles={bundles}
+              selectedId={selectedBundleId}
+              onSelect={handleBundleSelect}
+              freeBytes={storageInfo ? Math.max(0, storageInfo.totalSize - storageInfo.totalUsed) : null}
+              disabled={!isOnline || isLoadingCategories}
+            />
+            <hr className="my-8 border-border-subtle" />
+          </>
+        )}
+
         {/* Wikipedia Selection - Only show if Information capability is selected */}
         {isInformationSelected && (
           <div className="mb-8">
@@ -1115,6 +1167,7 @@ export default function EasySetupWizard(props: {
                     >
                       {model.description}
                     </p>
+                    <RussianLanguageBadge ru={model.ru} className="mb-2" />
                     {model.tags?.[0]?.size && (
                       <div
                         className={classNames(
