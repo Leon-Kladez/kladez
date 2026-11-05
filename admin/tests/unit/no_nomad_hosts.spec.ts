@@ -1,0 +1,43 @@
+import * as assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join, relative } from 'node:path'
+
+/**
+ * Kladez: the app must not talk to Project NOMAD's servers (privacy, and so it
+ * keeps working if they change). This scans string literals in app/ and start/
+ * for NOMAD hosts. Each remaining exception is listed with the part that owns it.
+ */
+const FORBIDDEN = [/projectnomad\.us/, /nomad-packs-worker/, /Crosstalk-Solutions\/project-nomad\//i]
+
+const ALLOWED: Array<{ file: string; pattern: RegExp; why: string }> = [
+  { file: 'app/services/auto_update_service.ts', pattern: /ghcr\.io\/crosstalk-solutions\/project-nomad/, why: 'Docker image — part 5 (installer)' },
+  { file: 'app/services/docker_service.ts', pattern: /install\/wikipedia_en_100_mini/, why: 'starter ZIM — waits for the author to approve the Russian replacement' },
+  { file: 'app/services/kiwix_catalog_service.ts', pattern: /project-nomad-maps/, why: 'maps — part 3' },
+  { file: 'app/services/map_service.ts', pattern: /project-nomad-maps|project-nomad\//, why: 'maps — part 3' },
+]
+
+function* tsFiles(dir: string): Generator<string> {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name)
+    if (statSync(p).isDirectory()) yield* tsFiles(p)
+    else if (p.endsWith('.ts')) yield p
+  }
+}
+
+test('no string literal points at Project NOMAD servers', () => {
+  const root = process.cwd()
+  const hits: string[] = []
+  for (const dir of ['app', 'start']) {
+    for (const file of tsFiles(join(root, dir))) {
+      const rel = relative(root, file).replace(/\\/g, '/')
+      const src = readFileSync(file, 'utf-8')
+      for (const lit of src.match(/(['"`])(?:\\.|(?!\1)[^\\\n])*\1/g) ?? []) {
+        if (!FORBIDDEN.some((re) => re.test(lit))) continue
+        if (ALLOWED.some((a) => a.file === rel && a.pattern.test(lit))) continue
+        hits.push(`${rel}: ${lit}`)
+      }
+    }
+  }
+  assert.deepEqual(hits, [])
+})

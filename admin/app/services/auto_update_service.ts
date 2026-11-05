@@ -1,4 +1,5 @@
 import { inject } from '@adonisjs/core'
+import { KLADEZ_RELEASES_API_URL } from '../../constants/kladez.js'
 import logger from '@adonisjs/core/services/logger'
 import axios from 'axios'
 import { DateTime } from 'luxon'
@@ -19,7 +20,8 @@ import {
 
 /** Docker image repository for the NOMAD admin/core image (tag applied per-release). */
 const NOMAD_IMAGE_REPO = 'ghcr.io/crosstalk-solutions/project-nomad'
-const RELEASES_URL = 'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases'
+// Kladez: releases of the Kladez repository.
+const RELEASES_URL = KLADEZ_RELEASES_API_URL
 
 /** Defaults for user-configurable settings (server-local time window + cool-off). */
 const DEFAULT_WINDOW_START = '02:00'

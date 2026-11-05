@@ -13,9 +13,10 @@ import type { CreatorPacksSpec, CreatorPackWithStatus } from '../../types/collec
 // application/octet-stream in worker/src/index.js). Mirror the ZimService allowlist.
 const ZIM_MIME_TYPES = ['application/x-zim', 'application/x-openzim', 'application/octet-stream']
 
-// Default entitlement Worker origin. Overridable via CREATOR_PACKS_WORKER_BASE so
-// we can move to a branded packs.projectnomad.us domain without a code change.
-const DEFAULT_WORKER_BASE = 'https://nomad-packs-worker.chris-556.workers.dev'
+// Kladez: Creator Packs are NOMAD authors' videos under their own license and are
+// not distributed in Kladez. No default Worker; the catalog has no packs, so
+// installs answer not_found / not_configured and nothing is contacted.
+const DEFAULT_WORKER_BASE = ''
 
 /**
  * Outcome of an install request. Discriminated on `code` so the controller can
@@ -78,7 +79,7 @@ export class CreatorPackService {
    */
   async installPack(packId: string): Promise<InstallPackResult> {
     const appKey = env.get('CREATOR_PACKS_APP_KEY')
-    if (!appKey) {
+    if (!appKey || !this.workerBase) {
       logger.error('[CreatorPackService] CREATOR_PACKS_APP_KEY is not set; cannot install packs')
       return { code: 'not_configured' }
     }

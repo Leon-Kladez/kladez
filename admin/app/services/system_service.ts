@@ -1,4 +1,5 @@
 import Service from '#models/service'
+import { KLADEZ_RELEASES_API_URL } from '../../constants/kladez.js'
 import InstalledResource from '#models/installed_resource'
 import { inject } from '@adonisjs/core'
 import { DockerService } from '#services/docker_service'
@@ -56,7 +57,8 @@ export class SystemService {
     const DEFAULT_TEST_URLS = [
       'https://1.1.1.1/cdn-cgi/trace',
       'https://api.github.com',
-      'https://api.projectnomad.us',
+      // Kladez: Kiwix's catalog instead of NOMAD's API (we already use it).
+      'https://opds.library.kiwix.org/catalog/v2/languages',
     ]
     const MAX_ATTEMPTS = 3
 
@@ -688,14 +690,14 @@ export class SystemService {
       let latestVersion: string
       if (earlyAccess) {
         const response = await axios.get(
-          'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases',
+          KLADEZ_RELEASES_API_URL,
           { headers: { Accept: 'application/vnd.github+json' }, timeout: 5000 }
         )
         if (!response?.data?.length) throw new Error('No releases found')
         latestVersion = response.data[0].tag_name.replace(/^v/, '').trim()
       } else {
         const response = await axios.get(
-          'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases/latest',
+          `${KLADEZ_RELEASES_API_URL}/latest`,
           { headers: { Accept: 'application/vnd.github+json' }, timeout: 5000 }
         )
         if (!response?.data?.tag_name) throw new Error('Invalid response from GitHub API')
@@ -731,31 +733,14 @@ export class SystemService {
     }
   }
 
-  async subscribeToReleaseNotes(email: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const response = await axios.post(
-        'https://api.projectnomad.us/api/v1/lists/release-notes/subscribe',
-        { email },
-        { timeout: 5000 }
-      )
-
-      if (response.status === 200) {
-        return {
-          success: true,
-          message: 'Successfully subscribed to release notes',
-        }
-      }
-
-      return {
-        success: false,
-        message: `Failed to subscribe: ${response.statusText}`,
-      }
-    } catch (error) {
-      logger.error('Error subscribing to release notes:', error)
-      return {
-        success: false,
-        message: `Failed to subscribe: ${error instanceof Error ? error.message : error}`,
-      }
+  /**
+   * Kladez: no e-mail list — the address is never sent anywhere. Kept so the
+   * existing route answers clearly until the UI hides the form (after part 1).
+   */
+  async subscribeToReleaseNotes(_email: string): Promise<{ success: boolean; message: string }> {
+    return {
+      success: false,
+      message: 'В «Кладезе» нет рассылки по e-mail. О новых версиях программа сообщает сама.',
     }
   }
 

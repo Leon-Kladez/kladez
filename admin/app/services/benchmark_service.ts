@@ -3,10 +3,7 @@ import logger from '@adonisjs/core/services/logger'
 import transmit from '@adonisjs/transmit/services/main'
 import si from 'systeminformation'
 import axios from 'axios'
-import { DateTime } from 'luxon'
 import BenchmarkResult from '#models/benchmark_result'
-import BenchmarkSetting from '#models/benchmark_setting'
-import { SystemService } from '#services/system_service'
 import type {
   BenchmarkType,
   BenchmarkStatus,
@@ -19,7 +16,6 @@ import type {
   SysbenchCpuResult,
   SysbenchMemoryResult,
   SysbenchDiskResult,
-  RepositorySubmissionV2,
   RepositorySubmitResponse,
   RepositoryStats,
   BenchmarkStageDescriptor,
@@ -33,7 +29,7 @@ import { normalizeArchitecture, deriveOsName } from '../utils/platform_metadata.
 import { isUnresolvedGpuModel } from '../utils/gpu_model.js'
 import { getFreeBytes } from '../utils/image_disk_preflight.js'
 import { readFile } from 'node:fs/promises'
-import { randomUUID, createHmac } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import { DockerService } from './docker_service.js'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
@@ -44,7 +40,6 @@ import Dockerode from 'dockerode'
 // This provides basic protection against casual API abuse.
 // Note: Since NOMAD is open source, a determined attacker could extract this.
 // For stronger protection, see challenge-response authentication.
-const BENCHMARK_HMAC_SECRET = '778ba65d0bc0e23119e5ffce4b3716648a7d071f0a47ec3f'
 
 // Re-export default weights for use in service
 const SCORE_WEIGHTS = {
@@ -56,10 +51,6 @@ const SCORE_WEIGHTS = {
   disk_write: 0.10,
 }
 
-// The benchmark_version this client emits. Server dispatches on the major:
-// >= 2 → raw-channel v2 ingest (score recomputed server-side). Bumped 1.0.0 -> 2.0.0
-// for the NOMAD Score v2 rollout (uncapped index vs a frozen Reference Build).
-const BENCHMARK_VERSION = '2.0.0'
 
 // ---------------------------------------------------------------------------
 // NOMAD Score v2 — the uncapped index.
@@ -151,41 +142,6 @@ const MEMORY_BENCHMARK_THREADS = 4
 
 // AI is measured as the median of N runs (W7) to damp per-run inference jitter.
 const AI_BENCHMARK_RUNS = 3
-
-/**
- * Does `ai.remoteOllamaUrl` point back at the machine NOMAD itself runs on?
- *
- * The submission gate exists because a remote AI host makes the AI channel
- * describe someone else's hardware. That reasoning does not apply when the
- * "remote" host is this same box — the commonest case being Ollama installed
- * natively on the host while NOMAD runs in Docker, which is how the AI
- * assistant is expected to work on macOS.
- *
- * `host.docker.internal` is the meaningful entry: from inside the admin
- * container it resolves to the host, and it is the form the setup flow accepts
- * for a native host install. Loopback is included for completeness (it only
- * reaches the container itself, so it is unlikely to have been saved, but it
- * unambiguously is not another machine).
- *
- * A LAN address is DELIBERATELY NOT exempt. `192.168.1.50` is indistinguishable
- * from another box on the same network, and wrongly exempting one would let a
- * genuinely remote GPU's throughput be attributed to this hardware. False
- * blocks are recoverable by clearing the setting; a false pass silently
- * corrupts the leaderboard.
- */
-function isSelfHostedOllamaUrl(rawUrl: string): boolean {
-  let host: string
-  try {
-    host = new URL(rawUrl.trim()).hostname.toLowerCase()
-  } catch {
-    return false
-  }
-  if (host === 'host.docker.internal' || host === 'gateway.docker.internal') return true
-  if (host === 'localhost' || host === '::1' || host === '[::1]') return true
-  // 127.0.0.0/8 — the whole loopback range, not just 127.0.0.1.
-  if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true
-  return false
-}
 
 // Moved to app/utils/gpu_model.ts so the Settings > System display path can
 // share the same definition — see the note there (#1196).
@@ -294,208 +250,24 @@ export class BenchmarkService {
   }
 
   /**
-   * Submit benchmark results to central repository
+   * Kladez: benchmark results stay on this computer — nothing is sent to
+   * NOMAD's (or anyone's) servers. The local benchmark itself still runs.
    */
-  async submitToRepository(benchmarkId?: string, anonymous?: boolean): Promise<RepositorySubmitResponse> {
-    const result = benchmarkId
-      ? await this.getResultById(benchmarkId)
-      : await this.getLatestResult()
-
-    if (!result) {
-      throw new Error('No benchmark result found to submit')
-    }
-
-    // Only allow full benchmarks with AI data to be submitted to repository
-    if (result.benchmark_type !== 'full') {
-      throw new Error('Only full benchmarks can be shared with the community. Run a Full Benchmark to share your results.')
-    }
-
-    if (!result.ai_tokens_per_second || result.ai_tokens_per_second <= 0) {
-      throw new Error('Benchmark must include AI performance data. Ensure AI Assistant is installed and run a Full Benchmark.')
-    }
-
-    if (result.submitted_to_repository) {
-      throw new Error('Benchmark result has already been submitted')
-    }
-
-    // Remote inference cannot be attributed to this machine.
-    //
-    // DockerService.getServiceURL() resolves ai.remoteOllamaUrl ahead of the
-    // local container, so when a remote host is configured the AI channel
-    // measures THAT machine while every other channel measures this one. The
-    // submission would report someone else's tok/s under this hardware, and AI
-    // carries 0.30 of an uncapped v2 score, so the distortion is large.
-    //
-    // Blocks submission only — running the benchmark locally is still useful to
-    // the operator, it just isn't a result about this box.
-    // A "remote" host that points back at this same machine is not remote. The
-    // AI ran on the hardware being submitted, so blocking it is a false
-    // positive — see isSelfHostedOllamaUrl for which forms qualify and why a
-    // LAN address deliberately does not.
-    const remoteOllamaUrl = await KVStore.getValue('ai.remoteOllamaUrl')
-    if (remoteOllamaUrl && isSelfHostedOllamaUrl(remoteOllamaUrl)) {
-      logger.info(
-        `[BenchmarkService] ai.remoteOllamaUrl (${remoteOllamaUrl}) points at this machine; treating the AI result as local for submission purposes`
-      )
-    } else if (remoteOllamaUrl) {
-      throw new Error(
-        // Name the setting and where it lives. The previous wording told the
-        // user to install the AI Assistant, but configuring a remote host
-        // already marks it installed — so it sent them looking for something
-        // they believe they have, and never mentioned the one thing that fixes
-        // it.
-        'This NOMAD is set to use a remote AI host, so the AI portion of this benchmark measured that machine, not this one. ' +
-          'Leaderboard results have to be measured entirely on the hardware being submitted. ' +
-          'To share a result, clear the remote host under Settings → Models so AI runs locally, then run a Full Benchmark.'
-      )
-    }
-
-    // Build the v2 payload (raw channels; server recomputes the score). Throws a
-    // user-facing error if the row predates v2 and lacks the raw channels.
-    const submission = this._buildV2Submission(result, anonymous ?? false)
-
-    try {
-      // Generate HMAC signature for submission verification
-      const timestamp = Date.now().toString()
-      const payload = timestamp + JSON.stringify(submission)
-      const signature = createHmac('sha256', BENCHMARK_HMAC_SECRET)
-        .update(payload)
-        .digest('hex')
-
-      const response = await axios.post(
-        'https://benchmark.projectnomad.us/api/v1/submit',
-        submission,
-        {
-          timeout: 30000,
-          headers: {
-            'X-NOMAD-Timestamp': timestamp,
-            'X-NOMAD-Signature': signature,
-          },
-        }
-      )
-
-      if (response.data.success) {
-        result.submitted_to_repository = true
-        result.submitted_at = DateTime.now()
-        result.repository_id = response.data.repository_id
-        await result.save()
-
-        await BenchmarkSetting.setValue('last_benchmark_run', new Date().toISOString())
-      }
-
-      return response.data as RepositorySubmitResponse
-    } catch (error: any) {
-      const detail = error.response?.data?.error || error.message || 'Unknown error'
-      const statusCode = error.response?.status
-      logger.error(`Failed to submit benchmark to repository: ${detail} (Status: ${statusCode})`)
-      
-      // Create an error with the status code and raw detail attached for proper
-      // handling upstream (the controller surfaces `detail` as the user-facing reason).
-      const err: any = new Error(`Failed to submit benchmark: ${detail}`)
-      err.statusCode = statusCode
-      err.detail = detail
-      throw err
-    }
-  }
-
-  /**
-   * Build the NOMAD Score v2 submission payload from a stored result, validating
-   * that every required raw channel + companion + provenance field is present.
-   *
-   * A row produced before this benchmark_version (or an interrupted run) won't
-   * carry the v2 raws — rather than send a payload the leaderboard will reject
-   * with a terse validator error, we throw a clear "re-run" message here.
-   *
-   * ai_time_to_first_token is stored in milliseconds but the leaderboard's v2 API
-   * treats it as SECONDS, so it is divided by 1000 here.
-   */
-  private _buildV2Submission(result: BenchmarkResult, anonymous: boolean): RepositorySubmissionV2 {
-    const reRun = 'Re-run a Full Benchmark to share your results.'
-
-    // Required raw channels — all must be present and > 0.
-    const requiredRaws: Array<[string, number | null]> = [
-      ['CPU single-thread', result.cpu_events_single],
-      ['CPU multi-thread', result.cpu_events_multi],
-      ['memory', result.memory_ops_per_sec],
-      ['disk read', result.disk_read_mb_per_sec],
-      ['disk write', result.disk_write_mb_per_sec],
-    ]
-    for (const [label, value] of requiredRaws) {
-      if (value == null || !(value > 0)) {
-        throw new Error(`This benchmark is missing the ${label} raw measurement needed for the v2 leaderboard. ${reRun}`)
-      }
-    }
-
-    if (result.ai_time_to_first_token == null || !(result.ai_time_to_first_token > 0)) {
-      throw new Error(`This benchmark is missing AI time-to-first-token data. ${reRun}`)
-    }
-    if (
-      result.cpu_benchmark_threads == null ||
-      result.memory_threads == null ||
-      result.cpu_total_events == null ||
-      result.cpu_total_time == null
-    ) {
-      throw new Error(`This benchmark is missing CPU test parameters needed for the v2 leaderboard. ${reRun}`)
-    }
-    if (!result.sysbench_digest || !result.ollama_version) {
-      throw new Error(`This benchmark is missing harness provenance (sysbench/Ollama version). ${reRun}`)
-    }
-
-    const submission: RepositorySubmissionV2 = {
-      cpu_model: result.cpu_model,
-      cpu_cores: result.cpu_cores,
-      cpu_threads: result.cpu_threads,
-      ram_gb: Math.round(result.ram_bytes / (1024 * 1024 * 1024)),
-      disk_type: result.disk_type,
-      gpu_model: result.gpu_model,
-      ai_tokens_per_second: result.ai_tokens_per_second!,
-      cpu_events_single: result.cpu_events_single!,
-      cpu_events_multi: result.cpu_events_multi!,
-      memory_ops_per_sec: result.memory_ops_per_sec!,
-      disk_read_mb_per_sec: result.disk_read_mb_per_sec!,
-      disk_write_mb_per_sec: result.disk_write_mb_per_sec!,
-      cpu_benchmark_threads: result.cpu_benchmark_threads,
-      memory_threads: result.memory_threads,
-      // Stored in ms; the v2 API expects seconds.
-      ai_time_to_first_token: result.ai_time_to_first_token / 1000,
-      cpu_total_events: result.cpu_total_events,
-      cpu_total_time: result.cpu_total_time,
-      ollama_version: result.ollama_version,
-      sysbench_digest: result.sysbench_digest,
-      nomad_version: SystemService.getAppVersion(),
-      benchmark_version: BENCHMARK_VERSION,
-    }
-
-    // Optional environment metadata — only send fields we actually have.
-    if (result.run_environment) submission.run_environment = result.run_environment
-    if (result.storage_path_type) submission.storage_path_type = result.storage_path_type
-    if (result.gpu_compute_detected != null) submission.gpu_compute_detected = result.gpu_compute_detected
-
-    // Platform metadata. Optional rather than required so results recorded
-    // before this shipped remain submittable.
-    if (result.cpu_architecture) submission.cpu_architecture = result.cpu_architecture
-    if (result.os_name) submission.os_name = result.os_name
-    if (result.os_version) submission.os_version = result.os_version
-
-    // Builder tag: omit entirely when anonymous or unset (validator rejects null).
-    if (!anonymous && result.builder_tag) submission.builder_tag = result.builder_tag
-
-    return submission
+  async submitToRepository(_benchmarkId?: string, _anonymous?: boolean): Promise<RepositorySubmitResponse> {
+    const err: any = new Error(
+      'В «Кладезе» результаты замера никуда не отправляются: они остаются только на этом компьютере.'
+    )
+    err.statusCode = 410
+    err.detail = err.message
+    throw err
   }
 
   /**
    * Get comparison stats from central repository
    */
   async getComparisonStats(): Promise<RepositoryStats | null> {
-    try {
-      const response = await axios.get('https://benchmark.projectnomad.us/api/v1/stats', {
-        timeout: 10000,
-      })
-      return response.data as RepositoryStats
-    } catch (error: any) {
-      logger.warn(`Failed to fetch comparison stats: ${error.message}`)
-      return null
-    }
+    // Kladez: no shared leaderboard, so nothing is fetched from NOMAD's server.
+    return null
   }
 
   /**
