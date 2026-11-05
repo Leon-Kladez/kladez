@@ -1,10 +1,11 @@
+import { t } from '../../../constants/i18n'
 export default function NotFound() {
   return (
     <>
       <div className="container">
-        <div className="title">Page not found</div>
+        <div className="title">{t('errors.notFound.title')}</div>
 
-        <span>This page does not exist.</span>
+        <span>{t('errors.notFound.text')}</span>
       </div>
     </>
   )

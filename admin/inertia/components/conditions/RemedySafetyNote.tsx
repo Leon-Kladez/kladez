@@ -1,4 +1,6 @@
 import { IconAlertTriangle } from '@tabler/icons-react'
+import { tx } from '~/lib/tx'
+import { t } from '../../../constants/i18n'
 
 /**
  * Co-located safety note for AFFIRMATIVE self-care / natural-remedy guidance.
@@ -23,15 +25,12 @@ export default function RemedySafetyNote() {
         aria-hidden="true"
       />
       <div className="space-y-1">
-        <p className="font-bold">Informational only — not medical advice.</p>
+        <p className="font-bold">{t('safety.remedy.title')}</p>
         <p className="text-amber-800">
-          These remedies have limited or mixed evidence, are not FDA-evaluated, and are not a
-          substitute for professional care. Check with a clinician before using any of them, and
-          before combining one with a medication you already take.
+          {t('safety.remedy.body')}
         </p>
         <p className="text-amber-800">
-          In an emergency, or if symptoms are severe or worsening,{' '}
-          <strong>seek real medical care — call emergency services</strong>.
+          {tx('safety.banner.emergency', { strong: <strong>{t('safety.remedy.emergencyStrong')}</strong> })}
         </p>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { t } from '../../../constants/i18n'
 type ScaleUnit = 'imperial' | 'metric' | 'nautical'
 
 type ScaleUnitSelectorProps = {
@@ -28,7 +29,7 @@ export default function ScaleUnitSelector({
             cursor: 'pointer',
           }}
         >
-          Metric
+          {t('maps.scale.metric')}
         </button>
 
         {/* Imperial */}
@@ -44,7 +45,7 @@ export default function ScaleUnitSelector({
             cursor: 'pointer',
           }}
         >
-          Imperial
+          {t('maps.scale.imperial')}
         </button>
 
         {/* Nautical */}
@@ -60,7 +61,7 @@ export default function ScaleUnitSelector({
             cursor: 'pointer',
           }}
         >
-          Nautical
+          {t('maps.scale.nautical')}
         </button>
 
       </div>

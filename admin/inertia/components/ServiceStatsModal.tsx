@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import StyledModal from './StyledModal'
 import { formatBytes } from '~/lib/util'
 import api from '~/lib/api'
+import { t, formatNumber } from '../../constants/i18n'
 
 interface Stats {
   cpuPercent: number
@@ -71,29 +72,29 @@ export default function ServiceStatsModal({
 
   return (
     <StyledModal
-      title={`Stats — ${friendlyName}`}
+      title={t('serviceStats.title', { name: friendlyName })}
       open={open}
       onCancel={onClose}
-      cancelText="Close"
+      cancelText={t('common.close')}
     >
       <div className="space-y-4 text-sm">
         {!running ? (
           <p className="text-text-muted text-center py-6">
-            This app is not running. Start it to see live resource usage.
+            {t('serviceStats.notRunning')}
           </p>
         ) : !stats ? (
           <p className="text-text-muted text-center py-6">
-            {loading ? 'Loading…' : 'No stats available.'}
+            {loading ? t('common.loadingEllipsis') : t('serviceStats.empty')}
           </p>
         ) : (
           <>
-            <Bar label="CPU" percent={stats.cpuPercent} value={`${stats.cpuPercent.toFixed(1)}%`} />
+            <Bar label="CPU" percent={stats.cpuPercent} value={`${formatNumber(Math.round(stats.cpuPercent * 10) / 10)} %`} />
             <Bar
-              label="Memory"
+              label={t('serviceStats.memory')}
               percent={stats.memPercent}
-              value={`${formatBytes(stats.memUsageBytes)} / ${formatBytes(stats.memLimitBytes)} (${stats.memPercent.toFixed(1)}%)`}
+              value={`${formatBytes(stats.memUsageBytes)} / ${formatBytes(stats.memLimitBytes)} (${formatNumber(Math.round(stats.memPercent * 10) / 10)} %)`}
             />
-            <p className="text-xs text-text-muted">Updates every 2 seconds.</p>
+            <p className="text-xs text-text-muted">{t('serviceStats.refreshNote')}</p>
           </>
         )}
       </div>

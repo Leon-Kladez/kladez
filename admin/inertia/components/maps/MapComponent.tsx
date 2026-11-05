@@ -20,6 +20,7 @@ import CoordinateOverlay from './CoordinateOverlay'
 import ViewMapMarkerPopup from './ViewMapMarkerPopup'
 import MapMarkerFormPopup from './MapMarkerFormPopup'
 import ScaleUnitToggle from './ScaleUnitSelector'
+import { t } from '../../../constants/i18n'
 
 type ScaleUnit = 'imperial' | 'metric' | 'nautical'
 
@@ -188,7 +189,7 @@ export default function MapComponent({
 
   const confirmDiscardMarkerChanges = useCallback(() => {
     if (!hasUnsavedMarkerChanges) return true
-    return window.confirm('Discard unsaved marker changes?')
+    return window.confirm(t('pins.discardConfirm'))
   }, [hasUnsavedMarkerChanges])
 
   useEffect(() => {

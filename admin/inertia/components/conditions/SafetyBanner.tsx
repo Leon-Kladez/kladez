@@ -1,4 +1,6 @@
 import { IconAlertTriangle } from '@tabler/icons-react'
+import { tx } from '~/lib/tx'
+import { t } from '../../../constants/i18n'
 
 /**
  * "When to use what" — top-of-page safety banner.
@@ -18,19 +20,19 @@ export default function SafetyBanner() {
           aria-hidden="true"
         />
         <div className="text-sm text-amber-900">
-          <p className="font-bold mb-1">Informational reference only — not medical advice.</p>
+          <p className="font-bold mb-1">{t('safety.banner.title')}</p>
           <ul className="list-disc pl-5 space-y-0.5 text-amber-800">
             <li>
-              These results match FDA drug-label indications to a situation. They are{' '}
-              <strong>not a recommendation</strong> and <strong>not an FDA endorsement</strong>.
+              {tx('safety.banner.matches', {
+                notRec: <strong>{t('safety.banner.notRecommendation')}</strong>,
+                notFda: <strong>{t('safety.banner.notEndorsement')}</strong>,
+              })}
             </li>
             <li>
-              This is <strong>not a drug-interaction checker</strong>. Read each label&rsquo;s full
-              warnings, and check with a pharmacist or clinician before combining medicines.
+              {tx('safety.banner.notChecker', { strong: <strong>{t('drugDisclaimer.notCheckerStrong')}</strong> })}
             </li>
             <li>
-              In an emergency, or if symptoms are severe or worsening,{' '}
-              <strong>contact a medical professional or call emergency services</strong>.
+              {tx('safety.banner.emergency', { strong: <strong>{t('drugDisclaimer.emergencyStrong')}</strong> })}
             </li>
           </ul>
         </div>

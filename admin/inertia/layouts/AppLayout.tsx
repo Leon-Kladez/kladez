@@ -8,6 +8,7 @@ import { Link, router } from '@inertiajs/react'
 import { IconArrowLeft } from '@tabler/icons-react'
 import classNames from 'classnames'
 import KladezLogo from '~/components/KladezLogo'
+import { t } from '../../constants/i18n'
 
 export default function AppLayout({
   children,
@@ -36,7 +37,7 @@ export default function AppLayout({
             )}
           >
             <IconArrowLeft className="mr-2" size={24} />
-            <p className="text-lg text-text-secondary">Back to Home</p>
+            <p className="text-lg text-text-secondary">{t('nav.backToHome')}</p>
           </Link>
         )}
       <div

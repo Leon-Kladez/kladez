@@ -1,4 +1,5 @@
 import { computeJobHealth, type JobHealthStatus } from '../../app/utils/kb_job_health.js'
+import { t } from '../../constants/i18n/index.js'
 
 export { computeJobHealth, type JobHealthStatus } from '../../app/utils/kb_job_health.js'
 
@@ -13,28 +14,28 @@ export const JOB_HEALTH_DISPLAY: Record<
 > = {
   waiting: {
     dot: 'bg-gray-400 dark:bg-gray-500',
-    label: 'Waiting',
-    ariaLabel: 'Job is queued and waiting to start',
+    label: t('kb.health.waiting'),
+    ariaLabel: t('kb.health.waitingHint'),
   },
   healthy: {
     dot: 'bg-green-500',
-    label: 'Active',
-    ariaLabel: 'Job is embedding at a normal rate',
+    label: t('kb.health.active'),
+    ariaLabel: t('kb.health.activeHint'),
   },
   slow: {
     dot: 'bg-yellow-500',
-    label: 'Slow',
-    ariaLabel: 'Job has not made progress for at least 2 minutes',
+    label: t('kb.health.slow'),
+    ariaLabel: t('kb.health.slowHint'),
   },
   stalled: {
     dot: 'bg-red-500',
-    label: 'Stalled',
-    ariaLabel: 'Job has not made progress for at least 5 minutes',
+    label: t('kb.health.stalled'),
+    ariaLabel: t('kb.health.stalledHint'),
   },
   failed: {
     dot: 'bg-red-700',
-    label: 'Failed',
-    ariaLabel: 'Job failed',
+    label: t('kb.health.failed'),
+    ariaLabel: t('kb.health.failedHint'),
   },
 }
 
@@ -44,12 +45,12 @@ export const JOB_HEALTH_DISPLAY: Record<
  */
 export function formatTimeAgo(timestampMs: number, now: number): string {
   const seconds = Math.max(0, Math.floor((now - timestampMs) / 1000))
-  if (seconds < 5) return 'just now'
-  if (seconds < 60) return `${seconds}s ago`
+  if (seconds < 5) return t('time.justNow')
+  if (seconds < 60) return t('time.secondsAgo', { n: seconds })
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return t('time.minutesAgo', { n: minutes })
   const hours = Math.floor(minutes / 60)
-  return `${hours}h ago`
+  return t('time.hoursAgo', { n: hours })
 }
 
 /**

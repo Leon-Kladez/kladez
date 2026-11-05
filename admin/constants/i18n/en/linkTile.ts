@@ -1,0 +1,18 @@
+export const linkTileEn = {
+  'linkTile.saveFailed': 'Failed to save this link.',
+  'linkTile.addFailed': 'Failed to add this link. A link with that name may already exist.',
+  'linkTile.editTitle': 'Edit Link',
+  'linkTile.addTitle': 'Add a Link',
+  'linkTile.add': 'Add Link',
+  'linkTile.intro': 'Add a shortcut to something you already run, on this machine or anywhere else on your network. NOMAD does not manage it, it just puts a button on your dashboard.',
+  'linkTile.name': 'Name',
+  'linkTile.namePlaceholder': 'Living room NAS',
+  'linkTile.invalid': 'Enter a valid URL, for example 192.168.1.50:8080 or https://nas.local.',
+  'linkTile.opensAs': 'Opens as:',
+  'linkTile.notSet': 'not set yet',
+  'linkTile.description': 'Description (optional)',
+  'linkTile.descriptionPlaceholder': 'Photos and backups',
+  'linkTile.icon': 'Icon',
+  'linkTile.color': 'Color',
+  'linkTile.colorHint': 'Links stay outlined rather than filled whichever color you pick, so they are distinguishable from apps NOMAD manages.',
+} as const

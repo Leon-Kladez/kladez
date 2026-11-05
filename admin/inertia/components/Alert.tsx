@@ -1,6 +1,7 @@
 import classNames from '~/lib/classNames'
 import DynamicIcon, { DynamicIconName } from './DynamicIcon'
 import StyledButton, { StyledButtonProps } from './StyledButton'
+import { t } from '../../constants/i18n'
 
 export type AlertProps = React.HTMLAttributes<HTMLDivElement> & {
   title: string
@@ -201,7 +202,7 @@ export default function Alert({
               type === 'success' ? 'focus:ring-desert-olive' : '',
               type === 'info' ? 'focus:ring-desert-stone' : ''
             )}
-            aria-label="Dismiss alert"
+            aria-label={t('common.dismiss')}
           >
             <DynamicIcon icon="IconX" className="size-4" />
           </button>

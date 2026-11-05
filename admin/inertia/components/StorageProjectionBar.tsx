@@ -1,6 +1,7 @@
 import classNames from '~/lib/classNames'
 import { formatBytes } from '~/lib/util'
 import { IconAlertTriangle, IconServer } from '@tabler/icons-react'
+import { t } from '../../constants/i18n'
 
 interface StorageProjectionBarProps {
   totalSize: number // Total disk size in bytes
@@ -40,13 +41,13 @@ export default function StorageProjectionBar({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <IconServer size={20} className="text-desert-green" />
-          <span className="font-semibold text-desert-green">Storage</span>
+          <span className="font-semibold text-desert-green">{t('storage.title')}</span>
         </div>
         <div className="text-sm text-desert-stone-dark font-mono">
           {formatBytes(projectedTotal, 1)} / {formatBytes(totalSize, 1)}
           {projectedAddition > 0 && (
             <span className="text-desert-stone ml-2">
-              (+{formatBytes(projectedAddition, 1)} selected)
+              {t('storage.selectedSuffix', { size: formatBytes(projectedAddition, 1) })}
             </span>
           )}
         </div>
@@ -94,13 +95,13 @@ export default function StorageProjectionBar({
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-desert-stone" />
-            <span className="text-desert-stone-dark">Current ({formatBytes(currentUsed, 1)})</span>
+            <span className="text-desert-stone-dark">{t('storage.current', { size: formatBytes(currentUsed, 1) })}</span>
           </div>
           {projectedAddition > 0 && (
             <div className="flex items-center gap-1.5">
               <div className={classNames('w-3 h-3 rounded', getProjectedColor())} />
               <span className="text-desert-stone-dark">
-                Selected (+{formatBytes(projectedAddition, 1)})
+                {t('storage.selected', { size: formatBytes(projectedAddition, 1) })}
               </span>
             </div>
           )}
@@ -109,11 +110,11 @@ export default function StorageProjectionBar({
         {willExceed ? (
           <div className="flex items-center gap-1.5 text-desert-red text-xs font-medium">
             <IconAlertTriangle size={14} />
-            <span>Exceeds available space by {formatBytes(projectedTotal - totalSize, 1)}</span>
+            <span>{t('storage.exceeds', { size: formatBytes(projectedTotal - totalSize, 1) })}</span>
           </div>
         ) : (
           <div className="text-xs text-desert-stone">
-            {formatBytes(remainingAfter, 1)} will remain free
+            {t('storage.remainFree', { size: formatBytes(remainingAfter, 1) })}
           </div>
         )}
       </div>

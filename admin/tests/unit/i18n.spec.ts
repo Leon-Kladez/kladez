@@ -1,7 +1,7 @@
 import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { en, ru, t, tIn, formatBytes, formatDate, formatNumber, LOCALE } from '../../constants/i18n/index.js'
+import { en, ru, t, tIn, formatBytes, formatDate, formatDateTime, formatNumber, countryName, LOCALE } from '../../constants/i18n/index.js'
 
 test('plural: русские формы', () => {
   assert.equal(t('test.files', { count: 1 }), '1 файл')
@@ -33,7 +33,21 @@ test('formatBytes', () => {
 
 test('formatDate', () => assert.equal(formatDate('2026-11-05T12:00:00Z'), '5 ноября 2026'))
 
+test('formatDateTime: дата и время по-русски', () => {
+  const d = new Date(2026, 10, 5, 14, 30)
+  assert.equal(formatDateTime(d), '5 ноября 2026, 14:30')
+})
+
 test('formatNumber', () => assert.equal(formatNumber(1234567), '1 234 567'.replace(/ /g, ' ')))
+
+test('countryName: страна по коду ISO — по-русски', () => {
+  assert.equal(countryName('DE', 'Germany'), 'Германия')
+  assert.equal(countryName('ru', 'Russia'), 'Россия')
+})
+
+test('countryName: неизвестный код — запасное название', () => {
+  assert.equal(countryName('not-a-code', 'Atlantis'), 'Atlantis')
+})
 
 test('LOCALE — русский', () => assert.equal(LOCALE, 'ru'))
 

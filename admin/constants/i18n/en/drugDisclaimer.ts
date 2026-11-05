@@ -1,0 +1,17 @@
+export const drugDisclaimerEn = {
+  'drugDisclaimer.title': 'Before you use the Drug Reference',
+  'drugDisclaimer.intro': 'This tool shows general health information from official {labels} and matches symptoms to over-the-counter options. It is provided for {infoOnly}.',
+  'drugDisclaimer.labels': 'FDA drug labels',
+  'drugDisclaimer.infoOnly': 'information only',
+  'drugDisclaimer.notAdvice': 'It is {strong} and not a substitute for a doctor, pharmacist, or nurse.',
+  'drugDisclaimer.notAdviceStrong': 'not medical advice',
+  'drugDisclaimer.notChecker': 'It is {strong}. Always read each product\'s full label and check with a professional before combining medicines.',
+  'drugDisclaimer.notCheckerStrong': 'not a drug-interaction checker',
+  'drugDisclaimer.matches': 'Situation matches come from label text, not clinical recommendations — they can be incomplete or include products you wouldn\'t expect.',
+  'drugDisclaimer.followLabel': 'Always follow the directions on the {strong}; dosages and warnings differ between products.',
+  'drugDisclaimer.followLabelStrong': 'actual product you have',
+  'drugDisclaimer.emergency': 'In an emergency, or if symptoms are severe, worsening, or you\'re unsure, {strong}.',
+  'drugDisclaimer.emergencyStrong': 'contact a medical professional or call emergency services',
+  'drugDisclaimer.source': 'Data is from openFDA (U.S. FDA, public domain). NOMAD is not affiliated with or endorsed by the FDA.',
+  'drugDisclaimer.continue': 'I understand — continue',
+} as const

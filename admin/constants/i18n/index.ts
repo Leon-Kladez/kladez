@@ -78,6 +78,34 @@ export function formatDate(d: Date | string | number): string {
   return DATE_FORMAT.format(date).replace(/\s*г\.$/, '')
 }
 
+const TIME_FORMAT = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' })
+
+/** «5 ноября 2026, 14:30». */
+export function formatDateTime(d: Date | string | number): string {
+  const date = d instanceof Date ? d : new Date(d)
+  if (Number.isNaN(date.getTime())) return String(d)
+  return `${formatDate(date)}, ${TIME_FORMAT.format(date)}`
+}
+
+let REGION_NAMES: Intl.DisplayNames | null | undefined
+
+/** Название страны по коду ISO 3166 (DE → «Германия»); если код не распознан — запасное название. */
+export function countryName(code: string, fallback: string): string {
+  if (REGION_NAMES === undefined) {
+    try {
+      REGION_NAMES = new Intl.DisplayNames(['ru'], { type: 'region', fallback: 'none' })
+    } catch {
+      REGION_NAMES = null
+    }
+  }
+  if (!REGION_NAMES || !/^([A-Za-z]{2}|\d{3})$/.test(code)) return fallback
+  try {
+    return REGION_NAMES.of(code.toUpperCase()) || fallback
+  } catch {
+    return fallback
+  }
+}
+
 const NUMBER_FORMAT = new Intl.NumberFormat('ru-RU')
 
 /** «1 234 567», «1 234,5» — по-русски. */

@@ -3,6 +3,7 @@ import { IconChevronDown } from '@tabler/icons-react'
 import DrugResultRow from './DrugResultRow'
 import type { DrugSearchResult } from '../../../types/drug_reference'
 import { PRODUCT_TYPES } from '../../../types/drug_reference'
+import { t } from '../../../constants/i18n'
 
 export interface IngredientGrouping {
   key: string
@@ -58,7 +59,7 @@ export default function IngredientGroup({
           </span>
         )}
         <span className="ml-auto text-xs text-desert-stone flex-shrink-0">
-          {group.products.length} products
+          {t('drug.products', { count: group.products.length })}
         </span>
       </button>
       {open && (

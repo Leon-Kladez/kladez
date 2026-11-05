@@ -6,16 +6,14 @@ import { IconAlertTriangle, IconLoader2, IconX } from '@tabler/icons-react'
 import api from '~/lib/api'
 import { useModals } from '~/context/ModalContext'
 import { formatBytes } from '~/lib/util'
+import { t, formatNumber } from '../../constants/i18n'
 
 interface ActiveModelDownloadsProps {
     withHeader?: boolean
 }
 
 function formatSpeed(bytesPerSec: number): string {
-    if (bytesPerSec <= 0) return '0 B/s'
-    if (bytesPerSec < 1024) return `${Math.round(bytesPerSec)} B/s`
-    if (bytesPerSec < 1024 * 1024) return `${(bytesPerSec / 1024).toFixed(1)} KB/s`
-    return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
+    return t('download.speed', { size: formatBytes(Math.max(0, bytesPerSec)) })
 }
 
 const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps) => {
@@ -87,24 +85,22 @@ const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps)
 
         openModal(
             <StyledModal
-                title="Cancel Download?"
+                title={t('modelDownload.cancelTitle')}
                 onConfirm={() => {
                     closeAllModals()
                     runCancel(download)
                 }}
                 onCancel={closeAllModals}
                 open={true}
-                confirmText="Cancel Download"
-                cancelText="Keep Downloading"
+                confirmText={t('modelDownload.cancelConfirm')}
+                cancelText={t('modelDownload.keepDownloading')}
             >
                 <div className="space-y-3 text-text-primary">
                     <p>
-                        Stop downloading <span className="font-mono font-semibold">{download.model}</span>?
+                        {t('modelDownload.stopPrefix')}<span className="font-mono font-semibold">{download.model}</span>?
                     </p>
                     <p className="text-sm text-text-muted">
-                        Any data already downloaded will remain on disk. If you re-download
-                        this model later, it will resume from where it left off rather than
-                        starting over.
+                        {t('modelDownload.resumeNote')}
                     </p>
                 </div>
             </StyledModal>,
@@ -114,7 +110,7 @@ const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps)
 
     return (
         <>
-            {withHeader && <StyledSectionHeader title="Active Model Downloads" className="mt-12 mb-4" />}
+            {withHeader && <StyledSectionHeader title={t('modelDownload.activeTitle')} className="mt-12 mb-4" />}
             <div className="space-y-4">
                 {downloads && downloads.length > 0 ? (
                     downloads.map((download) => {
@@ -161,7 +157,7 @@ const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps)
                                                     <button
                                                         onClick={() => confirmCancel(download)}
                                                         className="flex-shrink-0 p-1 rounded hover:bg-red-100 transition-colors"
-                                                        title="Cancel download"
+                                                        title={t('download.cancel')}
                                                     >
                                                         <IconX className="w-4 h-4 text-text-muted hover:text-red-500" />
                                                     </button>
@@ -174,7 +170,7 @@ const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps)
                                             <span>
                                                 {hasBytes
                                                     ? `${formatBytes(download.downloadedBytes!, 1)} / ${formatBytes(download.totalBytes!, 1)}`
-                                                    : `${download.percent.toFixed(1)}% / 100%`}
+                                                    : `${formatNumber(Math.round(download.percent * 10) / 10)}% / 100%`}
                                             </span>
                                         </div>
 
@@ -201,7 +197,7 @@ const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps)
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                             <span className="text-xs text-text-muted">
-                                                Downloading...{speed > 0 ? ` ${formatSpeed(speed)}` : ''}
+                                                {t('download.downloading')}{speed > 0 ? ` ${formatSpeed(speed)}` : ''}
                                             </span>
                                         </div>
                                     </div>
@@ -210,7 +206,7 @@ const ActiveModelDownloads = ({ withHeader = false }: ActiveModelDownloadsProps)
                         )
                     })
                 ) : (
-                    <p className="text-text-muted">No active model downloads</p>
+                    <p className="text-text-muted">{t('modelDownload.noneActive')}</p>
                 )}
             </div>
         </>

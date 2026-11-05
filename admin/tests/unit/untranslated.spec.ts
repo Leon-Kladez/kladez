@@ -1,5 +1,5 @@
 import * as assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 import { test } from 'node:test'
@@ -62,8 +62,29 @@ test('русский текст, классы и короткие слова н�
   )
 })
 
+/** Все файлы и папки внутри dir, кроме перечисленных. */
+function allExcept(dir: string, ...skip: string[]): string[] {
+  return readdirSync(join(ADMIN, dir))
+    .filter((name) => !skip.includes(name))
+    .map((name) => `${dir}/${name}`)
+}
+
 // Папки, уже переведённые на русский. Каждая задача перевода добавляет сюда свои.
-const DONE_DIRS: string[] = []
+const DONE_DIRS: string[] = [
+  // Задача 5 — общий каркас и главная
+  'inertia/layouts',
+  ...allExcept('inertia/components', 'chat'),
+  'inertia/pages/home.tsx',
+  'inertia/pages/about.tsx',
+  'inertia/pages/errors',
+  'inertia/lib/navigation.ts',
+  'inertia/lib/util.ts',
+  'inertia/lib/benchmarkScore.ts',
+  'inertia/lib/kb_job_health_display.ts',
+  'inertia/lib/tx.ts',
+  'inertia/lib/uppy_ru.ts',
+  'inertia/hooks',
+]
 
 test('нет зашитого английского в готовых папках', () => {
   const found = DONE_DIRS.flatMap((d) => findUntranslated(join(ADMIN, d)))

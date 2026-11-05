@@ -5,6 +5,8 @@ import Input from './inputs/Input'
 import { getServiceLink, normalizeCustomUrl } from '~/lib/navigation'
 import { ServiceSlim } from '../../types/services'
 import api from '~/lib/api'
+import { tx } from '~/lib/tx'
+import { t } from '../../constants/i18n'
 
 interface AppUrlModalProps {
   open: boolean
@@ -44,7 +46,7 @@ export default function AppUrlModal({ open, service, onClose, onSaved, showError
     const result = await api.setServiceCustomUrl(service.service_name, trimmed ? trimmed : null)
     setSubmitting(false)
     if (!result?.success) {
-      showError('Failed to save custom URL.')
+      showError(t('appUrl.saveFailed'))
       return
     }
     onSaved()
@@ -54,30 +56,33 @@ export default function AppUrlModal({ open, service, onClose, onSaved, showError
 
   return (
     <StyledModal
-      title="Set Custom URL"
+      title={t('appUrl.title')}
       open={open}
       onCancel={onClose}
       onClose={onClose}
-      cancelText="Cancel"
+      cancelText={t('common.cancel')}
       onConfirm={handleSave}
       confirmVariant="primary"
-      confirmText="Save"
+      confirmText={t('common.save')}
       confirmIcon="IconCheck"
       confirmLoading={submitting}
       confirmDisabled={isInvalid}
     >
       <div className="space-y-4 text-sm">
         <p className="text-text-muted">
-          Set where <span className="font-medium text-text-primary">{appName}</span> opens from — useful
-          if you reach it through a reverse proxy or local DNS. Leave this empty to use the default
-          address ({service?.ui_location ? `host + port ${service.ui_location}` : 'host + port'}).
+          {tx('appUrl.description', {
+            app: <span className="font-medium text-text-primary">{appName}</span>,
+            address: service?.ui_location
+              ? t('appUrl.hostPortValue', { port: service.ui_location })
+              : t('appUrl.hostPort'),
+          })}
         </p>
 
         <div>
           <div className="flex items-end gap-2">
             <Input
               name="customUrl"
-              label="Custom URL"
+              label={t('appUrl.label')}
               placeholder="http://jellyfin.myhomelab.net"
               maxLength={255}
               value={value}
@@ -87,23 +92,23 @@ export default function AppUrlModal({ open, service, onClose, onSaved, showError
             />
             {value.length > 0 && (
               <StyledButton size="sm" variant="ghost" icon="IconX" onClick={() => setValue('')} className="mb-1.5">
-                Clear
+                {t('common.clear')}
               </StyledButton>
             )}
           </div>
           {isInvalid ? (
             <p className="mt-1.5 text-xs text-red-500">
-              Enter a valid http(s) address (e.g. https://jellyfin.myhomelab.net). A bare host like
-              "jellyfin.lan" becomes http://jellyfin.lan.
+              {t('appUrl.invalid')}
             </p>
           ) : (
             <>
               <p className="mt-1.5 text-xs text-text-muted">
-                No scheme? We'll default to <span className="font-mono">http://</span>.</p>
+                {tx('appUrl.noScheme', { scheme: <span className="font-mono">http://</span> })}</p>
               <p className="mt-1.5 text-xs text-text-muted">
-                Opens as:{' '}
-                <span className="font-mono break-all text-text-primary">{previewLink}</span>
-                {usingDefault ? ' (default)' : ''}
+                {tx('appUrl.opensAs', {
+                  link: <span className="font-mono break-all text-text-primary">{previewLink}</span>,
+                })}
+                {usingDefault ? t('appUrl.defaultSuffix') : ''}
               </p>
             </>
           )}

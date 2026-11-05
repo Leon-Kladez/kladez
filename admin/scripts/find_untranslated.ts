@@ -20,13 +20,14 @@ const ALLOWED_WORDS = new Set(ALLOWLIST.flatMap((s) => s.split(/\s+/)))
 const TEXT_ATTR =
   /^(title|placeholder|alt|aria-label|label|description|text|message|subtitle|heading|tooltip|helperText|helpText|emptyMessage|.+Text|.+Label|.+Title|.+Message|.+Description)$/
 // Свойства объектов с видимым текстом (уведомления, пункты меню, модальные окна).
-const TEXT_PROP = /^(title|message|label|description|placeholder|confirmText|cancelText|subtitle|tooltip)$/
+const TEXT_PROP = /^(title|message|label|description|placeholder|confirmText|cancelText|subtitle|tooltip|ariaLabel|cta|helperText)$/
 // Вызовы, строковые аргументы которых показываются человеку.
 const NOTIFY_CALL = /^(addNotification|showError|showSuccess|showNotification|toast\w*|alert|confirm)$/
 
 /** Есть ли в тексте английские слова (3+ латинские буквы), не считая названий программ; русский текст не считается. */
 export function looksEnglish(raw: string): boolean {
-  const text = raw.replace(/\s+/g, ' ').trim()
+  // HTML-знаки вроде &middot; и &#8212; — не слова.
+  const text = raw.replace(/&[a-zA-Z]+;|&#\d+;/g, ' ').replace(/\s+/g, ' ').trim()
   if (!text || ALLOWED.has(text)) return false
   if (/[А-Яа-яЁё]/.test(text)) return false
   if (/^(https?:\/\/|\/|#|\.\/|mailto:)/.test(text)) return false

@@ -3,6 +3,8 @@ import { Notification } from "~/context/NotificationContext"
 // Global notification callback that can be set by the NotificationProvider
 let globalNotificationCallback: ((notification: Notification) => void) | null = null
 
+import { formatBytes as formatBytesRu, t } from '../../constants/i18n'
+
 export function setGlobalNotificationCallback(callback: (notification: Notification) => void) {
   globalNotificationCallback = callback
 }
@@ -12,13 +14,10 @@ export function capitalizeFirstLetter(str?: string | null): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export function formatBytes(bytes: number, decimals = 2): string {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+/** Размер по-русски: «340 МБ», «1,5 ГБ». Параметр decimals оставлен для совместимости вызовов NOMAD. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function formatBytes(bytes: number, _decimals = 2): string {
+  return formatBytesRu(bytes)
 }
 
 export function generateRandomString(length: number): string {
@@ -78,7 +77,7 @@ export function catchInternal<Fn extends (...args: any[]) => any>(fn: Fn): (...a
       console.error('Internal error caught:', error)
 
       if (globalNotificationCallback) {
-        const errorMessage = 'An internal error occurred. Please try again or check the console for details. ' + (error instanceof Error ? String(error.message).slice(0, 50) : '')
+        const errorMessage = t('common.internalError') + ' ' + (error instanceof Error ? String(error.message).slice(0, 50) : '')
         globalNotificationCallback({
           message: errorMessage,
           type: 'error',

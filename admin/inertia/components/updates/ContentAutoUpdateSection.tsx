@@ -9,12 +9,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotifications } from '~/context/NotificationContext'
 import { useContentAutoUpdateStatus } from '~/hooks/useContentAutoUpdateStatus'
 import { formatBytes } from '~/lib/util'
+import { t, formatDateTime } from '../../../constants/i18n'
 
 const COOLOFF_OPTIONS = [
-  { value: 24, label: '24 hours (1 day)' },
-  { value: 48, label: '48 hours (2 days)' },
-  { value: 72, label: '72 hours (3 days)' },
-  { value: 168, label: '7 days' },
+  { value: 24, label: t('autoUpdate.cooloff.24') },
+  { value: 48, label: t('autoUpdate.cooloff.48') },
+  { value: 72, label: t('autoUpdate.cooloff.72') },
+  { value: 168, label: t('autoUpdate.cooloff.168') },
 ]
 
 const BYTES_PER_GB = 1024 * 1024 * 1024
@@ -53,20 +54,18 @@ export default function ContentAutoUpdateSection() {
       queryClient.invalidateQueries({ queryKey: ['content-auto-update-status'] })
       addNotification({
         type: 'success',
-        message: value
-          ? 'Automatic content updates enabled.'
-          : 'Automatic content updates disabled.',
+        message: value ? t('autoUpdate.content.enabled') : t('autoUpdate.content.disabled'),
       })
     },
     onError: () => {
-      addNotification({ type: 'error', message: 'Failed to update content auto-update setting.' })
+      addNotification({ type: 'error', message: t('autoUpdate.content.saveFailed') })
     },
   })
 
   const handleSaveSchedule = async () => {
     const parsedGb = Number(capGb)
     if (!Number.isFinite(parsedGb) || parsedGb < 0) {
-      addNotification({ type: 'error', message: 'Data cap must be 0 or a positive number of GB.' })
+      addNotification({ type: 'error', message: t('autoUpdate.content.capInvalid') })
       return
     }
     const capBytes = Math.round(parsedGb * BYTES_PER_GB)
@@ -76,23 +75,22 @@ export default function ContentAutoUpdateSection() {
       await api.updateSetting('contentAutoUpdate.cooloffHours', String(cooloff))
       await api.updateSetting('contentAutoUpdate.maxBytesPerWindow', String(capBytes))
       queryClient.invalidateQueries({ queryKey: ['content-auto-update-status'] })
-      addNotification({ type: 'success', message: 'Content update schedule saved.' })
+      addNotification({ type: 'success', message: t('autoUpdate.content.scheduleSaved') })
     } catch {
-      addNotification({ type: 'error', message: 'Failed to save content update schedule.' })
+      addNotification({ type: 'error', message: t('autoUpdate.content.scheduleFailed') })
     }
   }
 
   return (
     <>
-      <StyledSectionHeader title="Automatic Content Updates" className="mt-8" />
+      <StyledSectionHeader title={t('autoUpdate.content.title')} className="mt-8" />
       <div className="bg-surface-primary rounded-lg border shadow-md overflow-hidden mt-6 p-6">
         {autoDisabled && (
           <Alert
             type="warning"
-            title="Automatic Content Updates Disabled"
+            title={t('autoUpdate.content.disabledTitle')}
             message={
-              status?.autoDisabledReason ||
-              'Automatic content updates were disabled after repeated failures.'
+              status?.autoDisabledReason || t('autoUpdate.content.disabledReason')
             }
             variant="bordered"
             className="mb-4"
@@ -103,37 +101,37 @@ export default function ContentAutoUpdateSection() {
           checked={enabled}
           onChange={(value) => toggleMutation.mutate(value)}
           disabled={toggleMutation.isPending || isLoading}
-          label="Enable Automatic Content Updates"
-          description="Automatically download newer versions of your installed Information Library content (ZIM files) and maps during your chosen window. Content downloads can be very large, so set a per-window data cap to limit how much is pulled at once. We recommend allowing at least 0.5 GB per update window to ensure most updates can be pulled in a timely manner, but you can set a lower cap if you have very limited bandwidth and don't mind some updates being skipped (they will still appear in the UI and can be updated manually). If an update repeatedly fails to download within the window, it will be automatically disabled and require manual intervention to re-enable."
+          label={t('autoUpdate.content.enableLabel')}
+          description={t('autoUpdate.content.enableDescription')}
         />
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Input
             name="contentWindowStart"
-            label="Window Start"
+            label={t('autoUpdate.windowStart')}
             type="time"
             value={windowStart}
             onChange={(e) => setWindowStart(e.target.value)}
             disabled={!enabled}
-            helpText="Local server time"
+            helpText={t('autoUpdate.serverTime')}
           />
           <Input
             name="contentWindowEnd"
-            label="Window End"
+            label={t('autoUpdate.windowEnd')}
             type="time"
             value={windowEnd}
             onChange={(e) => setWindowEnd(e.target.value)}
             disabled={!enabled}
-            helpText="Local server time"
+            helpText={t('autoUpdate.serverTime')}
           />
           <div>
             <label
               htmlFor="contentCooloff"
               className="block text-base/6 font-medium text-text-primary"
             >
-              Cool-off Period
+              {t('autoUpdate.cooloffLabel')}
             </label>
-            <p className="mt-1 text-sm text-text-muted">Delay after a new version appears</p>
+            <p className="mt-1 text-sm text-text-muted">{t('autoUpdate.content.cooloffHint')}</p>
             <select
               id="contentCooloff"
               value={cooloff}
@@ -150,42 +148,47 @@ export default function ContentAutoUpdateSection() {
           </div>
           <Input
             name="contentDataCap"
-            label="Data Cap (GB)"
+            label={t('autoUpdate.content.capLabel')}
             type="number"
             min="0"
             step="1"
             value={capGb}
             onChange={(e) => setCapGb(e.target.value)}
             disabled={!enabled}
-            helpText="Per window. 0 = unlimited"
+            helpText={t('autoUpdate.content.capHint')}
           />
         </div>
 
         <div className="mt-4 flex justify-end">
           <StyledButton variant="primary" size="sm" onClick={handleSaveSchedule} disabled={!enabled}>
-            Save Schedule
+            {t('autoUpdate.saveSchedule')}
           </StyledButton>
         </div>
 
         {enabled && status && (
           <div className="mt-6 pt-4 border-t border-desert-stone-light text-sm">
             <p className="text-desert-stone mb-3">
-              <span className="font-medium">Update window: </span>
-              {status.windowStart}–{status.windowEnd} (
-              {status.withinWindow ? 'currently inside' : 'currently outside'}); cool-off{' '}
-              {status.cooloffHours}h; data cap{' '}
-              {status.maxBytesPerWindow > 0 ? formatBytes(status.maxBytesPerWindow) : 'unlimited'}
-              {status.maxBytesPerWindow > 0 && (
-                <> ({formatBytes(status.windowBytesUsed)} used this window)</>
-              )}
+              <span className="font-medium">{t('autoUpdate.windowLabel')}</span>
+              {t('autoUpdate.content.windowSummary', {
+                start: status.windowStart,
+                end: status.windowEnd,
+                state: status.withinWindow ? t('autoUpdate.app.inside') : t('autoUpdate.app.outside'),
+                hours: status.cooloffHours,
+                cap:
+                  status.maxBytesPerWindow > 0
+                    ? formatBytes(status.maxBytesPerWindow)
+                    : t('autoUpdate.content.unlimited'),
+              })}
+              {status.maxBytesPerWindow > 0 &&
+                t('autoUpdate.content.usedThisWindow', { size: formatBytes(status.windowBytesUsed) })}
               .
               {status.lastResult && (
                 <>
                   {' '}
-                  <span className="font-medium">Last run: </span>
+                  <span className="font-medium">{t('autoUpdate.app.lastRun')}</span>
                   {status.lastResult}
                   {status.lastAttemptAt
-                    ? ` (${new Date(status.lastAttemptAt).toLocaleString()})`
+                    ? ` (${formatDateTime(status.lastAttemptAt)})`
                     : ''}
                 </>
               )}
@@ -193,14 +196,14 @@ export default function ContentAutoUpdateSection() {
 
             {status.lastError && (
               <p className="text-desert-red mb-3">
-                <span className="font-medium">Last error: </span>
+                <span className="font-medium">{t('autoUpdate.lastError')}</span>
                 {status.lastError}
               </p>
             )}
 
             {status.resources.length === 0 ? (
               <p className="text-desert-stone-dark">
-                All installed content is up to date. New versions will appear here when detected.
+                {t('autoUpdate.content.allUpToDate')}
               </p>
             ) : (
               <ul className="space-y-2">
@@ -213,14 +216,14 @@ export default function ContentAutoUpdateSection() {
                       <p className="font-medium text-text-primary">
                         {resource.resource_id}{' '}
                         <span className="text-xs uppercase text-desert-stone">
-                          {resource.resource_type}
+                          {resource.resource_type === 'map' ? t('autoUpdate.content.typeMap') : resource.resource_type}
                         </span>
                       </p>
                       <p className="text-desert-stone">
                         {resource.current_version}
                         {resource.available_update_version
                           ? ` → ${resource.available_update_version}`
-                          : ' (up to date)'}
+                          : t('autoUpdate.app.upToDate')}
                         {resource.size_bytes ? ` · ${formatBytes(resource.size_bytes)}` : ''}
                       </p>
                       {resource.auto_disabled_reason && (
@@ -235,7 +238,7 @@ export default function ContentAutoUpdateSection() {
                             : 'text-desert-stone'
                         }`}
                     >
-                      {resource.exceeds_cap ? 'Skipped — exceeds data cap, update manually' : resource.reason}
+                      {resource.exceeds_cap ? t('autoUpdate.content.skippedCap') : resource.reason}
                     </span>
                   </li>
                 ))}

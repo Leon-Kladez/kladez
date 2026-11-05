@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react'
 import type { DrugSearchResult } from '../../../types/drug_reference'
 import { PRODUCT_TYPES } from '../../../types/drug_reference'
+import { t } from '../../../constants/i18n'
 
 interface Props {
   result: DrugSearchResult
@@ -32,8 +33,8 @@ export default function DrugResultRow({ result, brandFirst = false }: Props) {
 
   // Headline vs sub-line depending on context.
   const headline = brandFirst
-    ? (brand ?? ingredient ?? 'Unknown')
-    : (ingredient ?? brand ?? 'Unknown')
+    ? (brand ?? ingredient ?? t('disk.unknown'))
+    : (ingredient ?? brand ?? t('disk.unknown'))
   const subParts: string[] = []
   if (brandFirst) {
     if (result.manufacturer) subParts.push(result.manufacturer)
@@ -68,7 +69,7 @@ export default function DrugResultRow({ result, brandFirst = false }: Props) {
 
           {result.labelCount > 1 && (
             <span className="px-1.5 py-0.5 rounded text-xs bg-surface-secondary text-text-secondary flex-shrink-0">
-              {result.labelCount} labels
+              {t('drug.labels', { count: result.labelCount })}
             </span>
           )}
         </div>

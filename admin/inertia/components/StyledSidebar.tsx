@@ -81,7 +81,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
                     className="flex flex-row items-center gap-x-3 text-desert-green text-sm font-semibold"
                   >
                     <IconArrowLeft aria-hidden="true" className="size-6 shrink-0" />
-                    Back to Home
+                    {t('nav.backToHome')}
                   </Link>
                 </li>
               </ul>
@@ -132,7 +132,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
                   onClick={() => setSidebarOpen(false)}
                   className="-m-2.5 p-2.5"
                 >
-                  <span className="sr-only">Close sidebar</span>
+                  <span className="sr-only">{t('nav.closeSidebar')}</span>
                   <IconX aria-hidden="true" className="size-6 text-white" />
                 </button>
               </div>

@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import Uppy from '@uppy/core'
+import { uppyRu } from '~/lib/uppy_ru'
 import '@uppy/core/css/style.min.css'
 import '@uppy/dashboard/css/style.min.css'
 import { useUppyEvent } from '@uppy/react'
@@ -39,6 +40,7 @@ const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>((props, ref)
   const [uppy] = useState(() => {
     const uppy = new Uppy({
       debug: true,
+      locale: uppyRu,
       restrictions: {
         maxFileSize: maxFileSize,
         minNumberOfFiles: minFiles,

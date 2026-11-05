@@ -1,0 +1,16 @@
+export const kbEn = {
+  'kb.health.waiting': 'Waiting',
+  'kb.health.waitingHint': 'Job is queued and waiting to start',
+  'kb.health.active': 'Active',
+  'kb.health.activeHint': 'Job is embedding at a normal rate',
+  'kb.health.slow': 'Slow',
+  'kb.health.slowHint': 'Job has not made progress for at least 2 minutes',
+  'kb.health.stalled': 'Stalled',
+  'kb.health.stalledHint': 'Job has not made progress for at least 5 minutes',
+  'kb.health.failed': 'Failed',
+  'kb.health.failedHint': 'Job failed',
+  'kb.queue.title': 'Processing Queue',
+  'kb.queue.lastActivity': 'last activity {time}',
+  'kb.queue.chunks': '{n} chunks',
+  'kb.queue.empty': 'No files are currently being processed',
+} as const

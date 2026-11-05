@@ -2,10 +2,98 @@
 // Словарь собран из файлов по областям в папке en/.
 import { testEn } from './en/test.js'
 import { commonEn } from './en/common.js'
+import { navEn } from './en/nav.js'
+import { mapsEn } from './en/maps.js'
+import { diskEn } from './en/disk.js'
+import { installEn } from './en/install.js'
+import { errorsEn } from './en/errors.js'
+import { aboutEn } from './en/about.js'
+import { kbEn } from './en/kb.js'
+import { timeEn } from './en/time.js'
+import { benchmarkEn } from './en/benchmark.js'
+import { themeEn } from './en/theme.js'
+import { storageEn } from './en/storage.js'
+import { debugEn } from './en/debug.js'
+import { serviceLogsEn } from './en/serviceLogs.js'
+import { categoryEn } from './en/category.js'
+import { mapsDownloadUrlEn } from './en/mapsDownloadUrl.js'
+import { collectionEn } from './en/collection.js'
+import { tableEn } from './en/table.js'
+import { downloadEn } from './en/download.js'
+import { builderTagEn } from './en/builderTag.js'
+import { whatsNewEn } from './en/whatsNew.js'
+import { modelDownloadEn } from './en/modelDownload.js'
+import { serviceStatsEn } from './en/serviceStats.js'
+import { creatorPacksEn } from './en/creatorPacks.js'
+import { appUrlEn } from './en/appUrl.js'
+import { kbGuardrailEn } from './en/kbGuardrail.js'
+import { wikipediaEn } from './en/wikipedia.js'
+import { updateServiceEn } from './en/updateService.js'
+import { customAppEn } from './en/customApp.js'
+import { autoUpdateEn } from './en/autoUpdate.js'
+import { contentUpdatesEn } from './en/contentUpdates.js'
+import { tierEn } from './en/tier.js'
+import { gpuEn } from './en/gpu.js'
+import { benchRunEn } from './en/benchRun.js'
+import { countryPickerEn } from './en/countryPicker.js'
+import { continentEn } from './en/continent.js'
+import { linkTileEn } from './en/linkTile.js'
+import { pinsEn } from './en/pins.js'
+import { durationEn } from './en/duration.js'
+import { drugDisclaimerEn } from './en/drugDisclaimer.js'
+import { drugIngestEn } from './en/drugIngest.js'
+import { drugEn } from './en/drug.js'
+import { safetyEn } from './en/safety.js'
+import { uploadEn } from './en/upload.js'
+import { homeEn } from './en/home.js'
 
 export const en = {
   ...testEn,
   ...commonEn,
+  ...navEn,
+  ...mapsEn,
+  ...diskEn,
+  ...installEn,
+  ...errorsEn,
+  ...aboutEn,
+  ...kbEn,
+  ...timeEn,
+  ...benchmarkEn,
+  ...themeEn,
+  ...storageEn,
+  ...debugEn,
+  ...serviceLogsEn,
+  ...categoryEn,
+  ...mapsDownloadUrlEn,
+  ...collectionEn,
+  ...tableEn,
+  ...downloadEn,
+  ...builderTagEn,
+  ...whatsNewEn,
+  ...modelDownloadEn,
+  ...serviceStatsEn,
+  ...creatorPacksEn,
+  ...appUrlEn,
+  ...kbGuardrailEn,
+  ...wikipediaEn,
+  ...updateServiceEn,
+  ...customAppEn,
+  ...autoUpdateEn,
+  ...contentUpdatesEn,
+  ...tierEn,
+  ...gpuEn,
+  ...benchRunEn,
+  ...countryPickerEn,
+  ...continentEn,
+  ...linkTileEn,
+  ...pinsEn,
+  ...durationEn,
+  ...drugDisclaimerEn,
+  ...drugIngestEn,
+  ...drugEn,
+  ...safetyEn,
+  ...uploadEn,
+  ...homeEn,
 } as const
 
 export type MessageKey = keyof typeof en
