@@ -5,7 +5,7 @@ import AppLayout from '~/layouts/AppLayout'
 import StyledButton from '~/components/StyledButton'
 import api from '~/lib/api'
 import { ServiceSlim } from '../../../types/services'
-import CuratedCollectionCard from '~/components/CuratedCollectionCard'
+import MapRegionPicker from '~/components/maps/MapRegionPicker'
 import CategoryCard from '~/components/CategoryCard'
 import CreatorPackCard from '~/components/CreatorPackCard'
 import TierSelectionModal from '~/components/TierSelectionModal'
@@ -117,7 +117,9 @@ export default function EasySetupWizard(props: {
 
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [selectedServices, setSelectedServices] = useState<string[]>([])
-  const [selectedMapCollections, setSelectedMapCollections] = useState<string[]>([])
+  // Кладезъ: выбранные пакеты карт (id из maps.json) и их общий размер.
+  const [selectedMapPackages, setSelectedMapPackages] = useState<string[]>([])
+  const [selectedMapBytes, setSelectedMapBytes] = useState(0)
   const [selectedCreatorPacks, setSelectedCreatorPacks] = useState<string[]>([])
   const [selectedAiModels, setSelectedAiModels] = useState<string[]>([])
   // Auto-index policy for the AI Assistant Knowledge Base. Defaults to
@@ -152,13 +154,13 @@ export default function EasySetupWizard(props: {
 
   const anySelectionMade =
     selectedServices.length > 0 ||
-    selectedMapCollections.length > 0 ||
+    selectedMapPackages.length > 0 ||
     selectedCreatorPacks.length > 0 ||
     selectedTiers.size > 0 ||
     selectedAiModels.length > 0 ||
     (selectedWikipedia !== null && selectedWikipedia !== 'none')
 
-  const { data: mapCollections, isLoading: isLoadingMaps } = useQuery({
+  const { data: mapCollections } = useQuery({
     queryKey: [CURATED_MAP_COLLECTIONS_KEY],
     queryFn: () => api.listCuratedMapCollections(),
     refetchOnWindowFocus: false,
@@ -230,12 +232,6 @@ export default function EasySetupWizard(props: {
     steps.push(6)
     return steps
   }, [creatorPacksConfigured, isAiInSetup])
-
-  const toggleMapCollection = (slug: string) => {
-    setSelectedMapCollections((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
-    )
-  }
 
   const toggleCreatorPack = (id: string) => {
     setSelectedCreatorPacks((prev) =>
@@ -324,15 +320,8 @@ export default function EasySetupWizard(props: {
     const tierResources = getSelectedTierResources()
     totalBytes += tierResources.reduce((sum, r) => sum + (r.size_mb ?? 0) * 1024 * 1024, 0)
 
-    // Add map collections
-    if (mapCollections) {
-      selectedMapCollections.forEach((slug) => {
-        const collection = mapCollections.find((c) => c.slug === slug)
-        if (collection) {
-          totalBytes += collection.resources.reduce((sum, r) => sum + r.size_mb * 1024 * 1024, 0)
-        }
-      })
-    }
+    // Кладезъ: выбранные пакеты карт (размер считает окно выбора региона)
+    totalBytes += selectedMapBytes
 
     // Add creator packs
     selectedCreatorPacks.forEach((id) => {
@@ -376,12 +365,12 @@ export default function EasySetupWizard(props: {
     return totalBytes
   }, [
     selectedTiers,
-    selectedMapCollections,
+    selectedMapPackages,
+    selectedMapBytes,
     selectedCreatorPacks,
     selectedAiModels,
     selectedWikipedia,
     categories,
-    mapCollections,
     creatorPacks,
     recommendedModels,
     wikipediaState,
@@ -469,7 +458,7 @@ export default function EasySetupWizard(props: {
       })
 
       const downloadPromises = [
-        ...selectedMapCollections.map((slug) => api.downloadMapCollection(slug)),
+        ...(selectedMapPackages.length > 0 ? [api.downloadMapPackages(selectedMapPackages)] : []),
         ...categoryTierPromises,
         ...selectedCreatorPacks.map((id) => api.installCreatorPack(id)),
         ...selectedAiModels.map((modelName) => api.downloadModel(modelName)),
@@ -914,40 +903,14 @@ export default function EasySetupWizard(props: {
           })}
         </p>
       </div>
-      {isLoadingMaps ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
-      ) : mapCollections && mapCollections.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mapCollections.map((collection) => (
-            <div
-              key={collection.slug}
-              onClick={() =>
-                isOnline && !collection.all_installed && toggleMapCollection(collection.slug)
-              }
-              className={classNames(
-                'relative',
-                selectedMapCollections.includes(collection.slug) &&
-                'ring-4 ring-desert-green rounded-lg',
-                collection.all_installed && 'opacity-75',
-                !isOnline && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              <CuratedCollectionCard collection={collection} />
-              {selectedMapCollections.includes(collection.slug) && (
-                <div className="absolute top-2 right-2 bg-desert-green rounded-full p-1">
-                  <IconCheck size={32} className="text-white" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-text-secondary text-lg">{t('easySetup.maps.none')}</p>
-        </div>
-      )}
+      <MapRegionPicker
+        mode="inline"
+        initialIds={selectedMapPackages}
+        onChange={(ids, bytes) => {
+          setSelectedMapPackages(ids)
+          setSelectedMapBytes(bytes)
+        }}
+      />
     </div>
   )
 
@@ -1262,7 +1225,7 @@ export default function EasySetupWizard(props: {
   const renderStep5 = () => {
     const hasSelections =
       selectedServices.length > 0 ||
-      selectedMapCollections.length > 0 ||
+      selectedMapPackages.length > 0 ||
       selectedCreatorPacks.length > 0 ||
       selectedTiers.size > 0 ||
       selectedAiModels.length > 0 ||
@@ -1307,18 +1270,18 @@ export default function EasySetupWizard(props: {
               </div>
             )}
 
-            {selectedMapCollections.length > 0 && (
+            {selectedMapPackages.length > 0 && (
               <div className="bg-surface-primary rounded-lg border-2 border-desert-stone-light p-6">
                 <h3 className="text-xl font-semibold text-text-primary mb-4">
-                  {t('easySetup.review.maps', { n: selectedMapCollections.length })}
+                  {t('easySetup.review.maps', { n: selectedMapPackages.length })}
                 </h3>
                 <ul className="space-y-2">
-                  {selectedMapCollections.map((slug) => {
-                    const collection = mapCollections?.find((c) => c.slug === slug)
+                  {selectedMapPackages.map((id) => {
+                    const pkg = mapCollections?.flatMap((c) => c.resources).find((r) => r.id === id)
                     return (
-                      <li key={slug} className="flex items-center">
+                      <li key={id} className="flex items-center">
                         <IconCheck size={20} className="text-desert-green mr-2" />
-                        <span className="text-text-primary">{collection?.name || slug}</span>
+                        <span className="text-text-primary">{pkg?.title || id}</span>
                       </li>
                     )
                   })}
@@ -1513,7 +1476,7 @@ export default function EasySetupWizard(props: {
                     ).length
                     return t('easySetup.summary.capabilities', { count })
                   })()}
-                  , {t('easySetup.summary.maps', { count: selectedMapCollections.length })},{' '}
+                  , {t('easySetup.summary.maps', { count: selectedMapPackages.length })},{' '}
                   {t('easySetup.summary.content', { count: selectedTiers.size })},{' '}
                   {creatorPacksConfigured && (
                     <>

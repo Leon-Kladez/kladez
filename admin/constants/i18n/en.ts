@@ -37,6 +37,7 @@ import { tierEn } from './en/tier.js'
 import { gpuEn } from './en/gpu.js'
 import { benchRunEn } from './en/benchRun.js'
 import { countryPickerEn } from './en/countryPicker.js'
+import { mapRegionsEn } from './en/mapRegions.js'
 import { continentEn } from './en/continent.js'
 import { linkTileEn } from './en/linkTile.js'
 import { pinsEn } from './en/pins.js'
@@ -159,6 +160,7 @@ export const en = {
   ...gpuEn,
   ...benchRunEn,
   ...countryPickerEn,
+  ...mapRegionsEn,
   ...continentEn,
   ...linkTileEn,
   ...pinsEn,

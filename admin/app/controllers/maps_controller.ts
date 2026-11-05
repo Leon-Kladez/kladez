@@ -118,6 +118,15 @@ export default class MapsController {
     }
   }
 
+  async picker({}: HttpContext) {
+    return this.mapService.pickerData()
+  }
+
+  async ruDistricts({ response }: HttpContext) {
+    response.header('Cache-Control', 'public, max-age=86400')
+    return response.download(this.mapService.ruDistrictsSchemaPath())
+  }
+
   async listCountries({}: HttpContext) {
     return { countries: await this.mapService.listCountries() }
   }

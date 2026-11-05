@@ -10,7 +10,7 @@ import { AppAutoUpdateStatus, AutoUpdateStatus, CheckLatestVersionResult, Conten
 import { DownloadJobWithProgress, WikipediaState } from '../../types/downloads'
 import type { Country, CountryCode, CountryGroup, MapExtractPreflight } from '../../types/maps'
 import { EmbedJobWithProgress, FileWarningsResult, StoredFileInfo } from '../../types/rag'
-import type { BundleWithStatus, CategoryWithStatus, CollectionWithStatus, ContentUpdateCheckResult, CreatorPackWithStatus, ResourceUpdateInfo } from '../../types/collections'
+import type { BundleWithStatus, CategoryWithStatus, CollectionWithStatus, ContentUpdateCheckResult, CreatorPackWithStatus, ResourceUpdateInfo, SpecResource } from '../../types/collections'
 import { catchInternal } from './util'
 import { NomadChatResponse, NomadInstalledModel, NomadOllamaModel, OllamaChatRequest } from '../../types/ollama'
 import BenchmarkResult from '#models/benchmark_result'
@@ -719,6 +719,27 @@ class API {
         filename: string
         jobId?: string
       }>('/maps/download-global-map')
+      return response.data
+    })()
+  }
+
+  /** Кладезъ: данные окна выбора региона. */
+  async getMapPicker() {
+    return catchInternal(async () => {
+      const response = await this.client.get<{
+        countries: (Country & { hasPackages: boolean })[]
+        resources: SpecResource[]
+        installed: string[]
+        freeBytes: number | null
+      }>('/maps/picker')
+      return response.data
+    })()
+  }
+
+  /** Кладезъ: упрощённые контуры федеральных округов России (GeoJSON). */
+  async getRuDistrictsSchema() {
+    return catchInternal(async () => {
+      const response = await this.client.get<{ type: 'FeatureCollection'; features: { type: 'Feature'; properties: { id: string }; geometry: unknown }[] }>('/maps/schema/ru-districts')
       return response.data
     })()
   }
