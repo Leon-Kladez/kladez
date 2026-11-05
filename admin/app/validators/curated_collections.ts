@@ -17,6 +17,24 @@ export const specResourceValidator = vine.object({
   // silently drop the field on manifest fetch and every gated download would go
   // out with no Authorization header and 401.
   auth: vine.enum(['nomad_app_key']).optional(),
+  // ---- Карты Кладезя (docs/superpowers/specs/2026-11-05-kladez-3-maps-design.md) ----
+  // Объявлены здесь по той же причине: VineJS молча выкидывает неизвестные поля.
+  // Контрольная сумма файла (SHA-256, hex) — сверяется после скачивания.
+  sha256: vine.string().regex(/^[a-f0-9]{64}$/).optional(),
+  // Запасные полные адреса того же файла, пробуются по порядку после `url`.
+  mirrors: vine.array(vine.string().url()).optional(),
+  // Адрес .torrent с веб-сидами на `url` и `mirrors`.
+  torrent: vine.string().url().optional(),
+  // Подробность карты: full — до домов (масштаб 15), overview — обзорно (масштаб 13).
+  detail: vine.enum(['full', 'overview']).optional(),
+  // Страна пакета (ISO 3166-1 alpha-2) — по ней окно выбора находит пакеты страны.
+  country: vine.string().regex(/^[A-Z]{2}$/).optional(),
+  // Все страны пакета (для пакетов на несколько стран, например «Израиль и Палестина»).
+  countries: vine.array(vine.string().regex(/^[A-Z]{2}$/)).optional(),
+  // Что входит в пакет, по-русски (например, перечень субъектов округа).
+  contents: vine.string().optional(),
+  // Черновик до первой сборки карт: файла ещё нет, программа такой ресурс не скачивает.
+  planned: vine.boolean().optional(),
 })
 
 // ---- ZIM Categories spec (versioned) ----

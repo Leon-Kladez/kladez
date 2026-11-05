@@ -5,6 +5,8 @@ import logger from '@adonisjs/core/services/logger'
 import InstalledResource from '#models/installed_resource'
 import { isRawListRemoteZimFilesResponse } from '../../util/zim.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
+import { mapsSpecToListing } from '../utils/map_packages.js'
+import type { MapsSpec } from '../../types/collections.js'
 
 /**
  * Local, in-process freshness check for installed content (Kiwix ZIM files +
@@ -25,8 +27,6 @@ import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
  * defensive — a malformed entry is skipped, never thrown.
  */
 
-const GITHUB_PMTILES_URL =
-  'https://api.github.com/repos/Crosstalk-Solutions/project-nomad-maps/contents/pmtiles'
 
 const CATALOG_TIMEOUT_MS = 15000
 /** Concurrent ZIM catalog lookups — keep small to avoid hammering the mirror. */
@@ -255,12 +255,14 @@ export class KiwixCatalogService {
 
   // ── Map internals ────────────────────────────────────────────────────────────
 
+  /**
+   * Кладезъ: свежие версии карт берутся из нашего списка карт (maps.json), а не из
+   * репозитория карт NOMAD. Имена файлов те же: `<id>_ГГГГ-ММ.pmtiles`.
+   */
   private async fetchMapListing(): Promise<GithubContentEntry[]> {
-    const res = await axios.get(GITHUB_PMTILES_URL, {
-      headers: { Accept: 'application/vnd.github+json' },
-      timeout: CATALOG_TIMEOUT_MS,
-    })
-    return Array.isArray(res.data) ? res.data : []
+    const { CollectionManifestService } = await import('./collection_manifest_service.js')
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    return mapsSpecToListing(spec)
   }
 
   private pickNewestMap(listing: GithubContentEntry[], resourceId: string): CatalogResult | null {

@@ -115,6 +115,11 @@ export default defineConfig({
       reloadServer: false,
     },
     {
+      // Кладезъ: встроенные базовые материалы карты (стиль на русском, шрифты, значки).
+      pattern: 'resources/maps/**',
+      reloadServer: false,
+    },
+    {
       pattern: 'public/**',
       reloadServer: false,
     },

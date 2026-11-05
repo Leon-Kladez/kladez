@@ -29,6 +29,8 @@ export type Country = {
   code: CountryCode
   code3: string
   name: string
+  /** Русское название (Natural Earth NAME_RU), иначе английское. */
+  nameRu: string
   continent: string
   subregion: string
   population: number

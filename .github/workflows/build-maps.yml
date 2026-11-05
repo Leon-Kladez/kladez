@@ -1,0 +1,150 @@
+# Сборка карт Кладезя: раз в квартал вырезает регионы из сборки Protomaps,
+# выкладывает их в релиз открытого репозитория карт и обновляет collections-ru/maps.json.
+# Описание: docs/superpowers/specs/2026-11-05-kladez-3-maps-design.md
+#
+# Нужно настроить (до этого запускается только dry_run):
+#   vars.KLADEZ_MAPS_REPO      — открытый репозиторий карт, например owner/kladez-maps
+#   secrets.MAPS_RELEASE_TOKEN — токен с правом на релизы только в этом репозитории
+#   (необязательно) vars.YC_BUCKET, secrets.YC_ACCESS_KEY_ID, secrets.YC_SECRET_ACCESS_KEY — зеркало в Яндексе
+name: Сборка карт
+
+on:
+  schedule:
+    - cron: '0 3 1 1,4,7,10 *'
+  workflow_dispatch:
+    inputs:
+      groups:
+        description: 'Группы через запятую (russia,cis,europe,middle-east,north-america)'
+        default: 'russia,cis,europe,middle-east,north-america'
+      only:
+        description: 'Только эти регионы (id через запятую), пусто — все'
+        default: ''
+      dry_run:
+        description: 'Только оценить размеры, ничего не выкладывать'
+        type: boolean
+        default: true
+      yandex:
+        description: 'Копировать и в Яндекс Object Storage'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PMTILES_VERSION: 1.31.2
+  PMTILES_SHA256: 3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f
+  # По расписанию — настоящая сборка; вручную — как выбрано. Пока репозиторий карт
+  # не настроен (vars.KLADEZ_MAPS_REPO пуст), всегда только оценка размеров.
+  DRY_RUN: ${{ vars.KLADEZ_MAPS_REPO == '' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.latest.outputs.tag }}
+      version: ${{ steps.latest.outputs.version }}
+      groups: ${{ steps.groups.outputs.json }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - id: latest
+        working-directory: tools/maps-build
+        run: |
+          info=$(node src/build.mjs latest)
+          echo "version=$(echo "$info" | jq -r .version)" >> "$GITHUB_OUTPUT"
+          echo "tag=maps-$(echo "$info" | jq -r .version)" >> "$GITHUB_OUTPUT"
+      - id: groups
+        env:
+          GROUPS_INPUT: ${{ inputs.groups }}
+        run: |
+          g="${GROUPS_INPUT:-russia,cis,europe,middle-east,north-america}"
+          echo "json=$(echo "$g" | jq -R -c 'split(",") | map(gsub("^\s+|\s+$"; "")) | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+      - name: Создать релиз
+        if: env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MAPS_RELEASE_TOKEN }}
+        run: |
+          gh release view "${{ steps.latest.outputs.tag }}" --repo "${{ vars.KLADEZ_MAPS_REPO }}" >/dev/null 2>&1 ||
+            gh release create "${{ steps.latest.outputs.tag }}" --repo "${{ vars.KLADEZ_MAPS_REPO }}" \
+              --title "Карты ${{ steps.latest.outputs.version }}" --latest=false \
+              --notes "Карты для Кладезя. Данные © участники OpenStreetMap (ODbL), © Protomaps."
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(needs.prepare.outputs.groups) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Поставить pmtiles и mktorrent
+        run: |
+          curl -sSL -o pmtiles.tar.gz "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz"
+          echo "${PMTILES_SHA256}  pmtiles.tar.gz" | sha256sum -c -
+          tar -xzf pmtiles.tar.gz pmtiles && sudo mv pmtiles /usr/local/bin/
+          sudo apt-get update -qq && sudo apt-get install -y -qq mktorrent
+      - name: Нарезать
+        working-directory: tools/maps-build
+        env:
+          GH_TOKEN: ${{ secrets.MAPS_RELEASE_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
+          ONLY_INPUT: ${{ inputs.only }}
+        run: |
+          args=(build --group "${{ matrix.group }}" --out out --tag "${{ needs.prepare.outputs.tag }}" --repo "${{ vars.KLADEZ_MAPS_REPO }}")
+          [ -n "$ONLY_INPUT" ] && args+=(--only "$ONLY_INPUT")
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); else args+=(--upload); fi
+          [ "${{ inputs.yandex }}" = "true" ] && [ "$DRY_RUN" != "true" ] && args+=(--yandex-bucket "${{ vars.YC_BUCKET }}")
+          node src/build.mjs "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: out-${{ matrix.group }}
+          path: |
+            tools/maps-build/out/manifest-*.json
+            tools/maps-build/out/sizes-*.json
+          if-no-files-found: error
+
+  publish:
+    needs: [prepare, build]
+    if: vars.KLADEZ_MAPS_REPO != '' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { path: parts, merge-multiple: true }
+      - name: Склеить maps.json и выложить
+        env:
+          GH_TOKEN: ${{ secrets.MAPS_RELEASE_TOKEN }}
+          REPO: ${{ vars.KLADEZ_MAPS_REPO }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          node tools/maps-build/src/build.mjs merge --out parts
+          gh release upload "$TAG" parts/maps.json tools/maps-build/LICENSE-ODbL.md --repo "$REPO" --clobber
+          gh release edit "$TAG" --repo "$REPO" --latest
+          # Храним две последние версии карт.
+          gh release list --repo "$REPO" --limit 100 --json tagName -q '.[].tagName' | grep '^maps-' | sort -r | tail -n +3 |
+            while read -r old; do gh release delete "$old" --repo "$REPO" --yes --cleanup-tag; done
+          mkdir -p collections-ru
+          cp parts/maps.json collections-ru/maps.json
+      - name: PR со встроенной копией списка карт
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'kladez-maps-bot'
+          git config user.email 'kladez-maps-bot@users.noreply.github.com'
+          branch="maps/${{ needs.prepare.outputs.tag }}"
+          git checkout -b "$branch"
+          git add collections-ru/maps.json
+          git commit -m "chore(maps): список карт ${{ needs.prepare.outputs.version }}" || exit 0
+          git push -u origin "$branch"
+          gh pr create --title "Карты ${{ needs.prepare.outputs.version }}" --body "Обновлён collections-ru/maps.json после сборки карт." --base main

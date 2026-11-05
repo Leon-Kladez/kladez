@@ -4,6 +4,7 @@ import { createHash } from 'crypto'
 import { tmpdir } from 'os'
 import logger from '@adonisjs/core/services/logger'
 import type { Country, CountryCode, CountryGroup } from '../../types/maps.js'
+import { ruCountryName } from '../utils/map_picker.js'
 
 interface NEFeature {
   type: 'Feature'
@@ -121,6 +122,7 @@ export class CountriesService {
         code,
         code3: resolveIso3(p) ?? code,
         name: typeof p.NAME === 'string' ? p.NAME : code,
+        nameRu: ruCountryName(code, typeof p.NAME_RU === 'string' && p.NAME_RU ? p.NAME_RU : typeof p.NAME === 'string' ? p.NAME : code),
         continent,
         subregion: typeof p.SUBREGION === 'string' ? p.SUBREGION : continent,
         population: typeof p.POP_EST === 'number' ? p.POP_EST : 0,
