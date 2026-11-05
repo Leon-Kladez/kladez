@@ -41,6 +41,7 @@ import CustomLibrarySource from '#models/custom_library_source'
 import { assertNotPrivateUrl } from '#validators/common'
 import { resolveZimDownload } from '../utils/zim_download_resolution.js'
 import { catalogUrl } from '../utils/catalog_source.js'
+import { wikipediaOptionToResource } from '../utils/wikipedia_option_resolution.js'
 import env from '#start/env'
 import { getHostedContentHeaders } from '../utils/hosted_content_auth.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
@@ -817,7 +818,6 @@ export class ZimService {
     } catch (error) {
       logger.error(`[ZimService] Failed to fetch Wikipedia options:`, error)
       // Kladez: fall back to the cached / bundled catalog (works offline).
-      const { CollectionManifestService } = await import('./collection_manifest_service.js')
       const spec = await new CollectionManifestService().getSpecWithFallback<{ options: WikipediaOption[] }>(
         'wikipedia'
       )
@@ -906,14 +906,26 @@ export class ZimService {
       throw new Error('Selected Wikipedia option has no download URL')
     }
 
+    // Kladez: the catalog link may be stale (Kiwix keeps only two builds), so
+    // ask the Kiwix catalog for the newest build of this file, as tiers do.
+    let downloadUrl = selectedOption.url
+    const asResource = wikipediaOptionToResource({ ...selectedOption, url: selectedOption.url })
+    if (asResource) {
+      const latest = await new KiwixCatalogService()
+        .getLatestForResources([{ resource_id: asResource.id, resource_type: 'zim' }])
+        .then((m) => m.get(`zim:${asResource.id}`) ?? null)
+        .catch(() => null)
+      downloadUrl = resolveZimDownload(asResource, latest).url
+    }
+
     // Check if already downloading
-    const existingJob = await RunDownloadJob.getActiveByUrl(selectedOption.url)
+    const existingJob = await RunDownloadJob.getActiveByUrl(downloadUrl)
     if (existingJob) {
       return { success: false, message: 'Download already in progress' }
     }
 
     // Extract filename from URL
-    const filename = selectedOption.url.split('/').pop()
+    const filename = downloadUrl.split('/').pop()
     if (!filename) {
       throw new Error('Could not determine filename from URL')
     }
@@ -924,7 +936,7 @@ export class ZimService {
     let selection: WikipediaSelection
     if (currentSelection) {
       currentSelection.option_id = optionId
-      currentSelection.url = selectedOption.url
+      currentSelection.url = downloadUrl
       currentSelection.filename = filename
       currentSelection.status = 'downloading'
       await currentSelection.save()
@@ -932,7 +944,7 @@ export class ZimService {
     } else {
       selection = await WikipediaSelection.create({
         option_id: optionId,
-        url: selectedOption.url,
+        url: downloadUrl,
         filename: filename,
         status: 'downloading',
       })
@@ -940,7 +952,7 @@ export class ZimService {
 
     // Dispatch download job
     const result = await RunDownloadJob.dispatch({
-      url: selectedOption.url,
+      url: downloadUrl,
       filepath,
       timeout: 30000,
       allowedMimeTypes: ZIM_MIME_TYPES,
