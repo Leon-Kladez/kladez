@@ -28,6 +28,7 @@ import { creatorPacksRu } from './ru/creatorPacks.js'
 import { appUrlRu } from './ru/appUrl.js'
 import { kbGuardrailRu } from './ru/kbGuardrail.js'
 import { wikipediaRu } from './ru/wikipedia.js'
+import { kladezRu } from './ru/kladez.js'
 import { updateServiceRu } from './ru/updateService.js'
 import { customAppRu } from './ru/customApp.js'
 import { autoUpdateRu } from './ru/autoUpdate.js'
@@ -149,6 +150,7 @@ export const ru: Record<MessageKey, string> = {
   ...appUrlRu,
   ...kbGuardrailRu,
   ...wikipediaRu,
+  ...kladezRu,
   ...updateServiceRu,
   ...customAppRu,
   ...autoUpdateRu,

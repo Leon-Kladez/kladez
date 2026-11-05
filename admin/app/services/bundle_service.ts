@@ -1,10 +1,10 @@
 import logger from '@adonisjs/core/services/logger'
 import { CollectionManifestService } from './collection_manifest_service.js'
 import type { ZimService } from './zim_service.js'
-import { bundleSizeMb, bundleStatus, type BundleStatus } from '../utils/bundles.js'
-import type { Bundle, BundlesSpec, WikipediaOption, ZimCategoriesSpec } from '../../types/collections.js'
+import { bundleSizeMb, bundleStatus } from '../utils/bundles.js'
+import type { BundlesSpec, BundleWithStatus, WikipediaOption, ZimCategoriesSpec } from '../../types/collections.js'
 
-export type BundleWithStatus = Bundle & { status: BundleStatus }
+export type { BundleWithStatus }
 
 /**
  * Kladez: ready-made sets «Аптечка / Библиотека / Всё». Installing a bundle is

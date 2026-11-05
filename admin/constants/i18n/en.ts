@@ -28,6 +28,7 @@ import { creatorPacksEn } from './en/creatorPacks.js'
 import { appUrlEn } from './en/appUrl.js'
 import { kbGuardrailEn } from './en/kbGuardrail.js'
 import { wikipediaEn } from './en/wikipedia.js'
+import { kladezEn } from './en/kladez.js'
 import { updateServiceEn } from './en/updateService.js'
 import { customAppEn } from './en/customApp.js'
 import { autoUpdateEn } from './en/autoUpdate.js'
@@ -149,6 +150,7 @@ export const en = {
   ...appUrlEn,
   ...kbGuardrailEn,
   ...wikipediaEn,
+  ...kladezEn,
   ...updateServiceEn,
   ...customAppEn,
   ...autoUpdateEn,

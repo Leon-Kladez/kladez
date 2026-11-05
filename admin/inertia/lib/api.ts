@@ -10,7 +10,7 @@ import { AppAutoUpdateStatus, AutoUpdateStatus, CheckLatestVersionResult, Conten
 import { DownloadJobWithProgress, WikipediaState } from '../../types/downloads'
 import type { Country, CountryCode, CountryGroup, MapExtractPreflight } from '../../types/maps'
 import { EmbedJobWithProgress, FileWarningsResult, StoredFileInfo } from '../../types/rag'
-import type { CategoryWithStatus, CollectionWithStatus, ContentUpdateCheckResult, CreatorPackWithStatus, ResourceUpdateInfo } from '../../types/collections'
+import type { BundleWithStatus, CategoryWithStatus, CollectionWithStatus, ContentUpdateCheckResult, CreatorPackWithStatus, ResourceUpdateInfo } from '../../types/collections'
 import { catchInternal } from './util'
 import { NomadChatResponse, NomadInstalledModel, NomadOllamaModel, OllamaChatRequest } from '../../types/ollama'
 import BenchmarkResult from '#models/benchmark_result'
@@ -768,6 +768,14 @@ class API {
       const response = await this.client.get<CollectionWithStatus[]>(
         '/maps/curated-collections'
       )
+      return response.data
+    })()
+  }
+
+  /** Kladez: ready-made sets (Аптечка / Библиотека / Всё) with their status. */
+  async listBundles() {
+    return catchInternal(async () => {
+      const response = await this.client.get<BundleWithStatus[]>('/easy-setup/bundles')
       return response.data
     })()
   }
