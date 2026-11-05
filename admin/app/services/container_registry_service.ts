@@ -1,5 +1,10 @@
 import logger from '@adonisjs/core/services/logger'
 import { isNewerVersion, parseMajorVersion } from '../utils/version.js'
+import {
+  parseMirrorList,
+  registryCandidates,
+  tryRegistriesInOrder,
+} from '../utils/kladez_registry.js'
 
 export interface ParsedImageReference {
   registry: string
@@ -121,14 +126,31 @@ export class ContainerRegistryService {
    * List all tags for a given image from the registry.
    */
   async listTags(parsed: ParsedImageReference): Promise<string[]> {
-    const token = await this.getToken(parsed.registry, parsed.fullName)
+    // Кладезъ: Docker Hub refuses some Russian addresses, so fall back to the mirrors in
+    // KLADEZ_REGISTRY_MIRRORS (anonymous, no token) when the primary registry fails.
+    const candidates = registryCandidates(
+      parsed.registry,
+      parseMirrorList(process.env.KLADEZ_REGISTRY_MIRRORS)
+    )
+    return tryRegistriesInOrder(candidates, (registry, isPrimary) =>
+      this.listTagsFrom(registry, parsed, isPrimary)
+    )
+  }
+
+  private async listTagsFrom(
+    registry: string,
+    parsed: ParsedImageReference,
+    useToken: boolean
+  ): Promise<string[]> {
+    const headers: Record<string, string> = {}
+    if (useToken) {
+      headers.Authorization = `Bearer ${await this.getToken(registry, parsed.fullName)}`
+    }
     const allTags: string[] = []
-    let url = `https://${parsed.registry}/v2/${parsed.fullName}/tags/list?n=1000`
+    let url = `https://${registry}/v2/${parsed.fullName}/tags/list?n=1000`
 
     while (url) {
-      const response = await this.fetchWithRetry(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const response = await this.fetchWithRetry(url, { headers })
 
       if (!response.ok) {
         throw new Error(`Failed to list tags for ${parsed.fullName}: ${response.status}`)
@@ -149,7 +171,7 @@ export class ContainerRegistryService {
       const linkHeader = response.headers.get('link')
       if (linkHeader) {
         const match = linkHeader.match(/<([^>]+)>;\s*rel="next"/)
-        url = match ? new URL(match[1], `https://${parsed.registry}`).toString() : ''
+        url = match ? new URL(match[1], `https://${registry}`).toString() : ''
       } else {
         url = ''
       }

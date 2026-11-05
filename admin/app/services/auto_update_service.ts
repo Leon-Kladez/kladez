@@ -10,6 +10,7 @@ import { SystemService } from '#services/system_service'
 import { SystemUpdateService } from '#services/system_update_service'
 import { ContainerRegistryService } from '#services/container_registry_service'
 import { isNewerVersion, parseMajorVersion } from '../utils/version.js'
+import { resolveNomadImageRepo } from '../utils/kladez_registry.js'
 import { isWithinWindow as isWithinWindowUtil } from '../utils/update_window.js'
 import {
   checkImageDiskSpace,
@@ -17,8 +18,11 @@ import {
   type PreflightResult,
 } from '../utils/image_disk_preflight.js'
 
-/** Docker image repository for the NOMAD admin/core image (tag applied per-release). */
-const NOMAD_IMAGE_REPO = 'ghcr.io/crosstalk-solutions/project-nomad'
+/**
+ * Docker image repository for the admin/core image (tag applied per-release).
+ * Кладезъ: KLADEZ_IMAGE_REPO points this at our own registry; unset → upstream NOMAD.
+ */
+const NOMAD_IMAGE_REPO = resolveNomadImageRepo(process.env.KLADEZ_IMAGE_REPO)
 const RELEASES_URL = 'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases'
 
 /** Defaults for user-configurable settings (server-local time window + cool-off). */

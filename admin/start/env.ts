@@ -27,6 +27,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   NOMAD_STORAGE_PATH: Env.schema.string.optional(),
+  // Кладезъ: own admin image repository and Docker Hub mirrors (comma-separated URLs)
+  KLADEZ_IMAGE_REPO: Env.schema.string.optional(),
+  KLADEZ_REGISTRY_MIRRORS: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------
