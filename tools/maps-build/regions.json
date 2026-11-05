@@ -230,6 +230,10 @@
    "source": {
     "countries": [
      "UA"
+    ],
+    "admin1": [
+     "UA-43",
+     "UA-40"
     ]
    },
    "variants": [
