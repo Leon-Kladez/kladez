@@ -51,6 +51,10 @@ CloseApplications=yes
 [Languages]
 Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
 
+[Dirs]
+; Steps that run as the original (non-elevated) user write to the same log folder.
+Name: "{commonappdata}\Kladez\logs"; Permissions: users-modify
+
 [Files]
 Source: "{#Dist}\Kladez.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#RepoRoot}\installer\windows\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion
@@ -60,6 +64,11 @@ Source: "{#RepoRoot}\installer\windows\docs\bios\index.html"; DestDir: "{tmp}\bi
 Source: "{#RepoRoot}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "{#RepoRoot}\NOTICE"; DestDir: "{app}"; DestName: "NOTICE.txt"; Flags: ignoreversion
 Source: "{#Dist}\kladez-images.tar.zst"; DestDir: "{app}\payload"; Flags: ignoreversion deleteafterinstall
+; New scripts and image list: on upgrade they replace the copies baked into the first rootfs.
+Source: "{#RepoRoot}\installer\linux\kladez-start"; DestDir: "{app}\payload\linux"; Flags: ignoreversion deleteafterinstall
+Source: "{#RepoRoot}\installer\linux\kladez-lib.sh"; DestDir: "{app}\payload\linux"; Flags: ignoreversion deleteafterinstall
+Source: "{#RepoRoot}\installer\linux\images.lock"; DestDir: "{app}\payload\linux"; Flags: ignoreversion deleteafterinstall
+Source: "{#RepoRoot}\installer\linux\compose.template.yaml"; DestDir: "{app}\payload\linux"; Flags: ignoreversion deleteafterinstall
 #ifndef UpdateOnly
 Source: "{#Dist}\kladez-rootfs.tar.gz"; DestDir: "{app}\payload"; Flags: ignoreversion deleteafterinstall
 Source: "{#Vendor}\{#WslMsi}"; DestDir: "{app}\payload"; Flags: ignoreversion deleteafterinstall
@@ -79,11 +88,11 @@ Filename: "{app}\Kladez.exe"; Description: "Открыть «Кладезъ» с
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{commonappdata}\Kladez"
+Type: dirifempty; Name: "{app}\payload\linux"
 Type: dirifempty; Name: "{app}\payload"
 
 [Code]
 const
-  UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#AppIdRaw}_is1';
   RunOnceKey = 'Software\Microsoft\Windows\CurrentVersion\RunOnce';
 
 var
@@ -92,7 +101,7 @@ var
   DriveFits: TArrayOfString;
   DriveDefault: Integer;
   WindowsPathKind, AdminPort, KiwixPort, ResumeDrive: String;
-  IsUpgrade, IsResume, NeedsReboot, Finished, RemoveLibraryChoice: Boolean;
+  IsUpgrade, IsResume, NeedsReboot, Finished, InstallFailed, RemoveLibraryChoice: Boolean;
 
 function HasParam(const Name: String): Boolean;
 var
@@ -196,7 +205,9 @@ begin
   Result := False;
   IsResume := HasParam('/RESUME');
   ResumeDrive := ExpandConstant('{param:DRIVE|}');
-  IsUpgrade := RegKeyExists(HKLM, UninstallKey);
+  { Not the uninstall key: Inno writes it before the steps run, so an interrupted first install
+    would look like an upgrade. Installed=1 is written only after the first run succeeded. }
+  IsUpgrade := IniValue('Installed') = '1';
 #ifdef UpdateOnly
   if not IsUpgrade then
   begin
@@ -257,7 +268,8 @@ begin
     begin
       AdminPort := Field(Lines[I], 1);
       KiwixPort := Field(Lines[I], 2);
-      if (AdminPort = '') and not IsUpgrade then
+      { After an interrupted install our own half-started Кладезъ may hold the ports. }
+      if (AdminPort = '') and not FileExists(IniPath) then
       begin
         MsgBox('Нужные «Кладезъ» порты заняты другой программой: ' + Field(Lines[I], 3) + '.' + #13#10 +
           'Возможно, работает Project NOMAD или похожая программа. Закройте её и запустите установку ещё раз.', mbError, MB_OK);
@@ -275,7 +287,7 @@ begin
   end;
   SetArrayLength(DriveLetters, N);
   SetArrayLength(DriveFits, N);
-  if IsUpgrade then
+  if FileExists(IniPath) and (IniValue('AdminPort') <> '') then
   begin
     AdminPort := IniValue('AdminPort');
     KiwixPort := IniValue('KiwixPort');
@@ -375,6 +387,7 @@ end;
 
 procedure Fail(const What: String);
 begin
+  InstallFailed := True;
   MsgBox(What + #13#10#13#10 + 'Перезагрузите компьютер и запустите установку ещё раз.' + #13#10 +
     'Если не поможет, отправьте помощнику файл журнала:' + #13#10 + LogPath, mbError, MB_OK);
 end;
@@ -391,16 +404,31 @@ begin
   Result := RunScript(ExpandConstant('{app}\scripts\setup-step.ps1'), '-Step ' + Name + ' ' + Params, AsOriginalUser);
 end;
 
+procedure MarkInstalled;
+var
+  Lines: TArrayOfString;
+  N: Integer;
+begin
+  if not LoadStringsFromFile(IniPath, Lines) then
+    Exit;
+  N := GetArrayLength(Lines);
+  SetArrayLength(Lines, N + 1);
+  Lines[N] := 'Installed=1';
+  SaveStringsToUTF8File(IniPath, Lines, False);
+end;
+
 procedure WriteSettings(const Drive: String);
 var
   Lines: TArrayOfString;
 begin
   ForceDirectories(ExpandConstant('{commonappdata}\Kladez\logs'));
-  SetArrayLength(Lines, 4);
-  Lines[0] := 'AdminPort=' + AdminPort;
-  Lines[1] := 'KiwixPort=' + KiwixPort;
-  Lines[2] := 'LibraryDir=' + Drive + ':\Kladez\library';
-  Lines[3] := 'SystemDir=' + Drive + ':\Kladez\system';
+  { First line is a header: if a BOM survives reading, it lands here and not on a key. }
+  SetArrayLength(Lines, 5);
+  Lines[0] := '[Kladez]';
+  Lines[1] := 'AdminPort=' + AdminPort;
+  Lines[2] := 'KiwixPort=' + KiwixPort;
+  Lines[3] := 'LibraryDir=' + Drive + ':\Kladez\library';
+  Lines[4] := 'SystemDir=' + Drive + ':\Kladez\system';
   SaveStringsToUTF8File(IniPath, Lines, False);
 
   ForceDirectories(Drive + ':\Kladez\library');
@@ -422,7 +450,7 @@ begin
   if IsUpgrade then
   begin
     SetStatus('Обновляю программы «Кладезъ»…');
-    if Step('upgrade', '-BundlePath "' + Payload + '\kladez-images.tar.zst"', True) <> 0 then
+    if Step('upgrade', '-BundlePath "' + Payload + '\kladez-images.tar.zst" -LinuxDir "' + Payload + '\linux"', True) <> 0 then
       Fail('Не удалось обновить «Кладезъ».')
     else
       Finished := True;
@@ -470,6 +498,7 @@ begin
     Fail('Не удалось запустить «Кладезъ» в первый раз.');
     Exit;
   end;
+  MarkInstalled;
   Finished := True;
 #endif
 end;
@@ -478,6 +507,17 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
     RunInstallSteps;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if (CurPageID = wpFinished) and InstallFailed then
+  begin
+    WizardForm.FinishedHeadingLabel.Caption := 'Установка не завершена';
+    WizardForm.FinishedLabel.Caption := 'Установка «Кладезъ» не закончилась. Перезагрузите компьютер и запустите ' +
+      'установщик ещё раз — он продолжит с того места, где остановился.' + #13#10#13#10 +
+      'Журнал для помощника: ' + LogPath;
+  end;
 end;
 
 function NeedRestart: Boolean;

@@ -45,7 +45,7 @@ Describe 'Test-KladezVirtualization' {
 Describe 'Get-KladezDriveChoices' {
     BeforeAll {
         function D($l, $label, $free, $type = 3, $sys = $false) {
-            [pscustomobject]@{ Letter = $l; Label = $label; FreeBytes = [long]($free * 1GB); DriveType = $type; IsSystem = $sys }
+            [pscustomobject]@{ Letter = $l; Label = $label; FreeBytes = [long]($free * 1GB); DriveType = $type; IsSystem = $sys; FileSystem = 'NTFS'; BusType = 'SATA' }
         }
     }
     It 'fits by free space: 14 none, 15 aptechka, 35 +biblioteka, 80 +vse' {
@@ -68,6 +68,13 @@ Describe 'Get-KladezDriveChoices' {
         $r = Get-KladezDriveChoices -Drives @((D 'C' 'S' 100 3 $true))
         ($r | Where-Object IsDefault).Letter | Should -Be 'C'
     }
+    It 'drops USB disks and non-NTFS volumes (vhdx needs NTFS; unplugging must not kill the program)' {
+        $usb = D 'G' 'Внешний' 900; $usb.BusType = 'USB'
+        $fat = D 'H' 'Старый' 500; $fat.FileSystem = 'FAT32'
+        $ex = D 'I' 'exFAT' 500; $ex.FileSystem = 'exFAT'
+        $r = Get-KladezDriveChoices -Drives @((D 'C' 'S' 100 3 $true), $usb, $fat, $ex)
+        $r.Letter | Should -Be @('C')
+    }
     It 'reports FreeGB rounded down' {
         (Get-KladezDriveChoices -Drives @((D 'D' 'a' 412.9))).FreeGB | Should -Be 412
     }
@@ -78,14 +85,15 @@ Describe 'Get-KladezPortPlan' {
         $p = Get-KladezPortPlan -ListeningPorts @(135, 445)
         $p.AdminPort | Should -Be 8080; $p.KiwixPort | Should -Be 8090; $p.Busy | Should -BeNullOrEmpty
     }
-    It '8080 busy → 8180/8190 and Busy lists it' {
-        $p = Get-KladezPortPlan -ListeningPorts @(8080)
-        $p.AdminPort | Should -Be 8180; $p.KiwixPort | Should -Be 8190; $p.Busy | Should -Be @(8080)
+    It '8080 or 8090 busy → blocked (Kiwix always starts on 8090, so spare ports cannot work)' {
+        foreach ($busy in @(@(8080), @(8090), @(8080, 8090))) {
+            $p = Get-KladezPortPlan -ListeningPorts $busy
+            $p.AdminPort | Should -BeNullOrEmpty
+            $p.Busy | Should -Be $busy
+        }
     }
-    It 'main and spare ports busy → no admin port' {
-        $p = Get-KladezPortPlan -ListeningPorts @(8080, 8180)
-        $p.AdminPort | Should -BeNullOrEmpty
-        $p.Busy | Should -Contain 8080; $p.Busy | Should -Contain 8180
+    It 'dozzle port 9999 is not needed (dozzle is not published)' {
+        (Get-KladezPortPlan -ListeningPorts @(9999)).AdminPort | Should -Be 8080
     }
 }
 
@@ -108,7 +116,7 @@ Describe 'checks.ps1 output file' {
             Build = 19045; TotalMemoryBytes = [long](16GB)
             HypervisorPresent = $true; FirmwareEnabled = $false; Slat = $true
             ListeningPorts = @(135)
-            Drives = @([pscustomobject]@{ Letter = 'D'; Label = 'Данные'; FreeBytes = [long](412GB); DriveType = 3; IsSystem = $false })
+            Drives = @([pscustomobject]@{ Letter = 'D'; Label = 'Данные'; FreeBytes = [long](412GB); DriveType = 3; IsSystem = $false; FileSystem = 'NTFS'; BusType = 'NVMe' })
         }
         & (Join-Path $PSScriptRoot '..\scripts\checks.ps1') -OutFile $out -Facts $facts
         $bytes = [IO.File]::ReadAllBytes($out)
@@ -122,5 +130,19 @@ Describe 'checks.ps1 output file' {
 ?$'
         $text | Should -Match '(?m)^drive\|D\|Данные\|412\|aptechka,biblioteka,vse\|default
 ?$'
+    }
+}
+
+Describe 'Write-KladezLog' {
+    It 'appends a UTF-8 line with time and tag' {
+        $f = Join-Path $TestDrive 'logs\setup.log'
+        Write-KladezLog -Path $f -Tag 'distro' -Text 'Привет'
+        [IO.File]::ReadAllText($f, [Text.Encoding]::UTF8) | Should -Match '^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] \[distro\] Привет'
+    }
+    It 'never throws when the log cannot be written (a log must not fail an install step)' {
+        $dir = Join-Path $TestDrive 'ro'; New-Item -ItemType Directory $dir | Out-Null
+        $f = Join-Path $dir 'setup.log'; Set-Content $f 'x'
+        $h = [IO.File]::Open($f, 'Open', 'ReadWrite', 'None')   # locked like an admin-owned file
+        try { { Write-KladezLog -Path $f -Tag 't' -Text 'y' } | Should -Not -Throw } finally { $h.Close() }
     }
 }

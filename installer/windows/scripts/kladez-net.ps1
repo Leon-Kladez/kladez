@@ -5,14 +5,12 @@ param(
     [string]$LogDir = (Join-Path $env:ProgramData 'Kladez\logs')
 )
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'Kladez.Checks.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Kladez.Wsl.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Kladez.Network.psm1') -Force
 
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $log = Join-Path $LogDir 'net.log'
-function Write-NetLog([string]$text) {
-    [IO.File]::AppendAllText($log, ("[{0:yyyy-MM-dd HH:mm:ss}] {1}`r`n" -f (Get-Date), $text), (New-Object System.Text.UTF8Encoding($false)))
-}
+function Write-NetLog([string]$text) { Write-KladezLog -Path $log -Tag 'net' -Text $text }
 
 try {
     $ini = @{}

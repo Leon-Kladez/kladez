@@ -55,6 +55,12 @@ namespace Kladez.Launcher.Tests
             Check(LauncherCore.ParseMode(new[] { "--collect-logs" }) == LaunchMode.CollectLogs, "--collect-logs");
             Check(LauncherCore.ParseMode(new[] { "--whatever" }) == LaunchMode.Interactive, "unknown → interactive");
 
+            // Shortcut click while autostart is still starting the program (review I6).
+            Check(LauncherCore.PlanInteractive(true, true) == InteractivePlan.OpenNow, "healthy → open browser now");
+            Check(LauncherCore.PlanInteractive(false, true) == InteractivePlan.OpenNow, "healthy, autostart running → open now");
+            Check(LauncherCore.PlanInteractive(true, false) == InteractivePlan.StartAndWait, "not running → start and wait");
+            Check(LauncherCore.PlanInteractive(false, false) == InteractivePlan.WaitOnly, "autostart still starting → wait, do not open a dead page");
+
             Console.WriteLine(failures == 0 ? "ALL PASSED" : failures + " FAILED");
             return failures == 0 ? 0 : 1;
         }

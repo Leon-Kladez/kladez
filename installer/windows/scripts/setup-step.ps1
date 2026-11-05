@@ -12,6 +12,7 @@ param(
     [string]$RootfsPath,
     [string]$BundlePath,
     [string]$LibraryDir,
+    [string]$LinuxDir,          # payload\linux: new kladez-start, images.lock, compose template (upgrade)
     [int]$AdminPort = 8080,
     [int]$KiwixPort = 8090,
     [string]$LogDir = (Join-Path $env:ProgramData 'Kladez\logs')
@@ -20,12 +21,8 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Kladez.Checks.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Kladez.Wsl.psm1') -Force
 
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $log = Join-Path $LogDir 'setup.log'
-function Write-StepLog([string]$text) {
-    $line = "[{0:yyyy-MM-dd HH:mm:ss}] [{1}] {2}" -f (Get-Date), $Step, $text
-    [IO.File]::AppendAllText($log, $line + "`r`n", (New-Object System.Text.UTF8Encoding($false)))
-}
+function Write-StepLog([string]$text) { Write-KladezLog -Path $log -Tag $Step -Text $text }
 
 try {
     $result = switch ($Step) {
@@ -53,7 +50,11 @@ try {
             [void](Invoke-KladezFirstRun -BundlePath $BundlePath -LibraryDir $LibraryDir -AdminPort $AdminPort -KiwixPort $KiwixPort)
             'ok'
         }
-        'upgrade' { [void](Invoke-KladezUpgrade -BundlePath $BundlePath); 'ok' }
+        'upgrade' {
+            Update-KladezDistroFiles -LinuxDir $LinuxDir
+            [void](Invoke-KladezUpgrade -BundlePath $BundlePath)
+            'ok'
+        }
     }
     Write-StepLog "result: $result"
     if ($result -eq 'reboot') { exit 3010 }

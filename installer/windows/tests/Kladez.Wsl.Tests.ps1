@@ -142,3 +142,20 @@ Describe 'never touches the user''s other WSL settings' {
         $src | Should -Not -Match '\.wslconfig'
     }
 }
+
+Describe 'Update-KladezDistroFiles (upgrade copies new scripts and image list into the distro)' {
+    It 'installs kladez-start, kladez-lib.sh, images.lock and the compose template' {
+        $script:calls = New-Object System.Collections.Generic.List[string]
+        Mock -ModuleName Kladez.Wsl Invoke-KladezNative { $script:calls.Add(($Arguments -join ' ')); [pscustomobject]@{ ExitCode = 0; Output = '' } }
+        Update-KladezDistroFiles -LinuxDir 'C:\Program Files\Kladez\payload\linux'
+        $src = '/mnt/c/Program Files/Kladez/payload/linux'
+        $script:calls | Should -Contain "-d Kladez -u root -- install -m 0755 $src/kladez-start /usr/local/bin/kladez-start"
+        $script:calls | Should -Contain "-d Kladez -u root -- install -D -m 0644 $src/kladez-lib.sh /usr/local/lib/kladez/kladez-lib.sh"
+        $script:calls | Should -Contain "-d Kladez -u root -- install -m 0644 $src/images.lock /opt/project-nomad/images.lock"
+        $script:calls | Should -Contain "-d Kladez -u root -- install -m 0644 $src/compose.template.yaml /opt/project-nomad/compose.template.yaml"
+    }
+    It 'a failed copy stops the upgrade with a Russian message' {
+        Mock -ModuleName Kladez.Wsl Invoke-KladezNative { [pscustomobject]@{ ExitCode = 1; Output = 'No such file' } }
+        { Update-KladezDistroFiles -LinuxDir 'C:\temp' } | Should -Throw '*Не удалось обновить*'
+    }
+}

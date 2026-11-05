@@ -16,13 +16,17 @@ setup() {
   [ "$status" -eq 1 ]
 }
 
-@test "daemon.json lists the three mirrors in order and the local log driver" {
+@test "daemon.json lists the three mirrors, local logs and networks that do not clash with another Docker" {
   f="$LINUX_DIR/rootfs/daemon.json"
   node -e '
     const j = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
     const want = ["https://mirror.gcr.io","https://dh-mirror.gitverse.ru","https://dockerhub.timeweb.cloud"];
     if (JSON.stringify(j["registry-mirrors"]) !== JSON.stringify(want)) process.exit(1);
     if (j["log-driver"] !== "local") process.exit(2);
+    // Another distro (e.g. Project NOMAD) runs its own dockerd in the same WSL network namespace.
+    if (j.bip !== "10.213.0.1/24") process.exit(3);
+    const pools = j["default-address-pools"] || [];
+    if (pools.length !== 1 || pools[0].base !== "10.214.0.0/16" || pools[0].size !== 24) process.exit(4);
   ' "$f"
 }
 
@@ -96,4 +100,9 @@ STUB
   grep -q "docker pull mirror.gcr.io/library/redis@$d" "$LOG"
   grep -q "docker tag mirror.gcr.io/library/redis@$d redis:7-alpine" "$LOG"
   grep -q 'docker save redis:7-alpine' "$LOG"
+}
+
+@test "Dockerfile switches to iptables-legacy (old WSL kernels cannot run dockerd with nft)" {
+  grep -q 'update-alternatives --set iptables /usr/sbin/iptables-legacy' "$LINUX_DIR/rootfs/Dockerfile"
+  grep -q 'update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy' "$LINUX_DIR/rootfs/Dockerfile"
 }

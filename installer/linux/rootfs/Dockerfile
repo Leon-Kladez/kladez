@@ -14,6 +14,9 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends \
       docker-ce docker-ce-cli containerd.io docker-compose-plugin \
       zstd iproute2 util-linux procps iptables; \
+    # Old WSL kernels (wsl_update_x64.msi, 5.10) break dockerd with iptables-nft.
+    update-alternatives --set iptables /usr/sbin/iptables-legacy; \
+    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy; \
     apt-get purge -y gnupg; apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 

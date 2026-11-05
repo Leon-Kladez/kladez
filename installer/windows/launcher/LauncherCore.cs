@@ -7,6 +7,8 @@ namespace Kladez.Launcher
 {
     public enum LaunchMode { Interactive, Background, Stop, CollectLogs }
 
+    public enum InteractivePlan { OpenNow, StartAndWait, WaitOnly }
+
     public sealed class KladezConfig
     {
         public const int DefaultAdminPort = 8080;
@@ -96,6 +98,16 @@ namespace Kladez.Launcher
         {
             string logs = Path.Combine(KladezDataDir(programData), "logs");
             return new[] { Path.Combine(logs, "setup.log"), Path.Combine(logs, "net.log"), Path.Combine(logs, "launcher.log") };
+        }
+
+        /// <summary>
+        /// Shortcut click. ownsMutex = no other Kladez.exe (e.g. autostart) is running.
+        /// If autostart is still starting the program, wait with it instead of opening a dead page.
+        /// </summary>
+        public static InteractivePlan PlanInteractive(bool ownsMutex, bool healthy)
+        {
+            if (healthy) return InteractivePlan.OpenNow;
+            return ownsMutex ? InteractivePlan.StartAndWait : InteractivePlan.WaitOnly;
         }
 
         public static LaunchMode ParseMode(string[] args)

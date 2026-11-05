@@ -75,3 +75,8 @@ services() { awk '/^services:/{s=1;next} /^[a-z]/{s=0} s && /^  [a-z-]+:$/' "$OU
   command -v docker >/dev/null || skip "docker not available here (runs in CI)"
   docker compose -f "$OUT" config -q
 }
+
+@test "dozzle is not published (9999 would clash with Project NOMAD in the shared WSL network)" {
+  run awk '/^  dozzle:/{d=1;next} /^  [a-z-]+:$/{d=0} d && /ports:/' "$OUT"
+  [ -z "$output" ]
+}

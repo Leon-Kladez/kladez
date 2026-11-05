@@ -39,24 +39,25 @@ namespace Kladez.Launcher
                         return StartAndWait(config) ? 0 : 1;
                     default:
                         Application.EnableVisualStyles();
-                        if (!created || IsRunning(config))
+                        var plan = LauncherCore.PlanInteractive(created, IsRunning(config));
+                        if (plan == InteractivePlan.OpenNow)
                         {
                             OpenBrowser(config);
                             return 0;
                         }
-                        return Interactive(config);
+                        return Interactive(config, plan == InteractivePlan.StartAndWait);
                 }
             }
         }
 
-        private static int Interactive(KladezConfig config)
+        private static int Interactive(KladezConfig config, bool startStack)
         {
             bool ok = false;
             using (var form = new ProgressForm())
             {
                 var worker = new Thread(() =>
                 {
-                    ok = StartAndWait(config);
+                    ok = startStack ? StartAndWait(config) : WaitHealthy(config);
                     form.BeginInvoke(new Action(form.Close));
                 });
                 worker.IsBackground = true;
@@ -83,6 +84,11 @@ namespace Kladez.Launcher
             // keepalive never returns while the program runs: it keeps the distro alive.
             RunWsl(LauncherCore.WslArgs("keepalive"), true);
             RunHidden("schtasks.exe", new[] { "/run", "/tn", LauncherCore.NetworkTaskName }, false);
+            return WaitHealthy(config);
+        }
+
+        private static bool WaitHealthy(KladezConfig config)
+        {
             var deadline = DateTime.UtcNow + StartTimeout;
             while (DateTime.UtcNow < deadline)
             {

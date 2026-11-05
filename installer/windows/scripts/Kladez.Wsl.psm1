@@ -156,6 +156,23 @@ function Install-KladezWslPackage {
     }
 }
 
+# Upgrade: the new scripts and image list must replace the ones baked into the first rootfs,
+# otherwise --upgrade re-renders compose from the old images.lock and nothing changes.
+function Update-KladezDistroFiles {
+    param([Parameter(Mandatory)][string]$LinuxDir)
+    $src = ConvertTo-KladezWslPath $LinuxDir
+    $copies = @(
+        @('-m', '0755', "$src/kladez-start", '/usr/local/bin/kladez-start'),
+        @('-D', '-m', '0644', "$src/kladez-lib.sh", '/usr/local/lib/kladez/kladez-lib.sh'),
+        @('-m', '0644', "$src/images.lock", '/opt/project-nomad/images.lock'),
+        @('-m', '0644', "$src/compose.template.yaml", '/opt/project-nomad/compose.template.yaml')
+    )
+    foreach ($c in $copies) {
+        $r = Invoke-KladezWsl -Arguments (@('-d', $script:DistroName, '-u', 'root', '--', 'install') + $c)
+        if ($r.ExitCode -ne 0) { throw "Не удалось обновить файлы «Кладезъ» ($($c[-1])): $($r.Output.Trim())" }
+    }
+}
+
 function Get-KladezWslState {
     $features = @('Microsoft-Windows-Subsystem-Linux', 'VirtualMachinePlatform') | ForEach-Object {
         (Get-WindowsOptionalFeature -Online -FeatureName $_).State -eq 'Enabled'
@@ -170,4 +187,4 @@ function Get-KladezWslState {
 Export-ModuleMember -Function ConvertFrom-WslOutput, Get-KladezWslVersion, Get-KladezInstallAction,
     Test-KladezDistroExists, ConvertTo-KladezArgumentString, Invoke-KladezNative, Invoke-KladezWsl,
     Install-KladezDistro, Invoke-KladezFirstRun, Invoke-KladezUpgrade, Enable-KladezFeatures,
-    Install-KladezWslPackage, Get-KladezWslState
+    Install-KladezWslPackage, Get-KladezWslState, Update-KladezDistroFiles

@@ -44,7 +44,12 @@ function Test-KladezVirtualization {
 
 function Get-KladezDriveChoices {
     param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Drives)
-    $fixed = @($Drives | Where-Object { $_.DriveType -eq 3 })
+    # Fixed NTFS volumes only, and not USB: ext4.vhdx needs NTFS, and an external disk can be unplugged.
+    $fixed = @($Drives | Where-Object {
+        $_.DriveType -eq 3 -and
+        (-not $_.PSObject.Properties['FileSystem'] -or $_.FileSystem -eq 'NTFS') -and
+        (-not $_.PSObject.Properties['BusType'] -or $_.BusType -ne 'USB')
+    })
     $result = foreach ($d in $fixed) {
         $freeGB = [math]::Floor([double]$d.FreeBytes / 1GB)
         $fits = @($script:SetGB.Keys | Where-Object { $freeGB -ge ($script:SystemGB + $script:SetGB[$_]) })
@@ -61,16 +66,11 @@ function Get-KladezDriveChoices {
 
 function Get-KladezPortPlan {
     param([AllowEmptyCollection()][int[]]$ListeningPorts = @())
-    $plans = @(@(8080, 8090), @(8180, 8190))
-    $busy = New-Object System.Collections.Generic.List[int]
-    foreach ($p in $plans) {
-        $taken = @($p | Where-Object { $ListeningPorts -contains $_ })
-        foreach ($t in $taken) { if (-not $busy.Contains($t)) { $busy.Add($t) } }
-        if ($taken.Count -eq 0) {
-            return [pscustomobject]@{ AdminPort = $p[0]; KiwixPort = $p[1]; Busy = $busy.ToArray() }
-        }
-    }
-    [pscustomobject]@{ AdminPort = $null; KiwixPort = $null; Busy = $busy.ToArray() }
+    # No spare ports: the admin always starts Kiwix on 8090, and all WSL distros share one
+    # network, so a busy 8080/8090 (e.g. Project NOMAD) must be freed first.
+    $busy = @(@(8080, 8090) | Where-Object { $ListeningPorts -contains $_ })
+    if ($busy.Count -gt 0) { return [pscustomobject]@{ AdminPort = $null; KiwixPort = $null; Busy = [int[]]$busy } }
+    [pscustomobject]@{ AdminPort = 8080; KiwixPort = 8090; Busy = [int[]]@() }
 }
 
 function ConvertTo-KladezWslPath {
@@ -88,9 +88,12 @@ function Get-KladezSystemFacts {
     $cpu = @(Get-CimInstance Win32_Processor)[0]
     $sysLetter = $env:SystemDrive.TrimEnd(':')
     $drives = foreach ($d in Get-CimInstance Win32_LogicalDisk) {
-        [pscustomobject]@{ Letter = $d.DeviceID.TrimEnd(':'); Label = [string]$d.VolumeName
+        $letter = $d.DeviceID.TrimEnd(':')
+        $bus = ''
+        try { $bus = [string](Get-Partition -DriveLetter $letter -ErrorAction Stop | Get-Disk -ErrorAction Stop).BusType } catch { }
+        [pscustomobject]@{ Letter = $letter; Label = [string]$d.VolumeName
             FreeBytes = [long]$d.FreeSpace; DriveType = [int]$d.DriveType
-            IsSystem = ($d.DeviceID.TrimEnd(':') -eq $sysLetter) }
+            IsSystem = ($letter -eq $sysLetter); FileSystem = [string]$d.FileSystem; BusType = $bus }
     }
     $ports = @()
     try { $ports = @(Get-NetTCPConnection -State Listen -ErrorAction Stop | Select-Object -ExpandProperty LocalPort -Unique) } catch { }
@@ -105,5 +108,17 @@ function Get-KladezSystemFacts {
     }
 }
 
-Export-ModuleMember -Function Test-KladezWindowsBuild, Test-KladezMemory, Test-KladezVirtualization,
+# Logging must never change the outcome of an install step: ProgramData\Kladez\logs may be
+# admin-owned while a step runs as the original (non-elevated) user.
+function Write-KladezLog {
+    param([Parameter(Mandatory)][string]$Path, [string]$Tag = '', [string]$Text = '')
+    try {
+        $dir = Split-Path -Parent $Path
+        if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+        $line = '[{0:yyyy-MM-dd HH:mm:ss}] [{1}] {2}' -f (Get-Date), $Tag, $Text
+        [IO.File]::AppendAllText($Path, $line + "`r`n", (New-Object System.Text.UTF8Encoding($false)))
+    } catch { }
+}
+
+Export-ModuleMember -Function Write-KladezLog, Test-KladezWindowsBuild, Test-KladezMemory, Test-KladezVirtualization,
     Get-KladezDriveChoices, Get-KladezPortPlan, ConvertTo-KladezWslPath, Get-KladezSystemFacts

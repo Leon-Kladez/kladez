@@ -59,8 +59,7 @@ services:
     pull_policy: never
     container_name: nomad_dozzle
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:9999:8080"
+    # Not published: 9999 would clash with Project NOMAD (all WSL distros share one network).
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:

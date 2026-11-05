@@ -89,4 +89,22 @@ Describe 'kladez.iss' {
         $iss | Should -Match 'RunOnce'
         $iss | Should -Match '/RESUME'
     }
+    It 'lets non-elevated steps write the shared log folder (review C1)' {
+        $iss | Should -Match '(?m)^Name: "\{commonappdata\}\\Kladez\\logs"; Permissions: users-modify'
+    }
+    It 'decides «upgrade» by a completion marker, not by the uninstall key Inno writes before the steps run (review C2)' {
+        $iss | Should -Not -Match 'IsUpgrade := RegKeyExists'
+        $iss | Should -Match "IsUpgrade := IniValue\('Installed'\) = '1'"
+        $iss | Should -Match "'Installed=1'"
+    }
+    It 'tells the truth on the last page when a step failed (review C2)' {
+        $iss | Should -Match 'FinishedLabel\.Caption'
+        $iss | Should -Match 'InstallFailed'
+    }
+    It 'ships the Linux scripts and image list and passes them to the upgrade step (review I1)' {
+        foreach ($f in 'kladez-start', 'kladez-lib.sh', 'images.lock', 'compose.template.yaml') {
+            $iss | Should -Match ('Source: "\{#RepoRoot\}\\installer\\linux\\' + [regex]::Escape($f) + '"; DestDir: "\{app\}\\payload\\linux"')
+        }
+        $iss | Should -Match '-LinuxDir "'
+    }
 }
