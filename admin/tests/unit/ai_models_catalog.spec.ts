@@ -39,3 +39,11 @@ test('cloud-only tags are dropped and an empty or broken answer gives null', () 
   assert.equal(modelsFromCatalog({ nope: 1 } as any), null)
   assert.equal(modelsFromCatalog(null), null)
 })
+
+test('models marked for Russian have a Russian description; the original is kept', () => {
+  for (const m of modelsFromCatalog(file)!) {
+    if (!m.ru) continue
+    assert.match(m.description, /[а-яё]/i, `${m.name}: description is not Russian`)
+    assert.ok((m as any).description_en, `${m.name}: original English description lost`)
+  }
+})
