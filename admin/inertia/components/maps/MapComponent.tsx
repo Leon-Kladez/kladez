@@ -35,6 +35,8 @@ type MapComponentProps = {
   mapCommand?: MapCommand | null
   isHoveringUI?: boolean
   showCoordinatesEnabled?: boolean
+  /** Границы скачанных регионов [запад, юг, восток, север] — карта открывается на них. */
+  startBounds?: [number, number, number, number] | null
 }
 
 type MapLocationParams = {
@@ -43,8 +45,10 @@ type MapLocationParams = {
   zoom: number
 }
 
-const SAVED_MAP_VIEW_KEY = 'nomad:map-view'
-const DEFAULT_MAP_VIEW = { longitude: -101, latitude: 40, zoom: 3.5 }
+// Кладезъ: свой ключ — вид, запомненный в NOMAD (США), не подхватываем.
+const SAVED_MAP_VIEW_KEY = 'kladez:map-view'
+// Без скачанных регионов карта открывается на Европе и России.
+const DEFAULT_MAP_VIEW = { longitude: 55, latitude: 57, zoom: 2.6 }
 
 type SavedMapView = { longitude: number; latitude: number; zoom: number }
 
@@ -135,6 +139,7 @@ export default function MapComponent({
                                        mapCommand,
                                        isHoveringUI = false,
                                        showCoordinatesEnabled = true,
+                                       startBounds = null,
                                      }: MapComponentProps) {
   const mapRef = useRef<MapRef>(null)
   const animationFrameRef = useRef<number | null>(null)
@@ -162,7 +167,20 @@ export default function MapComponent({
 
   // Resolve the initial view once at mount: saved view → default. Lazy so it isn't recomputed
   // on every render.
-  const [initialViewState] = useState(() => getSavedMapView() ?? DEFAULT_MAP_VIEW)
+  // Порядок: запомненный вид → скачанные регионы → Европа и Россия.
+  const [initialViewState] = useState(
+    () =>
+      getSavedMapView() ??
+      (startBounds
+        ? {
+            bounds: [
+              [startBounds[0], startBounds[1]],
+              [startBounds[2], startBounds[3]],
+            ] as [[number, number], [number, number]],
+            fitBoundsOptions: { padding: 24 },
+          }
+        : DEFAULT_MAP_VIEW)
+  )
 
   const [cursorLngLat, setCursorLngLat] = useState<{
     lng: number

@@ -34,15 +34,20 @@ import {
   WORLD_BASEMAP_SOURCE_NAME,
   buildPmtilesExtractArgs,
   BUNDLED_BASE_ASSETS_PATH,
+  KLADEZ_BASE_ASSETS_MARKER,
 } from '../../constants/map_regions.js'
 import {
+  baseAssetsUpToDate,
   buildPackageDownloadParams,
   downloadableResources,
+  readPmtilesBounds,
+  unionBounds,
+  type Bounds,
   findPackages,
   pickBaseAssetsSource,
   siblingVariantId,
 } from '../utils/map_packages.js'
-import { copyFile, statfs } from 'fs/promises'
+import { copyFile, open as openFile, readFile, statfs } from 'fs/promises'
 import { explainExtractError, pickerCountries, type PickerCountry } from '../utils/map_picker.js'
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
@@ -535,12 +540,15 @@ export class MapService implements IMapService {
     const baseStylePath = join(this.baseDirPath, this.baseStylesFile)
     const basemapsAssetsPath = join(this.baseDirPath, this.basemapsAssetsDir)
 
-    const [baseStyleExists, basemapsAssetsExists] = await Promise.all([
+    const [baseStyleExists, basemapsAssetsExists, marker] = await Promise.all([
       getFileStatsIfExists(baseStylePath),
       getFileStatsIfExists(basemapsAssetsPath),
+      readFile(join(this.baseDirPath, KLADEZ_BASE_ASSETS_MARKER), 'utf8').catch(() => null),
     ])
 
-    const exists = !!baseStyleExists && !!basemapsAssetsExists
+    // Кладезъ: материалы без нашей метки (например, английский стиль от NOMAD) считаем устаревшими —
+    // ensureBaseAssets() заменит их встроенным архивом с русскими подписями.
+    const exists = !!baseStyleExists && !!basemapsAssetsExists && baseAssetsUpToDate(marker)
 
     // update cache
     this.baseAssetsExistCache = exists
@@ -761,6 +769,32 @@ export class MapService implements IMapService {
     } catch {
       return null
     }
+  }
+
+  /**
+   * Кладезъ: общие границы скачанных регионов (без карты мира) — по ним карта открывается
+   * на своём регионе. Читается только заголовок файлов (127 байт).
+   */
+  async downloadedRegionsBounds(): Promise<Bounds | null> {
+    const { files } = await this.listRegions()
+    const bounds: Bounds[] = []
+    for (const f of files) {
+      if (f.type !== 'file') continue
+      try {
+        const handle = await openFile(join(this.baseDirPath, 'pmtiles', f.name), 'r')
+        try {
+          const buf = Buffer.alloc(127)
+          await handle.read(buf, 0, 127, 0)
+          const b = readPmtilesBounds(buf)
+          if (b) bounds.push(b)
+        } finally {
+          await handle.close()
+        }
+      } catch {
+        // файл занят или повреждён — просто без него
+      }
+    }
+    return unionBounds(bounds)
   }
 
   /** Упрощённые контуры федеральных округов России для схемы в окне выбора. */

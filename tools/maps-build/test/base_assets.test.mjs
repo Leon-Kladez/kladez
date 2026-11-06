@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { makeRussianStyle } from '../src/base_assets.mjs'
+import { makeRussianStyle, baseAssetsVersion } from '../src/base_assets.mjs'
 
 const template = {
   version: 8,
@@ -29,4 +29,10 @@ test('makeRussianStyle: подписи по-русски, остальное и�
 test('makeRussianStyle не меняет шаблон', () => {
   makeRussianStyle(template)
   assert.deepEqual(template.layers, [{ id: 'old', type: 'background' }])
+})
+
+test('baseAssetsVersion: берётся из констант программы', () => {
+  assert.equal(baseAssetsVersion("export const KLADEZ_BASE_ASSETS_VERSION = 'kladez-ru-7'"), 'kladez-ru-7')
+  assert.match(baseAssetsVersion(), /^kladez-ru-\d+$/)
+  assert.throws(() => baseAssetsVersion('nothing'))
 })
