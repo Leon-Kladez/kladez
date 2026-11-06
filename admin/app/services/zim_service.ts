@@ -5,6 +5,7 @@ import {
   RemoteZimFileEntry,
 } from '../../types/zim.js'
 import axios from 'axios'
+import { isOfflineError, kiwixGate, NETWORK_TIMEOUT_MS } from '../utils/offline_gate.js'
 import * as cheerio from 'cheerio'
 import { XMLParser } from 'fast-xml-parser'
 import { isRawListRemoteZimFilesResponse, isRawRemoteZimFileEntry } from '../../util/zim.js'
@@ -124,7 +125,11 @@ export class ZimService {
     let totalResults = 0
 
     for (let i = 0; i < MAX_KIWIX_FETCHES; i++) {
-      const res = await axios.get(KIWIX_CATALOG_BASE_URL, {
+      // Kladez: без интернета — быстрый ответ «нет сети» (offline: true) вместо
+      // долгого ожидания; неудача запоминается на 12 минут (offline_gate).
+      let res
+      try {
+        res = await kiwixGate.run(() => axios.get(KIWIX_CATALOG_BASE_URL, {
         params: {
           start: currentStart,
           count: KIWIX_PAGE_SIZE,
@@ -133,7 +138,20 @@ export class ZimService {
           ...(query ? { q: query } : {}),
         },
         responseType: 'text',
-      })
+        timeout: NETWORK_TIMEOUT_MS,
+      }))
+      } catch (error) {
+        // Первая страница не пришла — это «нет сети»; на следующих отдаём то, что уже набрали.
+        if (accumulated.length === 0 && i === 0) {
+          logger.warn(
+            `[ZimService] Kiwix catalog unreachable${isOfflineError(error) ? ' (recent failure, not retrying yet)' : ''}: ${
+              error instanceof Error ? error.message : error
+            }`
+          )
+          return { items: [], has_more: false, total_count: 0, next_start: start, offline: true }
+        }
+        break
+      }
 
       const parsed = parser.parse(res.data)
       if (!isRawListRemoteZimFilesResponse(parsed)) {
@@ -224,7 +242,9 @@ export class ZimService {
   async listCatalogLanguages(): Promise<CatalogLanguage[]> {
     const LANGUAGES_URL = 'https://opds.library.kiwix.org/catalog/v2/languages'
     try {
-      const res = await axios.get(LANGUAGES_URL, { responseType: 'text', timeout: 15000 })
+      const res = await kiwixGate.run(() =>
+        axios.get(LANGUAGES_URL, { responseType: 'text', timeout: NETWORK_TIMEOUT_MS })
+      )
       const parser = new XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: '',

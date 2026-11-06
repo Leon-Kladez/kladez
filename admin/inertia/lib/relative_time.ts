@@ -14,12 +14,12 @@ const UNITS: Record<string, MessageKey> = {
  * «7 months ago», «a year ago», «yesterday» (так отдаёт каталог моделей Ollama) → «7 месяцев назад».
  * Незнакомый текст возвращается без изменений.
  */
-export function relativeTimeRu(text: string): string {
+export function relativeTimeRu(text: string | null | undefined): string {
   const s = (text ?? '').trim().toLowerCase()
   if (s === 'yesterday') return t('relTime.yesterday')
   if (s === 'just now') return t('relTime.justNow')
   const m = s.match(/^(\d+|an?)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/)
-  if (!m) return text
+  if (!m) return text ?? ''
   const count = m[1] === 'a' || m[1] === 'an' ? 1 : Number(m[1])
   return t(UNITS[m[2]], { count })
 }

@@ -27,6 +27,8 @@ import {
 import { isGatedResource } from '../utils/hosted_content.js'
 import { catalogUrl, mapsCatalogUrl } from '../utils/catalog_source.js'
 import env from '#start/env'
+import { catalogGate, isOfflineError, NETWORK_TIMEOUT_MS } from '../utils/offline_gate.js'
+import { BackgroundRefresher, specWithFallback } from '../utils/spec_fallback.js'
 import {
   ensureDirectoryExists,
   listDirectoryContents,
@@ -63,6 +65,9 @@ const VALIDATORS: Record<ManifestType, any> = {
   mirrors: mirrorsSpecSchema,
 }
 
+// Один на процесс: фоновые обновления каталога не запускаются на каждый запрос страницы.
+const refresher = new BackgroundRefresher()
+
 export class CollectionManifestService {
   private readonly mapStoragePath = '/storage/maps'
 
@@ -70,7 +75,9 @@ export class CollectionManifestService {
 
   async fetchAndCacheSpec(type: ManifestType): Promise<boolean> {
     try {
-      const response = await axios.get(specUrl(type), { timeout: 15000 })
+      // Kladez: короткий таймаут и «сторож сети» — без интернета не ждём 15 с
+      // на каждый вид каталога и не повторяем попытку чаще раза в 12 минут.
+      const response = await catalogGate.run(() => axios.get(specUrl(type), { timeout: NETWORK_TIMEOUT_MS }))
 
       const validated = await vine.validate({
         schema: VALIDATORS[type],
@@ -98,7 +105,11 @@ export class CollectionManifestService {
 
       return true
     } catch (error) {
-      logger.error(`[CollectionManifestService] Failed to fetch spec for ${type}: ${error?.message || error}`)
+      if (isOfflineError(error)) {
+        logger.debug(`[CollectionManifestService] Skipping ${type} refresh: no network recently`)
+      } else {
+        logger.warn(`[CollectionManifestService] Failed to fetch spec for ${type}: ${error?.message || error}`)
+      }
       return false
     }
   }
@@ -109,17 +120,22 @@ export class CollectionManifestService {
     return manifest.spec_data as T
   }
 
+  /**
+   * Kladez: каталог сразу из сохранённой копии, а если её нет — из встроенной
+   * (collections-ru в образе). Обновление из сети идёт в фоне и не задерживает
+   * страницу; без интернета оно не повторяется чаще раза в 12 минут.
+   */
   async getSpecWithFallback<T>(type: ManifestType): Promise<T | null> {
-    try {
-      await this.fetchAndCacheSpec(type)
-    } catch {
-      // Fetch failed, will fall back to cache
-    }
-    const cached = await this.getCachedSpec<T>(type)
-    if (cached) return cached
-    // Kladez: no network and no cache (first start offline) -> the catalog copy
-    // baked into the image, so the wizard is never empty.
-    return this.loadBundledSpec<T>(type)
+    return specWithFallback<T>(
+      type,
+      {
+        readCache: () => this.getCachedSpec<T>(type),
+        loadBundled: () => this.loadBundledSpec<T>(type),
+        fetchFromNetwork: () => this.fetchAndCacheSpec(type),
+      },
+      refresher,
+      () => !catalogGate.isDown()
+    )
   }
 
   /**

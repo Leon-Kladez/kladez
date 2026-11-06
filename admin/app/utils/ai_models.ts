@@ -25,3 +25,25 @@ export function localizeModels(models: NomadOllamaModel[], locale: Locale = getL
   if (locale !== 'en') return models
   return models.map((m) => (m.description_en ? { ...m, description: m.description_en } : m))
 }
+
+/**
+ * «1.2M» → 1 200 000. В каталоге «Кладезя» estimated_pulls бывает null
+ * (у NOMAD это было обязательное поле) — тогда 0, а не падение на .endsWith.
+ */
+export function parsePulls(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+  const v = value.trim().toUpperCase()
+  const multiplier = v.endsWith('K') ? 1_000 : v.endsWith('M') ? 1_000_000 : v.endsWith('B') ? 1_000_000_000 : 1
+  const n = parseFloat(v) * multiplier
+  return Number.isFinite(n) ? n : 0
+}
+
+/** Размер тега модели в ГБ: «4.7GB» → 4.7, «900MB» → 0.9; непонятное или null → 0. */
+export function parseModelSizeGb(value: unknown): number {
+  if (typeof value !== 'string') return 0
+  const v = value.trim().toUpperCase()
+  const factor = v.endsWith('TB') ? 1_000 : v.endsWith('GB') ? 1 : v.endsWith('MB') ? 1 / 1_000 : v.endsWith('KB') ? 1 / 1_000_000 : 0
+  const n = parseFloat(v) * factor
+  return Number.isFinite(n) ? n : 0
+}

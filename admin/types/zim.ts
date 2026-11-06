@@ -17,6 +17,8 @@ export type ListRemoteZimFilesResponse = {
   has_more: boolean
   total_count: number
   next_start: number
+  /** Kladez: каталог Kiwix недоступен (нет интернета) — список пуст. */
+  offline?: boolean
 }
 
 /** One selectable language in the Kiwix catalog, with how many books it holds. */
