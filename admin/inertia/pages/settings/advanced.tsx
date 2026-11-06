@@ -8,7 +8,8 @@ import Input from '~/components/inputs/Input'
 import { useNotifications } from '~/context/NotificationContext'
 import { useMutation } from '@tanstack/react-query'
 import api from '~/lib/api'
-import { t } from '../../../constants/i18n'
+import LanguageSwitcher from '~/components/LanguageSwitcher'
+import { LANGUAGE_HEADING, t } from '../../../constants/i18n'
 
 export default function AdvancedPage(props: {
   advanced: {
@@ -76,6 +77,12 @@ export default function AdvancedPage(props: {
           <p className="text-text-muted mb-4">
             {t('advanced.subtitle')}
           </p>
+
+          <StyledSectionHeader title={LANGUAGE_HEADING} className="mt-8 mb-4" />
+          <div className="bg-surface-primary rounded-lg border-2 border-border-subtle p-6">
+            <p className="text-sm text-text-secondary mb-4">{t('language.description')}</p>
+            <LanguageSwitcher />
+          </div>
 
           <StyledSectionHeader title={t('advanced.connectivity')} className="mt-8 mb-4" />
           <div className="bg-surface-primary rounded-lg border-2 border-border-subtle p-6">

@@ -12,6 +12,8 @@ export type NomadOllamaModel = {
    * listed; absent — unknown or weak.
    */
   ru?: 'good' | 'fair'
+  /** Kladez: исходное английское описание, если description переведено на русский. */
+  description_en?: string
 }
 
 export type NomadOllamaModelTag = {

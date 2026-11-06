@@ -3,7 +3,7 @@
 
 import '../css/app.css'
 import { createRoot } from 'react-dom/client'
-import { createInertiaApp } from '@inertiajs/react'
+import { createInertiaApp, router } from '@inertiajs/react'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import ModalsProvider from '~/providers/ModalProvider'
 import { TransmitProvider } from 'react-adonis-transmit'
@@ -13,6 +13,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import NotificationsProvider from '~/providers/NotificationProvider'
 import { ThemeProvider } from '~/providers/ThemeProvider'
 import { UsePageProps } from '../../types/system'
+import { getLocale, setLocale } from '../../constants/i18n'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Кладезъ'
 const queryClient = new QueryClient()
@@ -35,7 +36,16 @@ createInertiaApp({
   },
 
   setup({ el, App, props }) {
-    const environment = (props.initialPage.props as unknown as UsePageProps).environment
+    const pageProps = props.initialPage.props as unknown as UsePageProps
+    const environment = pageProps.environment
+    setLocale(pageProps.locale)
+    document.documentElement.lang = getLocale()
+    // Язык сменили на другом устройстве — при следующем переходе перезагружаем
+    // страницу целиком, чтобы весь интерфейс перерисовался на новом языке.
+    router.on('navigate', (event) => {
+      const locale = (event.detail.page.props as unknown as Partial<UsePageProps>).locale
+      if (locale && locale !== getLocale()) window.location.reload()
+    })
     const showDevtools = ['development', 'staging'].includes(environment)
     createRoot(el).render(
       <QueryClientProvider client={queryClient}>

@@ -3,7 +3,7 @@ import { SETTINGS_KEYS } from "../../constants/kv_store.js";
 import type { KVStoreKey } from "../../types/kv_store.js";
 import { CONTEXT_LADDER } from "../utils/context_window.js";
 import { RESPONSE_STYLE_PRESETS } from "../../constants/ollama.js";
-import { t } from '../../constants/i18n/index.js'
+import { SUPPORTED_LOCALES, t } from '../../constants/i18n/index.js'
 
 export const getSettingSchema = vine.compile(vine.object({
     key: vine.enum(SETTINGS_KEYS),
@@ -132,6 +132,14 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
             }
             return null
         }
+        case 'ui.language':
+            if (value === '' || value === undefined || value === null) {
+                return null
+            }
+            if (typeof value !== 'string' || !(SUPPORTED_LOCALES as string[]).includes(value)) {
+                return t('serverValidate.language', { values: SUPPORTED_LOCALES.join(', ') })
+            }
+            return null
         default:
             return null
     }

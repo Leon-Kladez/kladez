@@ -1,7 +1,7 @@
 // Выбор страны и пакетов карт (описание части 3, §5). Чистые функции: сервер и окно выбора.
 import type { Country, CountryCode } from '../../types/maps.js'
 import type { MapsSpec, SpecResource } from '../../types/collections.js'
-import { t } from '../../constants/i18n/index.js'
+import { monthName, t } from '../../constants/i18n/index.js'
 
 /** Страны, где больше всего русскоязычных людей, — вверху списка, в этом порядке. */
 export const PRIORITY_COUNTRIES: CountryCode[] = [
@@ -109,14 +109,12 @@ export function selectionSummary(
   return { ids: chosen.map((r) => r.id), bytes, enough: missingBytes === 0, missingBytes, noOverview }
 }
 
-const MONTH_GENITIVE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' })
-
 /** «Карта от октября 2026» по версии `ГГГГ-ММ`; непонятная версия — пустая строка. */
 export function formatMapVersion(version: string): string {
   const m = /^(\d{4})-(\d{2})$/.exec(version)
   if (!m) return ''
   const date = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1))
-  const month = MONTH_GENITIVE.formatToParts(date).find((p) => p.type === 'month')?.value ?? ''
+  const month = monthName(date)
   return t('mapRegions.version', { month, year: m[1] })
 }
 

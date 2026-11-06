@@ -36,6 +36,7 @@ import { invalidateMinRelevanceCache } from '../utils/rag_relevance.js'
 import { invalidateResponseStyleCache } from '../utils/response_style.js'
 import { KiwixLibraryService } from '#services/kiwix_library_service'
 import { localizeService } from '../utils/service_i18n.js'
+import { applyLocale } from '../utils/locale_store.js'
 import { t, formatBytes } from '../../constants/i18n/index.js'
 
 @inject()
@@ -917,6 +918,11 @@ export class SystemService {
       await KVStore.setValue(key, value)
     }
     if (key === 'ai.assistantCustomName') {
+      invalidateAssistantNameCache()
+    }
+    if (key === 'ui.language') {
+      applyLocale(value)
+      // Имя ИИ-помощника по умолчанию зависит от языка.
       invalidateAssistantNameCache()
     }
     if (key === 'rag.minRelevance') {
