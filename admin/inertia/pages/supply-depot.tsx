@@ -44,7 +44,7 @@ import { ServiceSlim } from '../../types/services'
 import { getServiceLink } from '~/lib/navigation'
 import { getSupplyDepotDocLink } from '../../constants/supply_depot_docs'
 import api from '~/lib/api'
-import { toTitleCase } from '../../app/utils/misc'
+import { categoryLabel } from '~/lib/app_category'
 import { SERVICE_NAMES } from '../../constants/service_names'
 import { tx } from '~/lib/tx'
 import { t } from '../../constants/i18n'
@@ -189,7 +189,8 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
         s.friendly_name?.toLowerCase().includes(q) ||
         s.description?.toLowerCase().includes(q) ||
         s.powered_by?.toLowerCase().includes(q) ||
-        s.category?.toLowerCase().includes(q)
+        s.category?.toLowerCase().includes(q) ||
+        (s.category ? categoryLabel(s.category).toLowerCase().includes(q) : false)
       )
     }
     return true
@@ -974,7 +975,7 @@ function AppCard({
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         {service.category && (
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${catColor}`}>
-            {toTitleCase(service.category)}
+            {categoryLabel(service.category)}
           </span>
         )}
         {service.is_custom ? (

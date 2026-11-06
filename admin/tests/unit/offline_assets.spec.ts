@@ -22,7 +22,7 @@ const EXTERNAL = /src\s*=\s*\{?\s*["'`]https?:\/\/|url\(\s*["']?https?:\/\/|<lin
 
 test('нет внешних адресов в src=, url( и <link href=', () => {
   const files = [
-    join(ADMIN, 'views', 'inertia_layout.edge'),
+    join(ADMIN, 'resources', 'views', 'inertia_layout.edge'),
     join(ADMIN, 'inertia', 'css', 'app.css'),
     ...walk(join(ADMIN, 'inertia'), '.tsx'),
   ]
@@ -37,8 +37,16 @@ test('нет внешних адресов в src=, url( и <link href=', () => 
 })
 
 test('страница объявлена русской', () => {
-  const layout = readFileSync(join(ADMIN, 'views', 'inertia_layout.edge'), 'utf8')
+  const layout = readFileSync(join(ADMIN, 'resources', 'views', 'inertia_layout.edge'), 'utf8')
   assert.match(layout, /lang="ru"/)
+  assert.match(layout, /<title inertia>Кладезъ<\/title>/)
+  assert.doesNotMatch(layout, /Project NOMAD/)
+})
+
+test('шаблон страницы один — тот, что указан в adonisrc.ts', () => {
+  const rc = readFileSync(join(ADMIN, 'adonisrc.ts'), 'utf8')
+  assert.match(rc, /resources\/views\/\*\*\/\*\.edge/)
+  assert.ok(!existsSync(join(ADMIN, 'views', 'inertia_layout.edge')), 'лишняя копия admin/views/inertia_layout.edge')
 })
 
 test('шрифты логотипа лежат локально', () => {

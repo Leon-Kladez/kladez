@@ -121,6 +121,7 @@ import { serverBenchRu } from './ru/serverBench.js'
 import { serverZimRu } from './ru/serverZim.js'
 import { serverUpdateRu } from './ru/serverUpdate.js'
 import { serverAutoRu } from './ru/serverAuto.js'
+import { relTimeRu } from './ru/relTime.js'
 
 export const ru: Record<MessageKey, string> = {
   ...testRu,
@@ -244,4 +245,5 @@ export const ru: Record<MessageKey, string> = {
   ...serverZimRu,
   ...serverUpdateRu,
   ...serverAutoRu,
+  ...relTimeRu,
 }
