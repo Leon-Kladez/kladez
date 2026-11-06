@@ -12,6 +12,7 @@ import TierSelectionModal from '~/components/TierSelectionModal'
 import WikipediaSelector from '~/components/WikipediaSelector'
 import BundlePicker from '~/components/BundlePicker'
 import RussianLanguageBadge from '~/components/RussianLanguageBadge'
+import LanguageSwitcher from '~/components/LanguageSwitcher'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import Alert from '~/components/Alert'
 import { IconCheck, IconCpu, IconBooks } from '@tabler/icons-react'
@@ -26,7 +27,7 @@ import type { BundleWithStatus, CategoryWithStatus, SpecTier, SpecResource } fro
 import { resolveTierResources } from '~/lib/collections'
 import { SERVICE_NAMES } from '../../../constants/service_names'
 import { tx } from '~/lib/tx'
-import { t, formatBytes } from '../../../constants/i18n'
+import { t, formatBytes, LANGUAGE_HEADING } from '../../../constants/i18n'
 
 // Capability definitions - maps user-friendly categories to services
 interface Capability {
@@ -774,6 +775,10 @@ export default function EasySetupWizard(props: {
 
     return (
       <div className="space-y-8">
+        <div className="flex flex-col items-center gap-3 rounded-lg border-2 border-border-subtle bg-surface-primary p-6">
+          <h2 className="text-2xl font-bold text-text-primary">{LANGUAGE_HEADING}</h2>
+          <LanguageSwitcher size="large" />
+        </div>
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-text-primary mb-2">{t('easySetup.apps.title')}</h2>
           <p className="text-text-secondary">
@@ -1343,7 +1348,7 @@ export default function EasySetupWizard(props: {
 
             {selectedWikipedia && selectedWikipedia !== 'none' && (
               <div className="bg-surface-primary rounded-lg border-2 border-desert-stone-light p-6">
-                <h3 className="text-xl font-semibold text-text-primary mb-4">Wikipedia</h3>
+                <h3 className="text-xl font-semibold text-text-primary mb-4">{t('wikipedia.title')}</h3>
                 {(() => {
                   const option = wikipediaState?.options.find((o) => o.id === selectedWikipedia)
                   return option ? (

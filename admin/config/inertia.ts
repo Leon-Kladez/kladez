@@ -2,7 +2,7 @@ import KVStore from '#models/kv_store'
 import { SystemService } from '#services/system_service'
 import { defineConfig } from '@adonisjs/inertia'
 import type { InferSharedProps } from '@adonisjs/inertia/types'
-import { t } from '../constants/i18n/index.js'
+import { getLocale, t } from '../constants/i18n/index.js'
 
 let _assistantNameCache: { value: string; expiresAt: number } | null = null
 
@@ -22,6 +22,8 @@ const inertiaConfig = defineConfig({
   sharedData: {
     appVersion: () => SystemService.getAppVersion(),
     environment: process.env.NODE_ENV || 'production',
+    // Язык уже прочитан из настроек в locale_middleware.
+    locale: () => getLocale(),
     aiAssistantName: async () => {
       const now = Date.now()
       if (_assistantNameCache && now < _assistantNameCache.expiresAt) {

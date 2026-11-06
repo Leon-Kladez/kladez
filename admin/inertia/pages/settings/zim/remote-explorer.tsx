@@ -706,6 +706,7 @@ export default function ZimRemoteExplorer() {
                   },
                   {
                     accessor: 'actions',
+                    title: t('zimManager.actions'),
                     render(record) {
                       return (
                         <div className="flex space-x-2">

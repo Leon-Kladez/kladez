@@ -36,6 +36,8 @@ export type SystemInformationResponse = {
 export type UsePageProps = {
   appVersion: string
   environment: string
+  /** Kladez: язык интерфейса из настроек панели. */
+  locale: string
 }
 
 export type LSBlockDevice = {

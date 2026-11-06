@@ -122,6 +122,7 @@ import { serverZimRu } from './ru/serverZim.js'
 import { serverUpdateRu } from './ru/serverUpdate.js'
 import { serverAutoRu } from './ru/serverAuto.js'
 import { relTimeRu } from './ru/relTime.js'
+import { languageRu } from './ru/language.js'
 
 export const ru: Record<MessageKey, string> = {
   ...testRu,
@@ -246,4 +247,5 @@ export const ru: Record<MessageKey, string> = {
   ...serverUpdateRu,
   ...serverAutoRu,
   ...relTimeRu,
+  ...languageRu,
 }

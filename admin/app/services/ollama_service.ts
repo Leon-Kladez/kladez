@@ -20,7 +20,7 @@ import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import env from '#start/env'
 import { catalogUrl } from '../utils/catalog_source.js'
 import { readBundledSpec } from '../utils/bundled_catalog.js'
-import { modelsFromCatalog } from '../utils/ai_models.js'
+import { localizeModels, modelsFromCatalog } from '../utils/ai_models.js'
 import KVStore from '#models/kv_store'
 import type { ModelCapabilities } from '../utils/model_capabilities.js'
 import {
@@ -1328,7 +1328,9 @@ export class OllamaService {
     }
   ): Promise<{ models: NomadOllamaModel[]; hasMore: boolean } | null> {
     try {
-      const models = await this.retrieveAndRefreshModels(sort, force)
+      const fetched = await this.retrieveAndRefreshModels(sort, force)
+      // Kladez: описания моделей — на языке интерфейса (английский, если есть description_en).
+      const models = fetched ? localizeModels(fetched) : fetched
       if (!models || models.length === 0) {
         logger.warn(
           '[OllamaService] Returning fallback recommended models due to failure in fetching available models'

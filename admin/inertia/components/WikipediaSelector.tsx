@@ -42,7 +42,7 @@ const WikipediaSelector: React.FC<WikipediaSelectorProps> = ({
           <IconWorld className="w-6 h-6 text-text-primary" />
         </div>
         <div>
-          <h3 className="text-xl font-semibold text-text-primary">Wikipedia</h3>
+          <h3 className="text-xl font-semibold text-text-primary">{t('wikipedia.title')}</h3>
           <p className="text-sm text-text-muted">{t('wikipedia.selectPackage')}</p>
         </div>
       </div>

@@ -9,7 +9,13 @@ import StyledModal from '~/components/StyledModal'
 import StyledButton from '~/components/StyledButton'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import DistrictSchema from './DistrictSchema'
-import { formatBytes, t } from '../../../constants/i18n'
+import { formatBytes, getLocale, t } from '../../../constants/i18n'
+
+/** Название страны на языке интерфейса. */
+function countryLabel(c: { name: string; nameRu: string } | null | undefined): string | undefined {
+  if (!c) return undefined
+  return getLocale() === 'en' ? c.name : c.nameRu
+}
 import { matchesQuery, packagesForCountry, restoreSelection, selectionSummary } from '../../../app/utils/map_picker'
 import type { MapsSpec, SpecResource } from '../../../types/collections'
 
@@ -120,7 +126,7 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
       const res = await api.extractMapRegion({
         countries: [country],
         maxzoom: DETAIL_MAXZOOM[detail],
-        label: current?.nameRu,
+        label: countryLabel(current),
         estimatedBytes: onSiteBytes ?? undefined,
       })
       if (res && props.mode === 'modal') props.onDownloadStart?.([])
@@ -168,7 +174,7 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
                   }}
                   className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-surface-secondary"
                 >
-                  <span className="text-text-primary">{c.nameRu}</span>
+                  <span className="text-text-primary">{countryLabel(c)}</span>
                   {c.hasPackages && (
                     <span className="text-xs rounded-full bg-desert-green-lighter px-2 py-0.5 text-desert-green-dark">
                       {t('mapRegions.hasPackages')}
@@ -190,7 +196,7 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
           >
             <IconArrowLeft size={16} /> {t('mapRegions.back')}
           </button>
-          <h3 className="text-xl font-semibold text-text-primary">{current?.nameRu}</h3>
+          <h3 className="text-xl font-semibold text-text-primary">{countryLabel(current)}</h3>
 
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('mapRegions.detailLabel')}>
             {(['full', 'overview'] as Detail[]).map((d) => (

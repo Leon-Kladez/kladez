@@ -36,9 +36,9 @@ test('нет внешних адресов в src=, url( и <link href=', () => 
   assert.deepEqual(found, [])
 })
 
-test('страница объявлена русской', () => {
+test('язык страницы — из настроек панели, по умолчанию русский', () => {
   const layout = readFileSync(join(ADMIN, 'resources', 'views', 'inertia_layout.edge'), 'utf8')
-  assert.match(layout, /lang="ru"/)
+  assert.match(layout, /<html lang="\{\{ \(page\.props && page\.props\.locale\) \|\| 'ru' \}\}">/)
   assert.match(layout, /<title inertia>Кладезъ<\/title>/)
   assert.doesNotMatch(layout, /Project NOMAD/)
 })
