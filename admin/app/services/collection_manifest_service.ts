@@ -16,7 +16,14 @@ import {
   bundlesSpecSchema,
   mirrorsSpecSchema,
 } from '#validators/curated_collections'
-import { readBundledSpec } from '../utils/bundled_catalog.js'
+import {
+  BUNDLED_FETCHED_AT_ISO,
+  CATALOG_SCHEMAS,
+  bundledCatalogDir,
+  readBundledSpec,
+  validateBundledSpec,
+  type ValidatedCatalogType,
+} from '../utils/bundled_catalog.js'
 import { isGatedResource } from '../utils/hosted_content.js'
 import { catalogUrl, mapsCatalogUrl } from '../utils/catalog_source.js'
 import env from '#start/env'
@@ -91,7 +98,7 @@ export class CollectionManifestService {
 
       return true
     } catch (error) {
-      logger.error(`[CollectionManifestService] Failed to fetch spec for ${type}:`, error?.message || error)
+      logger.error(`[CollectionManifestService] Failed to fetch spec for ${type}: ${error?.message || error}`)
       return false
     }
   }
@@ -116,23 +123,36 @@ export class CollectionManifestService {
   }
 
   /**
-   * Kladez: validate and cache the bundled collections-ru/ copy. Cached with
-   * fetched_at = epoch so any later successful network fetch replaces it.
+   * Kladez: the bundled collections-ru/ copy (works offline). Validated with the
+   * same schema as a network fetch; the validation error is logged in full.
+   * Caching is best-effort and separate: a failed cache write must never hide a
+   * valid built-in catalog (epoch-0 fetched_at was rejected by MySQL TIMESTAMP).
    */
   async loadBundledSpec<T>(type: ManifestType): Promise<T | null> {
+    if (!(type in CATALOG_SCHEMAS)) return null
     const data = await readBundledSpec(type)
-    if (!data) return null
-    try {
-      const validated = await vine.validate({ schema: VALIDATORS[type], data })
-      await CollectionManifest.updateOrCreate(
-        { type },
-        { spec_version: validated.spec_version, spec_data: validated, fetched_at: DateTime.fromMillis(0) }
-      )
-      return validated as T
-    } catch (error) {
-      logger.error(`[CollectionManifestService] Bundled ${type} catalog is invalid:`, error?.message || error)
+    if (!data) {
+      logger.error(`[CollectionManifestService] Bundled ${type} catalog not found in ${bundledCatalogDir()}`)
       return null
     }
+    const result = await validateBundledSpec(type as ValidatedCatalogType, data)
+    if (!result.ok) {
+      logger.error(`[CollectionManifestService] Bundled ${type} catalog is invalid: ${result.error}`)
+      return null
+    }
+    try {
+      await CollectionManifest.updateOrCreate(
+        { type },
+        {
+          spec_version: result.value.spec_version,
+          spec_data: result.value,
+          fetched_at: DateTime.fromISO(BUNDLED_FETCHED_AT_ISO),
+        }
+      )
+    } catch (error: any) {
+      logger.warn(`[CollectionManifestService] Could not cache bundled ${type} catalog: ${error?.message ?? error}`)
+    }
+    return result.value as T
   }
 
   // ---- Status computation ----
