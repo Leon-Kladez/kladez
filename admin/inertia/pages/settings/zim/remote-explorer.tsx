@@ -190,6 +190,9 @@ export default function ZimRemoteExplorer() {
       enabled: selectedSource === 'default',
     })
 
+  // Kladez: сервер быстро отвечает offline: true, если каталог Kiwix недоступен.
+  const kiwixOffline = data?.pages[0]?.offline === true
+
   const flatData = useMemo(() => {
     const mapped = data?.pages.flatMap((page) => page.items) || []
     const localNames = new Set(localFiles?.map((f) => f.name) ?? [])
@@ -666,6 +669,15 @@ export default function ZimRemoteExplorer() {
                   </div>
                 )}
               </div>
+              {kiwixOffline && (
+                <Alert
+                  type="info"
+                  variant="bordered"
+                  title={t('explorer.kiwixOffline')}
+                  className="!mb-4"
+                />
+              )}
+              {!kiwixOffline && (
               <StyledTable<RemoteZimFileEntry & { actions?: any }>
                 data={flatData}
                 ref={tableParentRef}
@@ -818,6 +830,7 @@ export default function ZimRemoteExplorer() {
                 compact
                 rowLines
               />
+              )}
             </>
           )}
 

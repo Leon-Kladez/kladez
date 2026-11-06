@@ -33,7 +33,7 @@ export const easySetupEn = {
   'easySetup.error': 'An error occurred during setup. Some items may not have been processed.',
   'easySetup.progress': 'Progress',
   'easySetup.turnOffAiConfirm': 'Turning off AI will discard your AI model picks, indexing policy, and remote Ollama configuration. Continue?',
-  'easySetup.apps.title': 'What do you want NOMAD to do?',
+  'easySetup.apps.title': 'What do you want Kladez to do?',
   'easySetup.apps.subtitle': 'Select the capabilities you need. You can always add more later.',
   'easySetup.apps.allInstalled': 'All available capabilities are already installed!',
   'easySetup.apps.manage': 'Manage Apps',

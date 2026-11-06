@@ -20,7 +20,7 @@ import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import env from '#start/env'
 import { catalogUrl } from '../utils/catalog_source.js'
 import { readBundledSpec } from '../utils/bundled_catalog.js'
-import { localizeModels, modelsFromCatalog } from '../utils/ai_models.js'
+import { localizeModels, modelsFromCatalog, parseModelSizeGb, parsePulls } from '../utils/ai_models.js'
 import KVStore from '#models/kv_store'
 import type { ModelCapabilities } from '../utils/model_capabilities.js'
 import {
@@ -1473,41 +1473,16 @@ export class OllamaService {
   }
 
   private sortModels(models: NomadOllamaModel[], sort?: 'pulls' | 'name'): NomadOllamaModel[] {
+    // Kladez: estimated_pulls / size бывают null — разбор без .endsWith на null.
     if (sort === 'pulls') {
-      models.sort((a, b) => {
-        const parsePulls = (pulls: string) => {
-          const multiplier = pulls.endsWith('K')
-            ? 1_000
-            : pulls.endsWith('M')
-              ? 1_000_000
-              : pulls.endsWith('B')
-                ? 1_000_000_000
-                : 1
-          return parseFloat(pulls) * multiplier
-        }
-        return parsePulls(b.estimated_pulls) - parsePulls(a.estimated_pulls)
-      })
+      models.sort((a, b) => parsePulls(b.estimated_pulls) - parsePulls(a.estimated_pulls))
     } else if (sort === 'name') {
-      models.sort((a, b) => a.name.localeCompare(b.name))
+      models.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
     }
 
     models.forEach((model) => {
       if (model.tags && Array.isArray(model.tags)) {
-        model.tags.sort((a, b) => {
-          const parseSize = (size: string) => {
-            const multiplier = size.endsWith('KB')
-              ? 1 / 1_000
-              : size.endsWith('MB')
-                ? 1 / 1_000_000
-                : size.endsWith('GB')
-                  ? 1
-                  : size.endsWith('TB')
-                    ? 1_000
-                    : 0
-            return parseFloat(size) * multiplier
-          }
-          return parseSize(a.size) - parseSize(b.size)
-        })
+        model.tags.sort((a, b) => parseModelSizeGb(a.size) - parseModelSizeGb(b.size))
       }
     })
 

@@ -1,6 +1,6 @@
 export const mapsManagerEn = {
   'mapsManager.baseMapDone': 'Base map downloaded successfully.',
-  'mapsManager.baseMapFailed': 'Could not download the base map. Please connect this NOMAD to the internet and try again.',
+  'mapsManager.baseMapFailed': 'Could not download the base map. Please connect this computer to the internet and try again.',
   'mapsManager.globalQueued': 'Global map download has been queued. This is a large file (~125 GB) and may take a while.',
   'mapsManager.globalFailed': 'Failed to start the global map download. Please try again.',
   'mapsManager.assetsDone': 'Base map assets downloaded successfully.',
@@ -21,7 +21,7 @@ export const mapsManagerEn = {
   'mapsManager.subtitle': 'Manage your stored map files and explore new regions!',
   'mapsManager.downloadAssets': 'Download Base Assets',
   'mapsManager.worldMissingTitle': 'World base map not downloaded',
-  'mapsManager.worldMissingMessage': 'The low-zoom world base map (~15 MB) hasn\'t been downloaded yet, so the map appears blank outside any regions you\'ve downloaded. Connect this NOMAD to the internet and download it once for offline use.',
+  'mapsManager.worldMissingMessage': 'The low-zoom world base map (~15 MB) hasn\'t been downloaded yet, so the map appears blank outside any regions you\'ve downloaded. Connect this computer to the internet and download it once for offline use.',
   'mapsManager.downloadBaseMap': 'Download Base Map',
   'mapsManager.globalInstalled': 'Global Map Installed',
   'mapsManager.globalInstalledMessage': 'Your global map build {date} ({size}) is stored locally and ready for offline use.',

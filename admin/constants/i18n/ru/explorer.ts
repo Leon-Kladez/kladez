@@ -15,6 +15,7 @@ export const explorerRu: Record<keyof typeof explorerEn, string> = {
   'explorer.libraryAddFailed': 'Не удалось добавить источник.',
   'explorer.libraryRemoved': 'Источник убран.',
   'explorer.subtitle': 'Выбирайте и скачивайте материалы для чтения без интернета.',
+  'explorer.kiwixOffline': 'Нет интернета — каталог Kiwix доступен только онлайн. Готовые подборки выше работают и без него.',
   'explorer.noInternet': 'Нет интернета — скачать файлы, скорее всего, не получится.',
   'explorer.curated': 'Готовые подборки',
   'explorer.additional': 'Дополнительные материалы',

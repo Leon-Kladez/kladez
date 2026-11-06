@@ -13,6 +13,7 @@ export const explorerEn = {
   'explorer.libraryAddFailed': 'Failed to add custom library.',
   'explorer.libraryRemoved': 'Custom library removed.',
   'explorer.subtitle': 'Browse and download content for offline reading!',
+  'explorer.kiwixOffline': 'No internet — the Kiwix catalog is only available online. The curated collections above work without it.',
   'explorer.noInternet': 'No internet connection. You may not be able to download files.',
   'explorer.curated': 'Curated Content',
   'explorer.additional': 'Additional Content',

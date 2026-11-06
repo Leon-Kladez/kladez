@@ -7,7 +7,7 @@ export const benchEn = {
   'bench.compiling': 'Compiling report...',
   'bench.failedTitle': 'Benchmark Failed',
   'bench.aiRequired': '{name} Required',
-  'bench.aiRequiredText': 'Full benchmark requires {name} to be installed. Install it to measure your complete NOMAD capability and share results with the community.',
+  'bench.aiRequiredText': 'Full benchmark requires {name} to be installed. Install it to measure your complete Kladez capability and share results with the community.',
   'bench.goInstall': 'Go to Apps to install {name} →',
   'bench.intro': 'Run a benchmark to measure your system\'s CPU, memory, disk, and AI inference performance. The benchmark takes approximately 3-6 minutes to complete.',
   'bench.runFull': 'Run Full Benchmark',

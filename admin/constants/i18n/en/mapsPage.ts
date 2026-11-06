@@ -6,7 +6,7 @@ export const mapsPageEn = {
   'mapsPage.showCoords': 'Show coordinates',
   'mapsPage.manageRegions': 'Manage Map Regions',
   'mapsPage.noBaseAssets': 'The base map assets have not been installed. Please download them first to enable map functionality.',
-  'mapsPage.noWorldBasemap': 'The world base map has not been downloaded yet, so the map may appear blank outside downloaded regions. Connect this NOMAD to the internet and download it (~15 MB) from Map Settings.',
+  'mapsPage.noWorldBasemap': 'The world base map has not been downloaded yet, so the map may appear blank outside downloaded regions. Connect this computer to the internet and download it (~15 MB) from Map Settings.',
   'mapsPage.noRegions': 'No map regions have been downloaded yet. Please download some regions to enable map functionality.',
   'mapsPage.goToSettings': 'Go to Map Settings',
 } as const

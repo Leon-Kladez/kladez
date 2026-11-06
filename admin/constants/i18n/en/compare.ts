@@ -11,7 +11,7 @@ export const compareEn = {
   'compare.searchPlaceholder': 'Search for a drug to add…',
   'compare.noResults': 'No results for "{query}"',
   'compare.selectHint': 'Select drugs above to compare their labeled interaction warnings.',
-  'compare.source': '{label} U.S. Food & Drug Administration drug labeling, via {openfda} — public domain (CC0 1.0). NOMAD is not affiliated with or endorsed by the FDA. Label data is provided as-is; do not rely on it for medical decisions.',
+  'compare.source': '{label} U.S. Food & Drug Administration drug labeling, via {openfda} — public domain (CC0 1.0). Kladez is not affiliated with or endorsed by the FDA. Label data is provided as-is; do not rely on it for medical decisions.',
   'compare.added': 'Added',
   'compare.add': 'Add',
 } as const

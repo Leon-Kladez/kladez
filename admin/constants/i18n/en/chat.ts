@@ -21,7 +21,7 @@ export const chatEn = {
   'chat.imageSize': '{name} exceeds the 8 MB per-image limit.',
   'chat.imagesTrimmed': 'Only the first {count} selected image(s) were attached.',
   'chat.startTitle': 'Start a conversation',
-  'chat.startText': 'Interact with your installed language models directly in the Command Center.',
+  'chat.startText': 'Interact with your installed language models directly in Kladez.',
   'chat.suggestions': 'Suggestions:',
   'chat.thinking': 'Thinking',
   'chat.inspiration': 'Need some inspiration? Enable chat suggestions in settings to get started with example prompts.',
