@@ -17,7 +17,12 @@ type MapCommand = {
 }
 
 export default function Maps(props: {
-  maps: { baseAssetsExist: boolean; worldBasemapExists: boolean; regionFiles: FileEntry[] }
+  maps: {
+    baseAssetsExist: boolean
+    worldBasemapExists: boolean
+    regionFiles: FileEntry[]
+    startBounds?: [number, number, number, number] | null
+  }
 }) {
   const [isHoveringUI, setIsHoveringUI] = useState(false)
 
@@ -156,6 +161,7 @@ export default function Maps(props: {
 
         <div className="absolute inset-0">
           <MapComponent
+            startBounds={props.maps.startBounds ?? null}
             mapCommand={mapCommand}
             isHoveringUI={isHoveringUI}
             showCoordinatesEnabled={showCoordinatesEnabled}

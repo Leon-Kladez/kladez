@@ -23,6 +23,14 @@ export const NOMAD_BASE_ASSETS = {
 /** Верхняя папка архива: программа распаковывает его с strip: 1 в /storage/maps. */
 const TOP = 'tozip'
 const ATTRIBUTION = fileURLToPath(new URL('../../../admin/resources/maps/ATTRIBUTION.md', import.meta.url))
+const MAP_REGIONS_TS = fileURLToPath(new URL('../../../admin/constants/map_regions.ts', import.meta.url))
+
+/** Версия материалов — из admin/constants/map_regions.ts, чтобы программа и архив не разошлись. */
+export function baseAssetsVersion(source = readFileSync(MAP_REGIONS_TS, 'utf8')) {
+  const m = /KLADEZ_BASE_ASSETS_VERSION = '([^']+)'/.exec(source)
+  if (!m) throw new Error('KLADEZ_BASE_ASSETS_VERSION не найдена в admin/constants/map_regions.ts')
+  return m[1]
+}
 
 /** Стиль NOMAD с теми же источниками/шрифтами/значками, но слоями Protomaps на русском. */
 export function makeRussianStyle(template) {
@@ -59,6 +67,7 @@ export async function packBaseAssets({ nomadTar, worldPmtiles, out }) {
     const style = makeRussianStyle(JSON.parse(readFileSync(stylePath, 'utf8')))
     writeFileSync(stylePath, JSON.stringify(style))
     copyFileSync(ATTRIBUTION, join(work, TOP, 'ATTRIBUTION.md'))
+    writeFileSync(join(work, TOP, 'kladez-base-assets.txt'), baseAssetsVersion() + '\n')
     if (worldPmtiles) {
       mkdirSync(join(work, TOP, 'pmtiles'), { recursive: true })
       copyFileSync(resolve(worldPmtiles), join(work, TOP, 'pmtiles', 'world.pmtiles'))

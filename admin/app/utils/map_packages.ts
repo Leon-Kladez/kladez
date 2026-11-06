@@ -1,6 +1,7 @@
 // Чистые функции карт Кладезя (описание: docs/superpowers/specs/2026-11-05-kladez-3-maps-design.md).
 import { join } from 'node:path'
 import type { MapsSpec, SpecResource } from '../../types/collections.js'
+import { KLADEZ_BASE_ASSETS_VERSION } from '../../constants/map_regions.js'
 import type { RunDownloadJobParams } from '../../types/downloads.js'
 
 export type BaseAssetsSource = { kind: 'file'; path: string } | { kind: 'url'; url: string }
@@ -83,4 +84,30 @@ export function findPackages(
     else unavailable.push(id)
   }
   return { found, unavailable }
+}
+
+export type Bounds = [west: number, south: number, east: number, north: number]
+
+/** Границы из заголовка PMTiles v3 (127 байт): int32 LE ×1e7 на смещениях 102, 106, 110, 114. */
+export function readPmtilesBounds(header: Buffer): Bounds | null {
+  if (header.length < 127 || header.toString('latin1', 0, 7) !== 'PMTiles' || header.readUInt8(7) !== 3) return null
+  const v = [102, 106, 110, 114].map((o) => header.readInt32LE(o) / 1e7)
+  return [v[0], v[1], v[2], v[3]]
+}
+
+/** Общие границы скачанных регионов; шире полмира (или через линию перемены дат) — null. */
+export function unionBounds(list: Bounds[]): Bounds | null {
+  if (list.length === 0) return null
+  const u: Bounds = [
+    Math.min(...list.map((b) => b[0])),
+    Math.min(...list.map((b) => b[1])),
+    Math.max(...list.map((b) => b[2])),
+    Math.max(...list.map((b) => b[3])),
+  ]
+  return u[2] - u[0] > 180 ? null : u
+}
+
+/** Подходят ли базовые материалы на диске (по метке версии из архива). */
+export function baseAssetsUpToDate(marker: string | null): boolean {
+  return marker !== null && marker.trim() === KLADEZ_BASE_ASSETS_VERSION
 }

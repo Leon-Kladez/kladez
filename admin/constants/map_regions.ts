@@ -45,3 +45,11 @@ export const KLADEZ_MAPS_REPO = 'kladez-maps-owner/kladez-maps'
 
 /** Адрес списка карт по умолчанию; часть 2 подставляет его в SPEC_URLS.maps через mapsCatalogUrl(). */
 export const DEFAULT_MAPS_CATALOG_URL = `https://github.com/${KLADEZ_MAPS_REPO}/releases/latest/download/maps.json`
+
+/**
+ * Версия базовых материалов карты Кладезя (стиль с русскими подписями). Лежит в архиве файлом
+ * kladez-base-assets.txt. Если на диске другая метка или её нет (например, остались английские
+ * материалы NOMAD), программа заменяет их встроенным архивом. Меняйте вместе с архивом.
+ */
+export const KLADEZ_BASE_ASSETS_VERSION = 'kladez-ru-1'
+export const KLADEZ_BASE_ASSETS_MARKER = 'kladez-base-assets.txt'

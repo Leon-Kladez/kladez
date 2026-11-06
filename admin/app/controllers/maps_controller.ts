@@ -21,15 +21,17 @@ export default class MapsController {
 
   async index({ inertia }: HttpContext) {
     const baseAssetsCheck = await this.mapService.ensureBaseAssets()
-    const [regionFiles, worldBasemapExists] = await Promise.all([
+    const [regionFiles, worldBasemapExists, startBounds] = await Promise.all([
       this.mapService.listRegions(),
       this.mapService.checkWorldBasemapExists(),
+      this.mapService.downloadedRegionsBounds(),
     ])
     return inertia.render('maps', {
       maps: {
         baseAssetsExist: baseAssetsCheck,
         worldBasemapExists,
         regionFiles: regionFiles.files,
+        startBounds,
       },
     })
   }
