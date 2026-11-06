@@ -3,11 +3,13 @@ import { NomadOllamaModel, ResponseStyle, SamplerProfile } from '../types/ollama
 /**
  * Fallback basic recommended Ollama models in case fetching from the service fails.
  */
+// Kladez: descriptions in Russian; order unchanged (the author decides which models come first).
 export const FALLBACK_RECOMMENDED_OLLAMA_MODELS: NomadOllamaModel[] = [
   {
     name: 'llama3.1',
     description:
-      'Llama 3.1 is a new state-of-the-art model from Meta available in 8B, 70B and 405B parameter sizes.',
+      'Llama 3.1 от Meta — открытая модель размеров 8, 70 и 405 млрд параметров. Русский понимает, но официально его не поддерживает.',
+    ru: 'fair',
     estimated_pulls: '109.3M',
     id: '9fe9c575-e77e-4a51-a743-07359458ee71',
     first_seen: '2026-01-28T23:37:31.000+00:00',
@@ -26,7 +28,8 @@ export const FALLBACK_RECOMMENDED_OLLAMA_MODELS: NomadOllamaModel[] = [
   {
     name: 'deepseek-r1',
     description:
-      'DeepSeek-R1 is a family of open reasoning models with performance approaching that of leading models, such as O3 and Gemini 2.5 Pro.',
+      'DeepSeek-R1 — открытые модели, которые «рассуждают» перед ответом; по качеству близки к ведущим моделям.',
+    ru: 'fair',
     estimated_pulls: '77.2M',
     id: '0b566560-68a6-4964-b0d4-beb3ab1ad694',
     first_seen: '2026-01-28T23:37:31.000+00:00',
@@ -44,7 +47,8 @@ export const FALLBACK_RECOMMENDED_OLLAMA_MODELS: NomadOllamaModel[] = [
   },
   {
     name: 'llama3.2',
-    description: "Meta's Llama 3.2 goes small with 1B and 3B models.",
+    description: 'Llama 3.2 от Meta — маленькие модели на 1 и 3 млрд параметров, быстрые даже на слабом компьютере.',
+    ru: 'fair',
     estimated_pulls: '54.7M',
     id: 'c9a1bc23-b290-4501-a913-f7c9bb39c3ad',
     first_seen: '2026-01-28T23:37:31.000+00:00',
