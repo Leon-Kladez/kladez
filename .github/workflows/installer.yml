@@ -109,7 +109,7 @@ jobs:
           $list = Invoke-RestMethod -Headers $h -Uri "$api/runs/$env:GITHUB_RUN_ID/artifacts?name=linux-dist"
           foreach ($a in $list.artifacts) {
             Invoke-RestMethod -Method Delete -Headers $h -Uri "$api/artifacts/$($a.id)"
-            Write-Output "Удалён артефакт $($a.name) ($([math]::Round($a.size_in_bytes / 1MB)) МБ)"
+            Write-Output "Deleted artifact $($a.name) ($([math]::Round($a.size_in_bytes / 1MB)) MB)"  # ASCII: Windows PowerShell 5.1 reads inline scripts as ANSI
           }
 
       - name: Тесты Pester
