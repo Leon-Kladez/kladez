@@ -28,6 +28,7 @@ import GpuPassthroughAlert from '~/components/GpuPassthroughAlert'
 import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
 import { errorText } from '~/lib/error_text'
+import { relativeTimeRu } from '~/lib/relative_time'
 
 const RELEVANCE_LABELS: Record<string, string> = {
   'Off — use every passage retrieved': t('models.relevance.off'),
@@ -591,6 +592,7 @@ export default function ModelsPage(props: {
               {
                 accessor: 'model_last_updated',
                 title: t('models.col.updated'),
+                render: (record) => relativeTimeRu(record.model_last_updated),
               },
             ]}
             data={availableModelData?.models || []}

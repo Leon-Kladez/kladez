@@ -121,6 +121,7 @@ import { serverBenchEn } from './en/serverBench.js'
 import { serverZimEn } from './en/serverZim.js'
 import { serverUpdateEn } from './en/serverUpdate.js'
 import { serverAutoEn } from './en/serverAuto.js'
+import { relTimeEn } from './en/relTime.js'
 
 export const en = {
   ...testEn,
@@ -244,6 +245,7 @@ export const en = {
   ...serverZimEn,
   ...serverUpdateEn,
   ...serverAutoEn,
+  ...relTimeEn,
 } as const
 
 export type MessageKey = keyof typeof en
