@@ -12,6 +12,6 @@ export const drugDisclaimerEn = {
   'drugDisclaimer.followLabelStrong': 'actual product you have',
   'drugDisclaimer.emergency': 'In an emergency, or if symptoms are severe, worsening, or you\'re unsure, {strong}.',
   'drugDisclaimer.emergencyStrong': 'contact a medical professional or call emergency services',
-  'drugDisclaimer.source': 'Data is from openFDA (U.S. FDA, public domain). NOMAD is not affiliated with or endorsed by the FDA.',
+  'drugDisclaimer.source': 'Data is from openFDA (U.S. FDA, public domain). Kladez is not affiliated with or endorsed by the FDA.',
   'drugDisclaimer.continue': 'I understand — continue',
 } as const

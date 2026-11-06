@@ -7,7 +7,7 @@ export const zimManagerEn = {
   'zimManager.subtitle': 'Manage your stored content files.',
   'zimManager.hideUploader': 'Hide Uploader',
   'zimManager.upload': 'Upload ZIM File',
-  'zimManager.rescanHint': 'Rebuild the Kiwix library index from the files on disk. Use this after manually adding ZIM files outside of NOMAD.',
+  'zimManager.rescanHint': 'Rebuild the Kiwix library index from the files on disk. Use this after manually adding ZIM files outside of Kladez.',
   'zimManager.rescan': 'Rescan Library',
   'zimManager.uploadHint': 'Upload a ZIM file from your browser. Files up to 20 GB are supported. For best results upload from the same machine or over a stable LAN connection. Larger files should be copied directly to the storage volume.',
   'zimManager.uploadAdded': 'Upload complete. {books} added to the library.',

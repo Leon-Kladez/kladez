@@ -1,5 +1,5 @@
 export const serverMapsControllerEn = {
-  'server.mapsController.couldNotDownloadTheBase': 'Could not download the base map. Please connect this NOMAD to the internet and try again.',
+  'server.mapsController.couldNotDownloadTheBase': 'Could not download the base map. Please connect this computer to the internet and try again.',
   'server.mapsController.downloadStartedSuccessfully': 'Download started successfully',
   'server.mapsController.collectionDownloadStartedSuccessfully': 'Collection download started successfully',
   'server.mapsController.extractStartedSuccessfully': 'Extract started successfully',

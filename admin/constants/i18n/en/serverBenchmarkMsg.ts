@@ -1,7 +1,7 @@
 export const serverBenchmarkMsgEn = {
   'server.benchmarkMsg.detecting': 'Detecting system hardware...',
   'server.benchmarkMsg.starting': 'Starting benchmark...',
-  'server.benchmarkMsg.calculating': 'Calculating NOMAD score...',
+  'server.benchmarkMsg.calculating': 'Calculating Kladez score...',
   'server.benchmarkMsg.completed': 'Benchmark completed successfully',
   'server.benchmarkMsg.failed': 'Benchmark failed: {error}',
   'server.benchmarkMsg.cpuSingle': 'Running CPU benchmark (single-thread)...',

@@ -1,4 +1,4 @@
-// Исходный английский текст Project NOMAD — дословно. По нему сверяются обновления от авторов NOMAD.
+// Английский текст Project NOMAD — почти дословно; бренд NOMAD / Command Center заменён на Kladez (атрибуция оставлена). По нему сверяются обновления от авторов NOMAD.
 // Словарь собран из файлов по областям в папке en/.
 import { testEn } from './en/test.js'
 import { commonEn } from './en/common.js'

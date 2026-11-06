@@ -1,5 +1,5 @@
 export const supportEn = {
-  'support.intro': 'Project NOMAD is 100% free and open source — no subscriptions, no paywalls, no catch. If you\'d like to help keep the project going, here are a few ways to show your support.',
+  'support.intro': 'Kladez is based on Project NOMAD — 100% free and open source, no subscriptions, no paywalls, no catch. If you\'d like to help keep the project going, here are a few ways to show your support.',
   'support.coffee': 'Buy Us a Coffee',
   'support.coffeeText': 'Every contribution helps fund development, server costs, and new content packs for NOMAD. Even a small donation goes a long way.',
   'support.kofi': 'Support on Ko-fi',
@@ -9,10 +9,10 @@ export const supportEn = {
   'support.rogueVisit': 'Visit Rogue.Support',
   'support.other': 'Other Ways to Help',
   'support.star': 'Star the project on GitHub',
-  'support.starText': '— it helps more people discover NOMAD',
+  'support.starText': '— it helps more people discover Kladez',
   'support.report': 'Report bugs and suggest features',
-  'support.reportText': '— every report makes NOMAD better',
-  'support.share': 'Share NOMAD with someone who\'d use it — word of mouth is the best marketing',
+  'support.reportText': '— every report makes Kladez better',
+  'support.share': 'Share Kladez with someone who\'d use it — word of mouth is the best marketing',
   'support.discord': 'Join the Discord community',
   'support.discordText': '— hang out, share your build, help other users',
 } as const
