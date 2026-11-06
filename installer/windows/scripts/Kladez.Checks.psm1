@@ -20,10 +20,12 @@ function Test-KladezWindowsBuild {
 
 function Test-KladezMemory {
     param([Parameter(Mandatory)][long]$TotalBytes)
-    if ($TotalBytes -lt 4GB) {
+    # Windows always reports a little less than the installed memory (an "8 GB" PC shows ~7.8-7.9 GB),
+    # so compare with half a gigabyte of slack: an ordinary 8 GB / 4 GB computer must not be warned/refused.
+    if ($TotalBytes -lt 3.5GB) {
         return [pscustomobject]@{ Level = 'fail'; Message = 'На компьютере меньше 4 ГБ оперативной памяти — «Кладезъ» не сможет работать.' }
     }
-    if ($TotalBytes -lt 8GB) {
+    if ($TotalBytes -lt 7.5GB) {
         return [pscustomobject]@{ Level = 'warn'; Message = 'Оперативной памяти меньше 8 ГБ: программа будет работать медленно, а ИИ-помощник не потянет.' }
     }
     [pscustomobject]@{ Level = 'ok'; Message = 'Оперативной памяти достаточно.' }
@@ -82,6 +84,15 @@ function ConvertTo-KladezWslPath {
     '/mnt/' + $Matches[1].ToLowerInvariant() + $(if ($rest) { '/' + $rest.TrimEnd('/') } else { '' })
 }
 
+function Get-KladezInstalledMemory {
+    param([long]$VisibleBytes)
+    # Installed modules (what the shop sticker says); fall back to what Windows sees.
+    $installed = 0L
+    try { $installed = [long](@(Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop) | Measure-Object -Property Capacity -Sum).Sum } catch { }
+    if ($installed -gt $VisibleBytes) { return $installed }
+    $VisibleBytes
+}
+
 function Get-KladezSystemFacts {
     $os = Get-CimInstance Win32_OperatingSystem
     $cs = Get-CimInstance Win32_ComputerSystem
@@ -99,7 +110,7 @@ function Get-KladezSystemFacts {
     try { $ports = @(Get-NetTCPConnection -State Listen -ErrorAction Stop | Select-Object -ExpandProperty LocalPort -Unique) } catch { }
     [pscustomobject]@{
         Build = [int]$os.BuildNumber
-        TotalMemoryBytes = [long]$cs.TotalPhysicalMemory
+        TotalMemoryBytes = Get-KladezInstalledMemory -VisibleBytes ([long]$cs.TotalPhysicalMemory)
         HypervisorPresent = [bool]$cs.HypervisorPresent
         FirmwareEnabled = [bool]$cpu.VirtualizationFirmwareEnabled
         Slat = [bool]$cpu.SecondLevelAddressTranslationExtensions

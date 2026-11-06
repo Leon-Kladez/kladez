@@ -18,9 +18,11 @@ Describe 'Test-KladezWindowsBuild' {
 }
 
 Describe 'Test-KladezMemory' {
-    It '3.9 GB → fail' { (Test-KladezMemory -TotalBytes ([long](3.9 * $GB))).Level | Should -Be 'fail' }
+    It '3.4 GB → fail' { (Test-KladezMemory -TotalBytes ([long](3.4 * $GB))).Level | Should -Be 'fail' }
+    It '3.8 GB (a 4 GB PC) → warn, not fail' { (Test-KladezMemory -TotalBytes ([long](3.8 * $GB))).Level | Should -Be 'warn' }
     It '4 GB → warn'   { (Test-KladezMemory -TotalBytes (4 * $GB)).Level | Should -Be 'warn' }
-    It '7.9 GB → warn' { (Test-KladezMemory -TotalBytes ([long](7.9 * $GB))).Level | Should -Be 'warn' }
+    It '7.4 GB → warn' { (Test-KladezMemory -TotalBytes ([long](7.4 * $GB))).Level | Should -Be 'warn' }
+    It '7.8 GB (an 8 GB PC as Windows sees it) → ok' { (Test-KladezMemory -TotalBytes ([long](7.8 * $GB))).Level | Should -Be 'ok' }
     It '8 GB → ok'     { (Test-KladezMemory -TotalBytes (8 * $GB)).Level | Should -Be 'ok' }
     It 'warn message mentions slowness and AI' {
         (Test-KladezMemory -TotalBytes (6 * $GB)).Message | Should -Match 'медленно.*ИИ'
