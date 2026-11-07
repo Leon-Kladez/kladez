@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useDevice } from '~/hooks/useDevice'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import ChatSidebar from './ChatSidebar'
 import ChatInterface from './ChatInterface'
@@ -248,12 +249,14 @@ export default function Chat({
     }
   }, [installedModels, selectedModel, lastModelSetting])
 
-  // Persist model selection
+  // Persist model selection. «Кладезъ»: с телефона в режиме «только смотреть» не сохраняем —
+  // сервер всё равно откажет, а человек увидит лишнюю ошибку.
+  const { canChange } = useDevice()
   useEffect(() => {
-    if (selectedModel) {
+    if (selectedModel && canChange) {
       api.updateSetting('chat.lastModel', selectedModel)
     }
-  }, [selectedModel])
+  }, [selectedModel, canChange])
 
   // Page-load normalization: enforce the "one chat model at a time" invariant
   // when the chat page first mounts. Anything stacked from a prior session

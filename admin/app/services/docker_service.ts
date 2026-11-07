@@ -1046,9 +1046,9 @@ export class DockerService {
   private async _runPreinstallActions__KiwixServe(): Promise<void> {
     /**
      * At least one .zim file must be available before we can start the kiwix container.
-     * Kladez: a tiny Russian ZIM (Vikidia) shipped inside the image is copied;
-     * only if it is missing is it downloaded (our repository, then Kiwix) and
-     * checked against its SHA-256.
+     * Kladez: the starter ZIM (Russian medical Wikipedia) shipped inside the
+     * image is copied; only if it is missing is it downloaded (Kiwix, then the
+     * checked mirrors) and verified against its SHA-256.
      **/
     const filename = STARTER_ZIM.filename
     const filepath = join(process.cwd(), ZIM_STORAGE_PATH, filename)
@@ -1075,7 +1075,7 @@ export class DockerService {
             await doResumableDownloadWithRetry({
               url,
               filepath,
-              timeout: 60000,
+              timeout: 120000,
               allowedMimeTypes: ['application/x-zim', 'application/x-openzim', 'application/octet-stream'],
             })
             const { sha256File } = await import('../utils/meta4.js')

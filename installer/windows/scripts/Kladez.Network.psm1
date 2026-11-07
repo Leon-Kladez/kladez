@@ -72,5 +72,67 @@ function Remove-KladezFirewallRule {
     Remove-NetFirewallRule -DisplayName $script:FirewallRuleName -ErrorAction SilentlyContinue
 }
 
+# --- Адрес компьютера для QR-кода «Открыть на телефоне» (часть 4) ---
+# Панель живёт в Docker внутри WSL и адресов Windows не видит. При каждом запуске пишем их
+# в файл в папке библиотеки (она же /app/storage панели): .kladez-network.json.
+$script:NetworkFileName = '.kladez-network.json'
+# Виртуальные адаптеры и VPN: с телефона по ним не достучаться.
+$script:VirtualAdapter = 'Hyper-V|vEthernet|WSL|Docker|VirtualBox|VMware|VPN|TAP-|Wintun|WireGuard|OpenVPN|Tailscale|ZeroTier|Fortinet|AnyConnect|Juniper|Loopback|Bluetooth'
+
+function Test-KladezPrivateIPv4 {
+    param([AllowEmptyString()][string]$Ip = '')
+    if ($Ip -notmatch "^$script:Ipv4$") { return $false }
+    $b = @($Ip.Split('.') | ForEach-Object { [int]$_ })
+    if (@($b | Where-Object { $_ -gt 255 }).Count) { return $false }
+    ($b[0] -eq 10) -or ($b[0] -eq 172 -and $b[1] -ge 16 -and $b[1] -le 31) -or ($b[0] -eq 192 -and $b[1] -eq 168)
+}
+
+# $Adapters — как у Get-NetAdapter -Physical (ifIndex, Name, Status, PhysicalMediaType, InterfaceDescription);
+# $Addresses — как у Get-NetIPAddress -AddressFamily IPv4 (InterfaceIndex, IPAddress, AddressState).
+# Возвращает подходящие адреса: сначала Wi-Fi, потом кабель.
+function Get-KladezLanAddress {
+    param(
+        [AllowEmptyCollection()][object[]]$Adapters = @(),
+        [AllowEmptyCollection()][object[]]$Addresses = @()
+    )
+    $found = foreach ($a in $Adapters) {
+        if ("$($a.Status)" -ne 'Up') { continue }
+        if ("$($a.InterfaceDescription) $($a.Name)" -match $script:VirtualAdapter) { continue }
+        $media = "$($a.PhysicalMediaType)"
+        $kind = if ($media -match '802\.11|Wireless') { 'wifi' } elseif ($media -match '802\.3') { 'ethernet' } else { 'other' }
+        foreach ($ip in @($Addresses | Where-Object { $_.InterfaceIndex -eq $a.ifIndex })) {
+            if ($ip.AddressState -and "$($ip.AddressState)" -ne 'Preferred') { continue }
+            if (-not (Test-KladezPrivateIPv4 -Ip "$($ip.IPAddress)")) { continue }
+            [pscustomobject]@{ ip = "$($ip.IPAddress)"; kind = $kind; name = "$($a.Name)" }
+        }
+    }
+    $order = @{ wifi = 0; ethernet = 1; other = 2 }
+    @($found | Sort-Object -Property @{ Expression = { $order[$_.kind] } }, ip -Unique)
+}
+
+function ConvertTo-KladezNetworkJson {
+    param(
+        [AllowEmptyCollection()][object[]]$Addresses = @(),
+        [Parameter(Mandatory)][int]$AdminPort,
+        [datetime]$Now = (Get-Date)
+    )
+    ConvertTo-Json -Depth 4 -InputObject ([ordered]@{
+        adminPort = $AdminPort
+        updatedAt = $Now.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+        addresses = @($Addresses)
+    })
+}
+
+# Записать файл для панели (через временный файл, чтобы панель не прочла половину).
+function Write-KladezNetworkFile {
+    param([Parameter(Mandatory)][string]$LibraryDir, [Parameter(Mandatory)][string]$Json)
+    $path = Join-Path $LibraryDir $script:NetworkFileName
+    $tmp = "$path.tmp"
+    [IO.File]::WriteAllText($tmp, $Json, (New-Object System.Text.UTF8Encoding($false)))
+    Move-Item -LiteralPath $tmp -Destination $path -Force
+    $path
+}
+
 Export-ModuleMember -Function Get-KladezWslIp, ConvertFrom-KladezPortProxyShow, Get-KladezPortProxyPlan,
-    Get-KladezPortProxyRemovePlan, New-KladezFirewallRule, Remove-KladezFirewallRule
+    Get-KladezPortProxyRemovePlan, New-KladezFirewallRule, Remove-KladezFirewallRule,
+    Test-KladezPrivateIPv4, Get-KladezLanAddress, ConvertTo-KladezNetworkJson, Write-KladezNetworkFile

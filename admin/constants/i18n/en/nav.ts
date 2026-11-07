@@ -13,7 +13,7 @@ export const navEn = {
   'nav.settings.system': 'System',
   'nav.settings.advanced': 'Advanced',
   'nav.settings.apiReference': 'API Reference',
-  'nav.settings.support': 'Support the Project',
+  'nav.settings.support': 'How to help Kladez',
   'nav.settings.legal': 'Legal Notices',
   'nav.closeSidebar': 'Close sidebar',
 } as const

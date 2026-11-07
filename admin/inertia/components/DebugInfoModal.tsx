@@ -3,6 +3,7 @@ import { IconBug, IconCopy, IconCheck } from '@tabler/icons-react'
 import StyledModal from './StyledModal'
 import api from '~/lib/api'
 import { t } from '../../constants/i18n'
+import { KLADEZ_ISSUES_URL } from '../../constants/kladez'
 
 interface DebugInfoModalProps {
   open: boolean
@@ -90,7 +91,7 @@ export default function DebugInfoModal({ open, onClose }: DebugInfoModalProps) {
         </button>
 
         <a
-          href="https://github.com/Crosstalk-Solutions/project-nomad/issues"
+          href={KLADEZ_ISSUES_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-desert-green hover:underline"

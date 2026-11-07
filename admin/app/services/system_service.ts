@@ -1,3 +1,4 @@
+import { applyPhonesMayChange } from '../utils/phone_access_store.js'
 import Service from '#models/service'
 import { KLADEZ_RELEASES_API_URL } from '../../constants/kladez.js'
 import InstalledResource from '#models/installed_resource'
@@ -37,6 +38,7 @@ import { invalidateResponseStyleCache } from '../utils/response_style.js'
 import { KiwixLibraryService } from '#services/kiwix_library_service'
 import { localizeService } from '../utils/service_i18n.js'
 import { applyLocale } from '../utils/locale_store.js'
+import { invalidateUiMode } from '../utils/ui_mode_store.js'
 import { t, formatBytes } from '../../constants/i18n/index.js'
 
 @inject()
@@ -920,10 +922,16 @@ export class SystemService {
     if (key === 'ai.assistantCustomName') {
       invalidateAssistantNameCache()
     }
+    if (key === 'ui.mode' || key === 'ui.advancedHintSeen') {
+      invalidateUiMode()
+    }
     if (key === 'ui.language') {
       applyLocale(value)
       // Имя ИИ-помощника по умолчанию зависит от языка.
       invalidateAssistantNameCache()
+    }
+    if (key === 'phones.allowChanges') {
+      applyPhonesMayChange(value)
     }
     if (key === 'rag.minRelevance') {
       invalidateMinRelevanceCache()

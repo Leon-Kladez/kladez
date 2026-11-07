@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance } from 'axios'
+import type { LibraryBook } from '../../app/utils/library_summary.js'
 import {
   ListCatalogLanguagesResponse,
   ListRemoteZimFilesResponse,
@@ -20,6 +21,19 @@ import type { ChatSource } from '../../types/chat'
 import { chatStreamErrorMessage } from './chat_stream.js'
 import { t } from '../../constants/i18n/index.js'
 import { errorText } from './error_text.js'
+
+export type PhonesInfo = {
+  device: { isComputer: boolean; canChange: boolean }
+  allowChanges: boolean
+  seenFrom: string | null
+  addresses: Array<{
+    ip: string
+    kind: 'wifi' | 'ethernet' | 'other'
+    name: string
+    url: string
+    qr: { size: number; path: string }
+  }>
+}
 
 type OllamaChatRequestWithImages = OllamaChatRequest & { images?: File[] }
 
@@ -801,6 +815,17 @@ class API {
     })()
   }
 
+  /** Kladez: скачать готовый набор («Аптечка / Библиотека / Всё»). */
+  async installBundle(id: string) {
+    return catchInternal(async () => {
+      const response = await this.client.post<{ success: boolean; message?: string }>(
+        '/easy-setup/bundles/install',
+        { id }
+      )
+      return response.data
+    })()
+  }
+
   async listCuratedCategories() {
     return catchInternal(async () => {
       const response = await this.client.get<CategoryWithStatus[]>('/easy-setup/curated-categories')
@@ -949,6 +974,14 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.delete<{ message: string }>(`/zim/${filename}`)
       return response.data
+    })()
+  }
+
+  /** Kladez: «Мои книги» — книги из библиотеки Kiwix. */
+  async listLibraryBooks() {
+    return catchInternal(async () => {
+      const response = await this.client.get<{ books: LibraryBook[] }>('/zim/library-books')
+      return response.data.books
     })()
   }
 
@@ -1249,6 +1282,14 @@ class API {
       const response = await this.client.delete<{ success: boolean }>('/system/services/links', {
         data: { service_name },
       })
+      return response.data
+    })()
+  }
+
+  /** «Кладезъ»: адреса компьютера в домашней сети с QR-кодами. */
+  async getPhonesInfo() {
+    return catchInternal(async () => {
+      const response = await this.client.get<PhonesInfo>('/phones/info')
       return response.data
     })()
   }

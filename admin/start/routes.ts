@@ -18,6 +18,7 @@ import MapsController from '#controllers/maps_controller'
 import NomadMdController from '#controllers/nomad_md_controller'
 import OllamaController from '#controllers/ollama_controller'
 import OpenApiController from '#controllers/openapi_controller'
+import PhonesController from '#controllers/phones_controller'
 import RagController from '#controllers/rag_controller'
 import SettingsController from '#controllers/settings_controller'
 import SupplyDepotController from '#controllers/supply_depot_controller'
@@ -98,6 +99,9 @@ transmit.registerRoutes()
 
 router.get('/', [HomeController, 'index'])
 router.get('/home', [HomeController, 'home'])
+router.get('/library', [HomeController, 'library'])
+// Старый адрес «Скачать знания» — теперь часть «Библиотеки».
+router.get('/knowledge', ({ response }) => response.redirect().toPath('/library#add'))
 router.on('/about').renderInertia('about')
 router.get('/chat', [ChatsController, 'inertia'])
 router.get('/maps', [MapsController, 'index'])
@@ -159,6 +163,7 @@ router
     router.get('/benchmark', [SettingsController, 'benchmark'])
     router.get('/support', [SettingsController, 'support'])
     router.get('/advanced', [SettingsController, 'advanced'])
+    router.get('/phones', [PhonesController, 'settings'])
   })
   .prefix('/settings')
 
@@ -322,6 +327,10 @@ documented(
 // Self-generating API docs: OpenAPI spec + Scalar UI. Registered top-level so
 // they stay clear of the `/docs/:slug` markdown catch-all above. The Scalar
 // bundle is served from this app (not a CDN) for offline appliances.
+documented(router.get('/api/phones/info', [PhonesController, 'info']), {
+  summary: 'Addresses of this computer in the home network, with QR codes, and whether this device may change things',
+  tags: ['system'],
+})
 router.get('/api/openapi.json', [OpenApiController, 'spec'])
 router.get('/reference', [OpenApiController, 'reference'])
 router.get('/reference/assets/standalone.js', [OpenApiController, 'standalone'])
@@ -775,6 +784,11 @@ router
       summary: 'Browse a ZIM library',
       tags: ['zim'],
       query: browseLibraryValidator,
+    })
+
+    documented(router.get('/library-books', [ZimController, 'libraryBooks']), {
+      summary: 'List books in the Kiwix library (Kladez «My books»)',
+      tags: ['zim'],
     })
 
     documented(router.post('/rescan-library', [ZimController, 'rescanLibrary']), {

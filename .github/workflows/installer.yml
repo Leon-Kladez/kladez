@@ -51,7 +51,8 @@ jobs:
       # в images.lock для них стоят нули вместо отпечатка: настоящий Id подставляется здесь.
       - name: Образы admin и updater из этого репозитория
         run: |
-          docker build -t "ghcr.io/leon-kladez/kladez:${VERSION}" .
+          # VERSION — номер в подвале панели («Кладезъ 0.1.5»); без него образ показывал бы «dev».
+          docker build --build-arg VERSION="${VERSION}" -t "ghcr.io/leon-kladez/kladez:${VERSION}" .
           docker build -t "ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}" install/sidecar-updater
           id=$(docker image inspect -f '{{.Id}}' "ghcr.io/leon-kladez/kladez:${VERSION}")
           uid=$(docker image inspect -f '{{.Id}}' "ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}")

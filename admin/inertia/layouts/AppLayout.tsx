@@ -9,6 +9,8 @@ import { IconArrowLeft } from '@tabler/icons-react'
 import classNames from 'classnames'
 import KladezLogo from '~/components/KladezLogo'
 import { t } from '../../constants/i18n'
+import PhoneReadOnlyBanner from '~/components/phones/PhoneReadOnlyBanner'
+import ModeSwitch from '~/components/mode/ModeSwitch'
 
 export default function AppLayout({
   children,
@@ -27,6 +29,10 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* «Кладезъ»: на телефоне — «изменять можно только на компьютере». Над всем остальным,
+          чтобы не попасть под «На главную» (у неё absolute-позиция внутри обёртки ниже). */}
+      <PhoneReadOnlyBanner />
+      <div className="relative flex-1 flex flex-col">
       {
         window.location.pathname !== '/home' && (
           <Link
@@ -47,9 +53,20 @@ export default function AppLayout({
         )}
         onClick={() => router.visit('/home')}
       >
-        <h1>
-          <KladezLogo compact={compact} />
-        </h1>
+        {/* «Кладезъ»: на главной по бокам от логотипа — «Обычный» / «Продвинутый». */}
+        {!compact && window.location.pathname === '/home' ? (
+          <ModeSwitch
+            logo={
+              <h1>
+                <KladezLogo />
+              </h1>
+            }
+          />
+        ) : (
+          <h1>
+            <KladezLogo compact={compact} />
+          </h1>
+        )}
       </div>
       <hr className={
         classNames(
@@ -58,6 +75,7 @@ export default function AppLayout({
         )} />
       <div className="flex-1 w-full bg-desert">{children}</div>
       <Footer />
+      </div>
 
       {aiAssistantInstalled && (
         <>

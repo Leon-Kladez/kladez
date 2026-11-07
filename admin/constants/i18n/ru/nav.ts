@@ -15,7 +15,7 @@ export const navRu: Record<keyof typeof navEn, string> = {
   'nav.settings.system': 'Система',
   'nav.settings.advanced': 'Дополнительно',
   'nav.settings.apiReference': 'Описание API',
-  'nav.settings.support': 'Поддержать проект',
+  'nav.settings.support': 'Как помочь «Кладезъ»',
   'nav.settings.legal': 'Правовая информация',
   'nav.closeSidebar': 'Закрыть меню',
 }

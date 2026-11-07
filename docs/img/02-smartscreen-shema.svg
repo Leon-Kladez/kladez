@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" role="img" aria-label="Схема окна SmartScreen: сначала нажмите Подробнее, затем кнопку Выполнить в любом случае">
+  <rect x="10" y="10" width="740" height="310" fill="#1f5fa8"/>
+  <g font-family="Segoe UI, Arial" fill="#fff">
+    <text x="40" y="70" font-size="30">Windows защитила ваш компьютер</text>
+    <text x="40" y="120" font-size="19">Фильтр SmartScreen Microsoft Defender предотвратил запуск</text>
+    <text x="40" y="146" font-size="19">неопознанного приложения…</text>
+    <text x="40" y="196" font-size="20" text-decoration="underline">Подробнее</text>
+  </g>
+  <rect x="30" y="172" width="130" height="34" fill="none" stroke="#ffd34d" stroke-width="4"/>
+  <text x="175" y="196" font-size="20" fill="#ffd34d" font-family="Segoe UI, Arial">← 1. сначала сюда</text>
+  <rect x="380" y="250" width="200" height="44" fill="none" stroke="#fff" stroke-width="2"/>
+  <text x="480" y="279" font-size="18" fill="#fff" text-anchor="middle" font-family="Segoe UI, Arial">Выполнить в любом случае</text>
+  <rect x="374" y="244" width="212" height="56" fill="none" stroke="#ffd34d" stroke-width="4"/>
+  <rect x="600" y="250" width="130" height="44" fill="#fff"/>
+  <text x="665" y="279" font-size="18" fill="#1f5fa8" text-anchor="middle" font-family="Segoe UI, Arial">Не выполнять</text>
+  <text x="250" y="279" font-size="20" fill="#ffd34d" text-anchor="middle" font-family="Segoe UI, Arial">2. потом сюда →</text>
+</svg>

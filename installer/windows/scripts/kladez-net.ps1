@@ -27,6 +27,17 @@ try {
         Write-NetLog "netsh $($cmd -join ' ') → $($r.ExitCode)"
     }
     Write-NetLog "ok: $ip, ports $($ports -join ','), changes: $($plan.Count)"
+    # Адреса компьютера в домашней сети — панели для QR-кода «Открыть на телефоне». Не вышло — телефоны
+    # всё равно работают, просто без QR-кода, поэтому только пишем в журнал.
+    try {
+        $lan = @(Get-KladezLanAddress -Adapters @(Get-NetAdapter -Physical -ErrorAction Stop) `
+            -Addresses @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop))
+        $json = ConvertTo-KladezNetworkJson -Addresses $lan -AdminPort ([int]$ini['AdminPort'])
+        $file = Write-KladezNetworkFile -LibraryDir $ini['LibraryDir'] -Json $json
+        Write-NetLog "lan: $(@($lan | ForEach-Object { $_.ip }) -join ', ') → $file"
+    } catch {
+        Write-NetLog "lan ERROR: $($_.Exception.Message)"
+    }
 } catch {
     Write-NetLog "ERROR: $($_.Exception.Message)"
     exit 1

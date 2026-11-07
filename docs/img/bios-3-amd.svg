@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" role="img" aria-label="Схема экрана BIOS для процессора AMD: строка SVM Mode, значение нужно поменять на Enabled">
+  <rect x="10" y="10" width="740" height="230" fill="#1d1d1d"/>
+  <g font-family="Consolas, monospace" font-size="20">
+    <text x="30" y="46" fill="#ff8a3d">Advanced\CPU Configuration</text>
+    <text x="40" y="92" fill="#ddd">Core Performance Boost</text><text x="520" y="92" fill="#ddd">[Auto]</text>
+    <rect x="28" y="112" width="704" height="38" fill="#ffd34d"/>
+    <text x="40" y="138" fill="#000" font-weight="bold">SVM Mode</text><text x="520" y="138" fill="#000" font-weight="bold">[Disabled]</text>
+    <text x="40" y="184" fill="#ddd">SMT Mode</text><text x="520" y="184" fill="#ddd">[Auto]</text>
+  </g>
+  <text x="380" y="226" fill="#ffd34d" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">У AMD строка называется SVM Mode (или AMD-V)</text>
+</svg>

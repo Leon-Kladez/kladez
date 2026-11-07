@@ -84,3 +84,66 @@ Describe 'New-KladezFirewallRule' {
         Should -Invoke -ModuleName Kladez.Network Set-NetFirewallRule -Times 1 -Exactly -ParameterFilter { ($LocalPort -join ',') -eq '8180,8190' }
     }
 }
+
+Describe 'Test-KladezPrivateIPv4' {
+    It 'home ranges' {
+        Test-KladezPrivateIPv4 -Ip '192.168.1.37' | Should -BeTrue
+        Test-KladezPrivateIPv4 -Ip '10.0.0.5' | Should -BeTrue
+        Test-KladezPrivateIPv4 -Ip '172.20.1.1' | Should -BeTrue
+    }
+    It 'not home' {
+        Test-KladezPrivateIPv4 -Ip '8.8.8.8' | Should -BeFalse
+        Test-KladezPrivateIPv4 -Ip '169.254.10.1' | Should -BeFalse
+        Test-KladezPrivateIPv4 -Ip '172.32.0.1' | Should -BeFalse
+        Test-KladezPrivateIPv4 -Ip '192.168.1.300' | Should -BeFalse
+        Test-KladezPrivateIPv4 -Ip '' | Should -BeFalse
+    }
+}
+
+Describe 'Get-KladezLanAddress' {
+    BeforeAll {
+        function NA($idx, $name, $media, $desc, $status = 'Up') {
+            [pscustomobject]@{ ifIndex = $idx; Name = $name; Status = $status; PhysicalMediaType = $media; InterfaceDescription = $desc }
+        }
+        function IP($idx, $ip, $state = 'Preferred') { [pscustomobject]@{ InterfaceIndex = $idx; IPAddress = $ip; AddressState = $state } }
+    }
+    It 'Wi-Fi first, then cable; skips VPN, disconnected, APIPA and public' {
+        $adapters = @(
+            (NA 3 'Ethernet' '802.3' 'Realtek PCIe GbE Family Controller'),
+            (NA 7 'Беспроводная сеть' 'Native 802.11' 'Intel(R) Wi-Fi 6 AX201'),
+            (NA 9 'VPN' '802.3' 'TAP-Windows Adapter V9'),
+            (NA 11 'Ethernet 2' '802.3' 'Intel(R) Ethernet' 'Disconnected')
+        )
+        $ips = @((IP 3 '192.168.0.105'), (IP 7 '192.168.1.37'), (IP 7 '169.254.3.3'), (IP 9 '10.8.0.2'),
+            (IP 11 '192.168.5.5'), (IP 3 '85.1.2.3'), (IP 3 '192.168.0.106' 'Tentative'))
+        $r = @(Get-KladezLanAddress -Adapters $adapters -Addresses $ips)
+        $r.Count | Should -Be 2
+        $r[0].ip | Should -Be '192.168.1.37'; $r[0].kind | Should -Be 'wifi'; $r[0].name | Should -Be 'Беспроводная сеть'
+        $r[1].ip | Should -Be '192.168.0.105'; $r[1].kind | Should -Be 'ethernet'
+    }
+    It 'nothing → empty' { @(Get-KladezLanAddress -Adapters @() -Addresses @()).Count | Should -Be 0 }
+}
+
+Describe 'ConvertTo-KladezNetworkJson / Write-KladezNetworkFile' {
+    It 'one address stays an array; file is UTF-8 without BOM' {
+        $one = @([pscustomobject]@{ ip = '192.168.1.37'; kind = 'wifi'; name = 'Беспроводная сеть' })
+        $json = ConvertTo-KladezNetworkJson -Addresses $one -AdminPort 8080 -Now ([datetime]'2026-11-07T10:00:00Z')
+        $dir = Join-Path ([IO.Path]::GetTempPath()) ("kladez-net-" + [guid]::NewGuid())
+        New-Item -ItemType Directory -Path $dir | Out-Null
+        try {
+            $path = Write-KladezNetworkFile -LibraryDir $dir -Json $json
+            Split-Path -Leaf $path | Should -Be '.kladez-network.json'
+            $bytes = [IO.File]::ReadAllBytes($path)
+            $bytes[0] | Should -Not -Be 0xEF
+            $data = [IO.File]::ReadAllText($path) | ConvertFrom-Json
+            $data.adminPort | Should -Be 8080
+            @($data.addresses).Count | Should -Be 1
+            $data.addresses[0].name | Should -Be 'Беспроводная сеть'
+            ([IO.File]::ReadAllText($path)) | Should -Match '"addresses":\s*\['
+            Test-Path "$path.tmp" | Should -BeFalse
+        } finally { Remove-Item -Recurse -Force $dir }
+    }
+    It 'no addresses → empty array' {
+        (ConvertTo-KladezNetworkJson -Addresses @() -AdminPort 8080) | Should -Match '"addresses":\s*\[\s*\]'
+    }
+}

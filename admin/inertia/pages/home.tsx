@@ -28,6 +28,10 @@ import { IconPlus, IconPencil, IconTrash, IconExternalLink } from '@tabler/icons
 import { useState } from 'react'
 import { linkTileColor } from '../../constants/link_tile_colors'
 import { t } from '../../constants/i18n'
+import OpenOnPhone from '~/components/phones/OpenOnPhone'
+import { useDevice } from '~/hooks/useDevice'
+import { useUiMode } from '~/hooks/useUiMode'
+import SimpleHome, { libraryStats, type LibrarySummary } from '~/components/mode/SimpleHome'
 
 // Maps is a Core Capability (display_order: 4)
 const MAPS_ITEM = {
@@ -110,6 +114,8 @@ interface DashboardItem {
   poweredBy: string | null
   /** Set only for user-added link tiles, which render differently and can be edited. */
   linkTile?: ServiceSlim
+  /** «Кладезъ»: карточка библиотеки Kiwix — счётчик книг и кнопка «Добавить книги». */
+  isLibrary?: boolean
 }
 
 export default function Home(props: {
@@ -120,12 +126,16 @@ export default function Home(props: {
   // installing (curated Medicine tier). Gates the two medical-reference tiles
   // below so they only appear once the data exists.
   drugReferenceInstalled: boolean
+  library?: LibrarySummary
 }) {
   const items: DashboardItem[] = []
   const updateInfo = useUpdateAvailable();
   const rerunBanner = useBenchmarkRerunBanner()
   const queryClient = useQueryClient()
   const { aiAssistantName } = usePage<{ aiAssistantName: string }>().props
+  const { isComputer, canChange } = useDevice()
+  const { isSimple } = useUiMode()
+  const library: LibrarySummary = props.library ?? { books: 0, articles: 0, nearlyEmpty: false }
 
   // Link tile management. `editingTile` null with the modal open means "create".
   const [linkModalOpen, setLinkModalOpen] = useState(false)
@@ -187,6 +197,7 @@ export default function Home(props: {
         installed: service.installed,
         displayOrder: service.display_order ?? 100,
         poweredBy: service.powered_by ?? null,
+        isLibrary: service.service_name === SERVICE_NAMES.KIWIX,
       })
     })
 
@@ -266,6 +277,17 @@ export default function Home(props: {
           </div>
         )
       }
+      {isSimple ? (
+        <SimpleHome
+          services={props.system.services}
+          library={library}
+          drugReferenceInstalled={props.drugReferenceInstalled}
+          aiAssistantName={aiAssistantName}
+          isComputer={isComputer}
+          canChange={canChange}
+        />
+      ) : (
+      <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {items.map((item) => {
           const isEasySetup = item.to === '/easy-setup'
@@ -311,8 +333,30 @@ export default function Home(props: {
               <h3 className="font-bold text-2xl break-words hyphens-auto max-w-full">{item.label}</h3>
               {item.poweredBy && <p className="text-sm opacity-80">{t('home.poweredBy', { name: item.poweredBy })}</p>}
               <p className="xl:text-lg mt-2">{item.description}</p>
+              {item.isLibrary && library.books > 0 && (
+                <p className="text-sm opacity-90 mt-1">{libraryStats(library)}</p>
+              )}
             </div>
           )
+
+          // «Кладезъ»: Kiwix — это читалка; книги добавляются в «Скачать знания».
+          if (item.isLibrary) {
+            return (
+              <div key={item.label} className="relative">
+                <a href={item.to} target="_blank" rel="noopener noreferrer">
+                  {tileContent}
+                </a>
+                {canChange && (
+                  <Link
+                    href="/library#add"
+                    className="absolute bottom-2 right-2 rounded bg-surface-primary px-2 py-1 text-xs font-semibold text-text-primary shadow hover:bg-surface-secondary"
+                  >
+                    {t('library.addBooks')}
+                  </Link>
+                )}
+              </div>
+            )
+          }
 
           if (isLinkTile) {
             const tile = item.linkTile!
@@ -324,7 +368,7 @@ export default function Home(props: {
                   {tileContent}
                 </a>
 
-                {confirming ? (
+                {!canChange ? null : confirming ? (
                   <div className="absolute top-2 right-2 flex items-center gap-1">
                     <button
                       type="button"
@@ -382,6 +426,7 @@ export default function Home(props: {
         })}
 
         {/* Add-a-link affordance, last in the grid so it never displaces an app. */}
+        {canChange && (
         <button
           type="button"
           onClick={() => {
@@ -394,7 +439,17 @@ export default function Home(props: {
           <h3 className="font-bold text-xl mt-2">{t('linkTile.addTitle')}</h3>
           <p className="text-sm mt-1">{t('home.addLinkHint')}</p>
         </button>
+        )}
       </div>
+
+      {/* «Кладезъ»: QR-код для телефонов — только на самом компьютере. */}
+      {isComputer && (
+        <div className="px-4 pb-4">
+          <OpenOnPhone />
+        </div>
+      )}
+      </>
+      )}
 
       {linkError && (
         <div className="px-4 pb-4">

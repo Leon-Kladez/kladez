@@ -107,6 +107,10 @@ const DONE_DIRS: string[] = [
   'app/validators',
   'config/inertia.ts',
   'constants/link_tile_colors.ts',
+  // Часть 4 — телефоны в домашней сети
+  'app/middleware/phone_access_middleware.ts',
+  'app/utils/phone_access.ts',
+  'app/utils/lan_addresses.ts',
 ]
 
 test('нет зашитого английского в готовых папках', () => {

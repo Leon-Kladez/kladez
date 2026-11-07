@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import {
+  IconChevronDown,
   IconAlertTriangle,
   IconArrowRight,
   IconArrowUp,
@@ -712,16 +713,20 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
         >
           <div className="space-y-3 text-sm text-text-muted">
             <p className="font-semibold text-desert-red">{t('depot.deleteWarn')}</p>
-            <p>{t('depot.deleteBody')}</p>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={removeImage}
-                onChange={(e) => setRemoveImage(e.target.checked)}
-                className="accent-desert-red h-4 w-4 rounded"
-              />
-              <span className="text-text-muted text-xs">{t('depot.removeImage')}</span>
-            </label>
+            <p className="text-text-primary">{t('depot.removeSimple')}</p>
+            <details className="rounded border border-border-subtle px-3 py-2">
+              <summary className="cursor-pointer text-xs font-medium">{t('depot.forExperts')}</summary>
+              <p className="mt-2">{t('depot.deleteBody')}</p>
+              <label className="mt-2 flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={removeImage}
+                  onChange={(e) => setRemoveImage(e.target.checked)}
+                  className="accent-desert-red h-4 w-4 rounded"
+                />
+                <span className="text-text-muted text-xs">{t('depot.removeImage')}</span>
+              </label>
+            </details>
           </div>
         </StyledModal>
       )}
@@ -745,16 +750,20 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
         >
           <div className="space-y-3 text-sm text-text-muted">
             <p className="font-semibold text-desert-red">{t('depot.uninstallWarn')}</p>
-            <p>{t('depot.uninstallBody')}</p>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={removeImage}
-                onChange={(e) => setRemoveImage(e.target.checked)}
-                className="accent-desert-red h-4 w-4 rounded"
-              />
-              <span className="text-text-muted text-xs">{t('depot.removeImage')}</span>
-            </label>
+            <p className="text-text-primary">{t('depot.removeSimple')}</p>
+            <details className="rounded border border-border-subtle px-3 py-2">
+              <summary className="cursor-pointer text-xs font-medium">{t('depot.forExperts')}</summary>
+              <p className="mt-2">{t('depot.uninstallBody')}</p>
+              <label className="mt-2 flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={removeImage}
+                  onChange={(e) => setRemoveImage(e.target.checked)}
+                  className="accent-desert-red h-4 w-4 rounded"
+                />
+                <span className="text-text-muted text-xs">{t('depot.removeImage')}</span>
+              </label>
+            </details>
           </div>
         </StyledModal>
       )}
@@ -885,6 +894,8 @@ function AppCard({
   const isStopped = service.installed && !isRunning
   const catColor = service.category ? CATEGORY_COLORS[service.category] ?? CATEGORY_COLORS.custom : CATEGORY_COLORS.custom
   const isDropdownOpen = openDropdown === service.service_name
+  // «Кладезъ»: технические пункты меню спрятаны под «Для опытных».
+  const [showExpert, setShowExpert] = useState(false)
   // Port pill: an ui_location may carry an explicit scheme ("https:8480") — show just the port,
   // with a lock when it's served over HTTPS, rather than the raw "https:8480" string.
   const uiIsPath = !!service.ui_location && service.ui_location.startsWith('/')
@@ -1054,7 +1065,7 @@ function AppCard({
               </StyledButton>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 bottom-full mb-1 w-44 bg-surface-primary border border-surface-secondary rounded-lg shadow-xl z-20 overflow-hidden">
+                <div className="absolute right-0 bottom-full mb-1 w-60 bg-surface-primary border border-surface-secondary rounded-lg shadow-xl z-20 overflow-hidden">
                   {docLink && (
                     <a
                       href={docLink}
@@ -1067,50 +1078,7 @@ function AppCard({
                       {t('home.tiles.docs.title')}
                     </a>
                   )}
-                  {isStopped && (
-                    <DropdownItem icon={<IconPlayerPlay className="h-4 w-4" />} label={t('common.start')} onClick={onStart} />
-                  )}
-                  {isRunning && (
-                    <DropdownItem icon={<IconPlayerStop className="h-4 w-4" />} label={t('common.stop')} onClick={onStop} />
-                  )}
-                  <DropdownItem icon={<IconRefresh className="h-4 w-4" />} label={t('common.restart')} onClick={onRestart} />
-                  <DropdownItem icon={<IconFileText className="h-4 w-4" />} label={t('depot.logs')} onClick={onLogs} />
-                  <DropdownItem icon={<IconChartBar className="h-4 w-4" />} label={t('depot.stats')} onClick={onStats} />
-                  <DropdownItem icon={<IconPencil className="h-4 w-4" />} label={t('common.edit')} onClick={onEdit} />
-                  <DropdownItem icon={<IconWorld className="h-4 w-4" />} label={t('depot.setUrl')} onClick={onSetUrl} />
-                  {
-                    migrationInstructionsHref ? (
-                      <a
-                        href={migrationInstructionsHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors text-left cursor-pointer text-text-primary hover:bg-surface-secondary"
-                      >
-                        <IconBook className="h-4 w-4" />
-                        {migrationInstructionsText || t('depot.migrationInstructions')}
-                      </a>
-                    ) : (null)
-                  }
-                  {!service.is_custom && onToggleAutoUpdate ? (
-                    autoUpdateMasterEnabled ? (
-                      <DropdownItem
-                        icon={
-                          <IconClockBolt
-                            className={`h-4 w-4 ${autoUpdateEnabled ? 'text-desert-green' : ''}`}
-                          />
-                        }
-                        label={autoUpdateEnabled ? t('depot.autoUpdateLabelOn') : t('depot.autoUpdateLabelOff')}
-                        onClick={() => onToggleAutoUpdate(!autoUpdateEnabled)}
-                      />
-                    ) : (
-                      <DropdownItem
-                        icon={<IconClockBolt className="h-4 w-4" />}
-                        label={t('depot.autoUpdatesOffSettings')}
-                        onClick={() => router.visit('/settings/update')}
-                      />
-                    )
-                  ) : null}
+                  <DropdownItem icon={<IconRefresh className="h-4 w-4" />} label={t('depot.restartIfBroken')} onClick={onRestart} />
                   {service.available_update_version && !service.is_custom ? (
                     <DropdownItem
                       icon={<IconArrowUp className="h-4 w-4 text-desert-green" />}
@@ -1119,13 +1087,70 @@ function AppCard({
                     />
                   ) : null}
                   {service.is_custom ? (
-                    <DropdownItem icon={<IconCloudDownload className="h-4 w-4" />} label={t('depot.updatePull')} onClick={onUpdate} />
-                  ) : null}
-                  <DropdownItem icon={<IconRefresh className="h-4 w-4 text-desert-orange" />} label={t('apps.forceReinstall')} onClick={onReinstall} danger />
-                  {service.is_custom ? (
                     <DropdownItem icon={<IconTrash className="h-4 w-4 text-desert-red" />} label={t('common.delete')} onClick={onDelete} danger />
                   ) : (
                     <DropdownItem icon={<IconTrash className="h-4 w-4 text-desert-red" />} label={t('common.uninstall')} onClick={onUninstall} danger />
+                  )}
+                  <button
+                    type="button"
+                    aria-expanded={showExpert}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowExpert((v) => !v)
+                    }}
+                    className="flex items-center justify-between gap-2 w-full px-3 py-2 text-xs text-left cursor-pointer border-t border-surface-secondary text-text-muted hover:bg-surface-secondary"
+                  >
+                    {t('depot.forExperts')}
+                    <IconChevronDown className={`h-4 w-4 transition-transform ${showExpert ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showExpert && (
+                    <div className="bg-surface-secondary/40">
+                      {isStopped && (
+                        <DropdownItem icon={<IconPlayerPlay className="h-4 w-4" />} label={t('common.start')} onClick={onStart} />
+                      )}
+                      {isRunning && (
+                        <DropdownItem icon={<IconPlayerStop className="h-4 w-4" />} label={t('common.stop')} onClick={onStop} />
+                      )}
+                      <DropdownItem icon={<IconFileText className="h-4 w-4" />} label={t('depot.logs')} onClick={onLogs} />
+                      <DropdownItem icon={<IconChartBar className="h-4 w-4" />} label={t('depot.stats')} onClick={onStats} />
+                      <DropdownItem icon={<IconPencil className="h-4 w-4" />} label={t('common.edit')} onClick={onEdit} />
+                      <DropdownItem icon={<IconWorld className="h-4 w-4" />} label={t('depot.setUrl')} onClick={onSetUrl} />
+                      {migrationInstructionsHref ? (
+                        <a
+                          href={migrationInstructionsHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors text-left cursor-pointer text-text-primary hover:bg-surface-secondary"
+                        >
+                          <IconBook className="h-4 w-4" />
+                          {migrationInstructionsText || t('depot.migrationInstructions')}
+                        </a>
+                      ) : null}
+                      {!service.is_custom && onToggleAutoUpdate ? (
+                        autoUpdateMasterEnabled ? (
+                          <DropdownItem
+                            icon={
+                              <IconClockBolt
+                                className={`h-4 w-4 ${autoUpdateEnabled ? 'text-desert-green' : ''}`}
+                              />
+                            }
+                            label={autoUpdateEnabled ? t('depot.autoUpdateLabelOn') : t('depot.autoUpdateLabelOff')}
+                            onClick={() => onToggleAutoUpdate(!autoUpdateEnabled)}
+                          />
+                        ) : (
+                          <DropdownItem
+                            icon={<IconClockBolt className="h-4 w-4" />}
+                            label={t('depot.autoUpdatesOffSettings')}
+                            onClick={() => router.visit('/settings/update')}
+                          />
+                        )
+                      ) : null}
+                      {service.is_custom ? (
+                        <DropdownItem icon={<IconCloudDownload className="h-4 w-4" />} label={t('depot.updatePull')} onClick={onUpdate} />
+                      ) : null}
+                      <DropdownItem icon={<IconRefresh className="h-4 w-4 text-desert-orange" />} label={t('apps.forceReinstall')} onClick={onReinstall} danger />
+                    </div>
                   )}
                 </div>
               )}

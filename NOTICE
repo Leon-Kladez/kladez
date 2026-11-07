@@ -9,9 +9,10 @@ Copyright Crosstalk Solutions, LLC, распространяемого по ли
 "Project NOMAD" — название, принадлежащее его авторам; Кладезъ не является
 официальным продуктом Crosstalk Solutions.
 
-Стартовый файл install/vikidia_ru_all_nopic_2026-09.zim — «Викидия»
-(https://ru.vikidia.org), энциклопедия для детей, авторы — участники Викидии.
-Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/) и GFDL.
-Файл собран проектом Kiwix/openZIM и скачан без изменений с
-https://download.kiwix.org/zim/vikidia/vikidia_ru_all_nopic_2026-09.zim
-(SHA-256 bccae35511f9de614f72f409cda56a4153cf133fc66106d0cbc2fa747bf11e92).
+Стартовый файл библиотеки wikipedia_ru_medicine_nopic_2026-10.zim — «Медицинская Википедия»
+(статьи русской Википедии о медицине, без картинок), авторы — участники Википедии
+(https://ru.wikipedia.org). Лицензия: CC BY-SA 4.0
+(https://creativecommons.org/licenses/by-sa/4.0/). Файл собран проектом Kiwix/openZIM;
+при сборке образа скачивается без изменений с
+https://download.kiwix.org/zim/wikipedia/wikipedia_ru_medicine_nopic_2026-10.zim
+(SHA-256 8e6d2f8fcd01544dac3db5b833681ba408feaff10717d6c8966a959ee14dddb8) и встраивается в образ панели.

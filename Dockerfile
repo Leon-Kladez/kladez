@@ -38,8 +38,27 @@ COPY collections/ /collections/
 RUN npm run gen:curated-data
 RUN node ace build
 
+# Kladez: стартовый файл библиотеки — медицинская Википедия (CC BY-SA 4.0, см. NOTICE).
+# Качается при сборке с download.kiwix.org (или зеркал) и проверяется по SHA-256;
+# в репозитории его нет. Имя и сумма совпадают с STARTER_ZIM в admin/constants/kladez.ts
+# (это проверяет tests/unit/starter_zim.spec.ts).
+FROM base AS starter-zim
+ARG STARTER_ZIM_FILE=wikipedia_ru_medicine_nopic_2026-10.zim
+ARG STARTER_ZIM_SHA256=8e6d2f8fcd01544dac3db5b833681ba408feaff10717d6c8966a959ee14dddb8
+RUN set -e; mkdir -p /out; \
+    for base in https://download.kiwix.org/zim/ https://ftp.fau.de/kiwix/zim/ \
+                https://mirrors.dotsrc.org/kiwix/zim/ https://dumps.wikimedia.org/kiwix/zim/; do \
+      if curl -fL --retry 3 --connect-timeout 20 -o "/out/$STARTER_ZIM_FILE" "${base}wikipedia/$STARTER_ZIM_FILE" \
+         && echo "$STARTER_ZIM_SHA256  /out/$STARTER_ZIM_FILE" | sha256sum -c -; then break; fi; \
+      rm -f "/out/$STARTER_ZIM_FILE"; \
+    done; \
+    test -s "/out/$STARTER_ZIM_FILE"
+
 # Production stage
 FROM base
+# Номер версии для подвала панели; сборки установщика и пробные передают его через
+# --build-arg VERSION=… (.github/workflows/installer.yml, preview-admin-image.yml).
+# «dev» — только для сборки вручную при разработке.
 ARG VERSION=dev
 ARG BUILD_DATE
 ARG VCS_REF
@@ -104,8 +123,8 @@ RUN echo "{\"version\":\"${VERSION}\"}" > /app/version.json
 COPY admin/docs /app/docs
 # Kladez: built-in copy of the Russian catalog (used offline on first start)
 COPY collections-ru/ /app/collections-ru/
-# Kladez: starter ZIM for Kiwix (Vikidia ru, CC BY-SA 3.0) — no download needed
-COPY install/vikidia_ru_all_nopic_2026-09.zim /app/assets/kiwix/vikidia_ru_all_nopic_2026-09.zim
+# Kladez: стартовый файл Kiwix — медицинская Википедия (скачан в стадии starter-zim)
+COPY --from=starter-zim /out/wikipedia_ru_medicine_nopic_2026-10.zim /app/assets/kiwix/wikipedia_ru_medicine_nopic_2026-10.zim
 COPY README.md /app/README.md
 
 # Empty Calibre library, seeded into storage/books on Calibre-Web install

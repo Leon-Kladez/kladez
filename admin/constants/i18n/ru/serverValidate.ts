@@ -11,5 +11,6 @@ export const serverValidateRu: Record<keyof typeof serverValidateEn, string> = {
   'serverValidate.style': 'Стиль ответов — одно из значений: {values}.',
   'serverValidate.keepAlive': 'Время удержания модели — например «10m», «1h» или «-1», чтобы держать модель загруженной всегда.',
   'serverValidate.gfx': 'Подмена GFX — версия вида «11.0.0», «none» или пусто (тогда берётся найденное значение).',
+  'serverValidate.uiMode': 'Режим панели — одно из значений: {values}.',
   'serverValidate.language': 'Язык интерфейса — одно из значений: {values}.',
 }
