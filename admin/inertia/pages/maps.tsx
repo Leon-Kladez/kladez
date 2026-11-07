@@ -8,6 +8,7 @@ import { IconArrowLeft, IconCrosshair, IconMapPin, IconPlaneTilt } from '@tabler
 import { FileEntry } from '../../types/files'
 import Alert from '~/components/Alert'
 import { t } from '../../constants/i18n'
+import { useDevice } from '~/hooks/useDevice'
 
 type MapCommand = {
   id: number
@@ -25,6 +26,7 @@ export default function Maps(props: {
   }
 }) {
   const [isHoveringUI, setIsHoveringUI] = useState(false)
+  const { canChange } = useDevice()
 
   const [coordinateSearch, setCoordinateSearch] = useState('')
   const [mapCommand, setMapCommand] = useState<MapCommand | null>(null)
@@ -73,18 +75,19 @@ export default function Maps(props: {
       <Head title={t('home.tiles.maps.title')} />
 
       <div className="relative w-full h-screen overflow-hidden">
-        {/* Navbar */}
+        {/* Navbar + alert. На узком экране (телефон) кнопки переносятся на вторую строку. */}
+        <div className="absolute top-0 left-0 right-0 z-50 flex flex-col">
         <div
-          className="absolute top-0 left-0 right-0 z-50 flex justify-between p-4 bg-surface-secondary backdrop-blur-sm shadow-sm"
+          className="flex flex-wrap items-center justify-between gap-2 p-4 bg-surface-secondary backdrop-blur-sm shadow-sm"
           onMouseEnter={() => setIsHoveringUI(true)}
           onMouseLeave={() => setIsHoveringUI(false)}
         >
-          <Link href="/home" className="flex items-center">
-            <IconArrowLeft className="mr-2" size={24} />
-            <p className="text-lg text-text-secondary">{t('nav.backToHome')}</p>
+          <Link href="/home" className="flex items-center" aria-label={t('nav.backToHome')}>
+            <IconArrowLeft className="sm:mr-2" size={24} />
+            <p className="hidden sm:block text-lg text-text-secondary">{t('nav.backToHome')}</p>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 min-w-0 flex-1">
             <input
               type="text"
               placeholder={t('mapsPage.coordsPlaceholder')}
@@ -93,7 +96,7 @@ export default function Maps(props: {
               onKeyDown={(event) => {
                 if (event.key === 'Enter') handleCoordinateAction('fly')
               }}
-              className="w-52 rounded border border-border-default bg-surface-primary px-2 py-1 text-sm text-text-primary placeholder:text-text-muted focus:border-desert-green focus:outline-none"
+              className="w-0 flex-1 min-w-[8rem] sm:flex-none sm:w-52 rounded border border-border-default bg-surface-primary px-2 py-1 text-sm text-text-primary placeholder:text-text-muted focus:border-desert-green focus:outline-none"
             />
 
             <button
@@ -105,6 +108,7 @@ export default function Maps(props: {
               <IconPlaneTilt size={18}/>
             </button>
 
+            {canChange && (
             <button
               type="button"
               onClick={() => handleCoordinateAction('marker')}
@@ -113,6 +117,7 @@ export default function Maps(props: {
             >
               <IconMapPin size={18}/>
             </button>
+            )}
 
             <button
               type="button"
@@ -127,18 +132,21 @@ export default function Maps(props: {
               <IconCrosshair size={18}/>
             </button>
 
-            <Link href="/settings/maps" className="mr-4">
-              <StyledButton variant="primary" icon="IconSettings">
-                {t('mapsPage.manageRegions')}
-              </StyledButton>
-            </Link>
+            {canChange && (
+              <Link href="/settings/maps" className="sm:mr-4" aria-label={t('mapsPage.manageRegions')} title={t('mapsPage.manageRegions')}>
+                {/* На телефоне — только значок, чтобы панель осталась в одну строку. */}
+                <StyledButton variant="primary" icon="IconSettings">
+                  <span className="hidden sm:inline">{t('mapsPage.manageRegions')}</span>
+                </StyledButton>
+              </Link>
+            )}
           </div>
         </div>
 
         {/* Alert */}
         {alertMessage && (
           <div
-            className="absolute top-20 left-4 right-4 z-50"
+            className="mx-4 mt-4"
             onMouseEnter={() => setIsHoveringUI(true)}
             onMouseLeave={() => setIsHoveringUI(false)}
           >
@@ -156,6 +164,7 @@ export default function Maps(props: {
             />
           </div>
         )}
+        </div>
 
         {/* Map */}
 

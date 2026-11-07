@@ -6,6 +6,7 @@ export const SETTINGS_KEYS: KVStoreKey[] = [
     'ui.hasVisitedEasySetup',
     'ui.theme',
     'ui.language',
+    'phones.allowChanges',
     'system.earlyAccess',
     'system.internetStatusTestUrl',
     'ai.assistantCustomName',

@@ -50,6 +50,9 @@ export const KV_STORE_SCHEMA = {
   'ui.theme':                   'string',
   // Язык интерфейса: 'ru' | 'en'. Пусто — русский. Один на всю панель.
   'ui.language':                'string',
+  // «Кладезъ»: пускать ли телефоны в домашней сети менять настройки и ставить программы.
+  // Пусто = нет (телефоны только смотрят).
+  'phones.allowChanges':        'boolean',
   'ai.assistantCustomName':     'string',
   'gpu.type':                   'string',
   'ai.remoteOllamaUrl':         'string',

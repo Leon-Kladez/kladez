@@ -3,6 +3,7 @@ import { SystemService } from '#services/system_service'
 import { defineConfig } from '@adonisjs/inertia'
 import type { InferSharedProps } from '@adonisjs/inertia/types'
 import { getLocale, t } from '../constants/i18n/index.js'
+import { resolveDeviceAccess } from '../app/middleware/phone_access_middleware.js'
 
 let _assistantNameCache: { value: string; expiresAt: number } | null = null
 
@@ -24,6 +25,8 @@ const inertiaConfig = defineConfig({
     environment: process.env.NODE_ENV || 'production',
     // Язык уже прочитан из настроек в locale_middleware.
     locale: () => getLocale(),
+    // «Кладезъ»: компьютер или телефон, можно ли менять (телефоны по умолчанию только смотрят).
+    device: (ctx) => resolveDeviceAccess(ctx),
     aiAssistantName: async () => {
       const now = Date.now()
       if (_assistantNameCache && now < _assistantNameCache.expiresAt) {

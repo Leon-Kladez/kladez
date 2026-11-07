@@ -36,6 +36,8 @@ server.use([
  * requests with a registered route.
  */
 router.use([
+  // «Кладезъ»: телефоны только смотрят — до bodyparser, чтобы не принимать загрузки зря.
+  () => import('#middleware/phone_access_middleware'),
   () => import('@adonisjs/core/bodyparser_middleware'),
   () => import('#middleware/locale_middleware'),
   // () => import('@adonisjs/session/session_middleware'),

@@ -3,6 +3,7 @@ import {
   IconArrowBigUpLines,
   IconBox,
   IconChartBar,
+  IconDeviceMobile,
   IconCode,
   IconDashboard,
   IconFolder,
@@ -21,6 +22,7 @@ import useServiceInstalledStatus from '~/hooks/useServiceInstalledStatus'
 import useCreatorPacks from '~/hooks/useCreatorPacks'
 import { SERVICE_NAMES } from '../../constants/service_names'
 import { t } from '../../constants/i18n'
+import PhoneReadOnlyBanner from '~/components/phones/PhoneReadOnlyBanner'
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const { aiAssistantName } = usePage<{ aiAssistantName: string }>().props
@@ -51,6 +53,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       current: false,
     },
     { name: t('nav.settings.system'), href: '/settings/system', icon: IconSettings, current: false },
+    { name: t('phones.nav'), href: '/settings/phones', icon: IconDeviceMobile, current: false },
     { name: t('nav.settings.advanced'), href: '/settings/advanced', icon: IconAdjustments, current: false },
     { name: t('nav.settings.apiReference'), href: '/reference', icon: IconCode, current: false },
     { name: t('nav.settings.support'), href: '/settings/support', icon: IconHeart, current: false },
@@ -58,9 +61,15 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   ]
 
   return (
-    <div className="min-h-screen flex flex-row bg-surface-secondary/90">
-      <StyledSidebar title={t('nav.settings.title')} items={navigation} />
-      {children}
+    <div className="min-h-screen bg-surface-secondary/90">
+      <div className="xl:pl-72">
+        {/* Слева на телефоне — кнопка меню настроек. */}
+        <PhoneReadOnlyBanner className="pl-16 xl:pl-4" />
+      </div>
+      <div className="flex flex-row">
+        <StyledSidebar title={t('nav.settings.title')} items={navigation} />
+        {children}
+      </div>
     </div>
   )
 }

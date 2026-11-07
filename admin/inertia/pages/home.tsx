@@ -28,6 +28,8 @@ import { IconPlus, IconPencil, IconTrash, IconExternalLink } from '@tabler/icons
 import { useState } from 'react'
 import { linkTileColor } from '../../constants/link_tile_colors'
 import { t } from '../../constants/i18n'
+import OpenOnPhone from '~/components/phones/OpenOnPhone'
+import { useDevice } from '~/hooks/useDevice'
 
 // Maps is a Core Capability (display_order: 4)
 const MAPS_ITEM = {
@@ -126,6 +128,7 @@ export default function Home(props: {
   const rerunBanner = useBenchmarkRerunBanner()
   const queryClient = useQueryClient()
   const { aiAssistantName } = usePage<{ aiAssistantName: string }>().props
+  const { isComputer, canChange } = useDevice()
 
   // Link tile management. `editingTile` null with the modal open means "create".
   const [linkModalOpen, setLinkModalOpen] = useState(false)
@@ -324,7 +327,7 @@ export default function Home(props: {
                   {tileContent}
                 </a>
 
-                {confirming ? (
+                {!canChange ? null : confirming ? (
                   <div className="absolute top-2 right-2 flex items-center gap-1">
                     <button
                       type="button"
@@ -382,6 +385,7 @@ export default function Home(props: {
         })}
 
         {/* Add-a-link affordance, last in the grid so it never displaces an app. */}
+        {canChange && (
         <button
           type="button"
           onClick={() => {
@@ -394,7 +398,15 @@ export default function Home(props: {
           <h3 className="font-bold text-xl mt-2">{t('linkTile.addTitle')}</h3>
           <p className="text-sm mt-1">{t('home.addLinkHint')}</p>
         </button>
+        )}
       </div>
+
+      {/* «Кладезъ»: QR-код для телефонов — только на самом компьютере. */}
+      {isComputer && (
+        <div className="px-4 pb-4">
+          <OpenOnPhone />
+        </div>
+      )}
 
       {linkError && (
         <div className="px-4 pb-4">

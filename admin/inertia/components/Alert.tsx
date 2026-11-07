@@ -168,12 +168,13 @@ export default function Alert({
 
   return (
     <div {...props} className={classNames(getVariantStyles(), 'p-5', props.className)} role="alert">
-      <div className="flex gap-4 items-center">
+      {/* flex-wrap: на узком экране (телефон) кнопка уходит под текст, а не сжимает его в столбик. */}
+      <div className="flex flex-wrap gap-4 items-center">
         <div className="flex-shrink-0 mt-0.5">
           <DynamicIcon icon={icon || getDefaultIcon()} className={classNames(getIconColor(), 'size-6')} />
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-[12rem]">
           <h3 className={classNames('text-base font-semibold leading-tight', getTitleColor())}>{title}</h3>
           {message && (
             <div className={classNames('mt-2 text-sm leading-relaxed', getMessageColor())}>

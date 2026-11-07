@@ -13,6 +13,7 @@ import { isRelevanceCheckEnabled } from '../utils/relevance_judge.js'
 import { parseResponseStyle } from '../utils/sampler.js'
 import { RAG_MIN_FINAL_SCORE } from '../../constants/ollama.js'
 import { t } from '../../constants/i18n/index.js'
+import { PHONE_READ_ONLY_CODE } from '../utils/phone_access.js'
 
 @inject()
 export default class SettingsController {
@@ -177,8 +178,13 @@ export default class SettingsController {
     return response.status(200).send({ key, value });
   }
 
-  async updateSetting({ request, response }: HttpContext) {
+  async updateSetting({ request, response, device }: HttpContext) {
     const reqData = await request.validateUsing(updateSettingSchema)
+    // «Кладезъ»: пускать ли телефоны менять — решают только на самом компьютере.
+    if (reqData.key === 'phones.allowChanges' && device && !device.isComputer) {
+      const message = t('phones.settings.computerOnly')
+      return response.status(403).send({ success: false, code: PHONE_READ_ONLY_CODE, message })
+    }
     const valueError = validateSettingValue(reqData.key, reqData.value)
     if (valueError) {
       return response.status(422).send({ success: false, message: valueError })
