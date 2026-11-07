@@ -1,6 +1,7 @@
-﻿; «Кладезъ» — установщик для Windows 10 (2004+) и 11 (спек Б4, план Задача 9).
-; Inno Setup 6.3+. Сборка: installer\build.ps1 (передаёт AppVersion, RepoRoot, Dist, Vendor, UpdateOnly).
-; Тонкий слой: вся логика — в PowerShell-модулях installer\windows\scripts (покрыты тестами Pester).
+﻿; «Кладезъ» — установщик для Windows 10 (2004+) и 11 (спек Б4, план Задача 9; правки 0.1.4).
+; Inno Setup 6.3+ (CI: 6.7). Сборка: installer\build.ps1 (передаёт AppVersion, RepoRoot, Dist, Vendor, UpdateOnly).
+; Тонкий слой: вся логика шагов — в PowerShell-модулях installer\windows\scripts (покрыты тестами Pester).
+; Pascal Script: каждая процедура объявлена выше места вызова (это проверяет тест Build.Tests.ps1).
 
 #define AppIdGuid "{{4144DCC6-736C-4B79-B6A7-D0992AF26718}"
 #define AppIdRaw "{4144DCC6-736C-4B79-B6A7-D0992AF26718}"
@@ -25,8 +26,11 @@ AppName=Кладезъ
 AppVersion={#AppVersion}
 AppVerName=Кладезъ {#AppVersion}
 AppPublisher=Проект «Кладезъ» (основано на Project NOMAD, Crosstalk Solutions)
-DefaultDirName={autopf}\Kladez
-DisableDirPage=yes
+; Папку программы выбирает человек («Обзор…»); по умолчанию — на диске с наибольшим свободным местом.
+; auto: страница показывается при первой установке и скрывается при обновлении (папка уже известна).
+DefaultDirName={code:DefaultAppDir}
+DisableDirPage=auto
+DirExistsWarning=no
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
@@ -36,7 +40,8 @@ WizardStyle=modern
 SetupIconFile={#RepoRoot}\installer\windows\launcher\kladez.ico
 UninstallDisplayIcon={app}\Kladez.exe
 UninstallDisplayName=Кладезъ
-InfoBeforeFile={#RepoRoot}\installer\windows\about-ru.txt
+; Соглашение: «Я принимаю» становится доступным только после прокрутки текста до конца (см. [Code]).
+LicenseFile={#RepoRoot}\installer\windows\agreement-ru.txt
 OutputDir={#Dist}
 #ifdef UpdateOnly
 OutputBaseFilename=Кладезъ-обновление-{#AppVersion}
@@ -92,16 +97,51 @@ Type: dirifempty; Name: "{app}\payload\linux"
 Type: dirifempty; Name: "{app}\payload"
 
 [Code]
+type
+  { user32 SCROLLINFO; all fields are 32-bit (Setup itself is a 32-bit process). }
+  TKladezScrollInfo = record
+    cbSize: LongWord;
+    fMask: LongWord;
+    nMin: Integer;
+    nMax: Integer;
+    nPage: LongWord;
+    nPos: Integer;
+    nTrackPos: Integer;
+  end;
+
 const
   RunOnceKey = 'Software\Microsoft\Windows\CurrentVersion\RunOnce';
+  KZ_SB_VERT = 1;
+  KZ_SIF_ALL = 23;            { SIF_RANGE or SIF_PAGE or SIF_POS or SIF_TRACKPOS }
+  KZ_SCROLLINFO_SIZE = 28;
+  { Free space needed: system 10 GB + set (same numbers as Kladez.Checks.psm1). }
+  KZ_SET_APTECHKA_GB = 15;
+  KZ_SET_BIBLIOTEKA_GB = 35;
+  KZ_SET_VSE_GB = 80;
 
 var
-  DrivePage: TInputOptionWizardPage;
-  DriveLetters: TArrayOfString;
-  DriveFits: TArrayOfString;
+  LibPage: TInputDirWizardPage;
+  LibInfo: TNewStaticText;
+  LibTouched: Boolean;
+  DriveLetters, DriveFits, DriveFree: TArrayOfString;
   DriveDefault: Integer;
-  WindowsPathKind, AdminPort, KiwixPort, ResumeDrive: String;
+  WindowsPathKind, AdminPort, KiwixPort, ResumeLibDir, ExistingLibDir: String;
   IsUpgrade, IsResume, NeedsReboot, Finished, InstallFailed, RemoveLibraryChoice: Boolean;
+  LicenseTimer, StepTimer: LongWord;
+  StepNumber, StepTotal, StepStartPct, StepWeight, StepExpectedSec: Integer;
+  StepStartTick: LongWord;
+  StepText, StepHint: String;
+
+function KzGetScrollInfo(Wnd: HWND; BarFlag: Integer; var ScrollInfo: TKladezScrollInfo): BOOL;
+  external 'GetScrollInfo@user32.dll stdcall';
+function KzSetTimer(Wnd: LongWord; nIDEvent, uElapse: LongWord; lpTimerFunc: LongWord): LongWord;
+  external 'SetTimer@user32.dll stdcall';
+function KzKillTimer(Wnd: LongWord; uIDEvent: LongWord): BOOL;
+  external 'KillTimer@user32.dll stdcall';
+function KzGetTickCount: LongWord;
+  external 'GetTickCount@kernel32.dll stdcall';
+
+{ ── Small helpers ─────────────────────────────────────────────────────────── }
 
 function HasParam(const Name: String): Boolean;
 var
@@ -146,7 +186,8 @@ begin
 end;
 
 { AsOriginalUser: WSL distros belong to a user, so import/first run/upgrade must run as the person
-  who started the installer, not as the elevated administrator account. }
+  who started the installer, not as the elevated administrator account. Such a process cannot write
+  into Setup's protected temporary folder: anything it writes goes to ProgramData\Kladez\logs (users-modify). }
 function RunScript(const Script, Params: String; AsOriginalUser: Boolean): Integer;
 var
   Code: Integer;
@@ -162,9 +203,14 @@ begin
     Result := 1;
 end;
 
+function LogDir: String;
+begin
+  Result := ExpandConstant('{commonappdata}\Kladez\logs');
+end;
+
 function LogPath: String;
 begin
-  Result := ExpandConstant('{commonappdata}\Kladez\logs\setup.log');
+  Result := LogDir + '\setup.log';
 end;
 
 function IniPath: String;
@@ -196,15 +242,114 @@ begin
   ShellExec('open', Target, '', '', SW_SHOWNORMAL, ewNoWait, Code);
 end;
 
+{ ── Drives and folders ───────────────────────────────────────────────────── }
+
+function DriveIndex(const Letter: String): Integer;
+var
+  I: Integer;
+begin
+  Result := -1;
+  for I := 0 to GetArrayLength(DriveLetters) - 1 do
+    if CompareText(DriveLetters[I], Letter) = 0 then
+      Result := I;
+end;
+
+{ 'D:\Мои файлы\library' → 'D'; '' when the path does not start with a drive letter. }
+function PathDrive(const Path: String): String;
+begin
+  Result := '';
+  if (Length(Path) >= 3) and (Path[2] = ':') and (Path[3] = '\') then
+    Result := Uppercase(Copy(Path, 1, 1));
+end;
+
+function FitsText(const Fits: String): String;
+begin
+  Result := '';
+  if Pos('aptechka', Fits) > 0 then Result := '«Аптечка»';
+  if Pos('biblioteka', Fits) > 0 then Result := Result + ', «Библиотека»';
+  if Pos('vse', Fits) > 0 then Result := Result + ', «Всё»';
+  if Result = '' then
+    Result := 'места не хватит даже для «Аптечки» (нужно ' + IntToStr(KZ_SET_APTECHKA_GB) + ' ГБ)'
+  else
+    Result := 'хватит на: ' + Result;
+end;
+
+function LibDriveInfo(const Path: String): String;
+var
+  I: Integer;
+begin
+  I := DriveIndex(PathDrive(Path));
+  if PathDrive(Path) = '' then
+    Result := 'Укажите полный путь к папке, например D:\Kladez\library.'
+  else if I < 0 then
+    Result := 'Этот диск не подходит: нужен встроенный диск компьютера (не флешка и не внешний диск) ' +
+      'с файловой системой NTFS.'
+  else
+    Result := 'Диск ' + DriveLetters[I] + ': — свободно ' + DriveFree[I] + ' ГБ — ' + FitsText(DriveFits[I]) + '.' + #13#10 +
+      'Наборы: «Аптечка» около 5 ГБ, «Библиотека» около 25 ГБ, «Всё» 70 ГБ и больше. ' +
+      'Служебная часть программы (около 10 ГБ) будет на этом же диске.';
+end;
+
+{ [Setup] DefaultDirName: the roomiest suitable drive, or the drive of an existing library. }
+function DefaultAppDir(Param: String): String;
+begin
+  if GetArrayLength(DriveLetters) > 0 then
+    Result := DriveLetters[DriveDefault] + ':\Kladez'
+  else
+    Result := ExpandConstant('{autopf}\Kladez');
+end;
+
+function DefaultLibDir: String;
+var
+  D: String;
+begin
+  if ExistingLibDir <> '' then
+  begin
+    Result := ExistingLibDir;
+    Exit;
+  end;
+  D := PathDrive(WizardDirValue);
+  if (D = '') or (DriveIndex(D) < 0) then
+  begin
+    if GetArrayLength(DriveLetters) > 0 then
+      D := DriveLetters[DriveDefault]
+    else
+      D := 'C';
+  end;
+  Result := D + ':\Kladez\library';
+end;
+
+function SelectedLibDir: String;
+begin
+  if IsResume and (ResumeLibDir <> '') then
+    Result := ResumeLibDir
+  else
+    Result := Trim(LibPage.Values[0]);
+  while (Length(Result) > 3) and (Result[Length(Result)] = '\') do
+    Result := Copy(Result, 1, Length(Result) - 1);
+end;
+
+procedure LibDirChanged(Sender: TObject);
+begin
+  LibTouched := True;
+  LibInfo.Caption := LibDriveInfo(Trim(LibPage.Values[0]));
+end;
+
+{ ── Setup start: checks ───────────────────────────────────────────────────── }
+
 function InitializeSetup: Boolean;
 var
   Lines: TArrayOfString;
   I, Code, N: Integer;
-  Kind: String;
+  Kind, D: String;
 begin
   Result := False;
   IsResume := HasParam('/RESUME');
-  ResumeDrive := ExpandConstant('{param:DRIVE|}');
+  ResumeLibDir := ExpandConstant('{param:LIBDIR|}');
+  { Older 0.1.x RunOnce entries passed only the drive letter. }
+  D := ExpandConstant('{param:DRIVE|}');
+  if (ResumeLibDir = '') and (D <> '') then
+    ResumeLibDir := D + ':\Kladez\library';
   { Not the uninstall key: Inno writes it before the steps run, so an interrupted first install
     would look like an upgrade. Installed=1 is written only after the first run succeeded. }
   IsUpgrade := IniValue('Installed') = '1';
@@ -229,6 +374,7 @@ begin
   N := 0;
   SetArrayLength(DriveLetters, GetArrayLength(Lines));
   SetArrayLength(DriveFits, GetArrayLength(Lines));
+  SetArrayLength(DriveFree, GetArrayLength(Lines));
   DriveDefault := 0;
   for I := 0 to GetArrayLength(Lines) - 1 do
   begin
@@ -249,7 +395,7 @@ begin
         MsgBox(Field(Lines[I], 2), mbError, MB_OK);
         Exit;
       end;
-      if (Field(Lines[I], 1) = 'warn') and not IsResume then
+      if (Field(Lines[I], 1) = 'warn') and not IsResume and not WizardSilent then
         if MsgBox(Field(Lines[I], 2) + #13#10#13#10 + 'Продолжить установку?', mbConfirmation, MB_YESNO) = IDNO then
           Exit;
     end
@@ -279,6 +425,7 @@ begin
     else if Kind = 'drive' then
     begin
       DriveLetters[N] := Field(Lines[I], 1);
+      DriveFree[N] := Field(Lines[I], 3);
       DriveFits[N] := Field(Lines[I], 4);
       if Field(Lines[I], 5) = 'default' then
         DriveDefault := N;
@@ -287,6 +434,18 @@ begin
   end;
   SetArrayLength(DriveLetters, N);
   SetArrayLength(DriveFits, N);
+  SetArrayLength(DriveFree, N);
+
+  { A library left by an earlier install (or uninstall that kept it) is offered again. }
+  ExistingLibDir := IniValue('LibraryDir');
+  if (ExistingLibDir <> '') and not DirExists(ExistingLibDir) then
+    ExistingLibDir := '';
+  for I := 0 to N - 1 do
+    if (ExistingLibDir = '') and DirExists(DriveLetters[I] + ':\Kladez\library') then
+      ExistingLibDir := DriveLetters[I] + ':\Kladez\library';
+  if (ExistingLibDir <> '') and (DriveIndex(PathDrive(ExistingLibDir)) >= 0) then
+    DriveDefault := DriveIndex(PathDrive(ExistingLibDir));
+
   if FileExists(IniPath) and (IniValue('AdminPort') <> '') then
   begin
     AdminPort := IniValue('AdminPort');
@@ -295,89 +454,50 @@ begin
   Result := True;
 end;
 
-function FitsText(const Fits: String): String;
+{ ── Agreement: «Я принимаю» only after scrolling to the end ───────────────── }
+
+function LicenseScrolledToEnd: Boolean;
+var
+  Info: TKladezScrollInfo;
 begin
-  Result := '';
-  if Pos('aptechka', Fits) > 0 then Result := 'Аптечка';
-  if Pos('biblioteka', Fits) > 0 then Result := Result + ', Библиотека';
-  if Pos('vse', Fits) > 0 then Result := Result + ', Всё';
-  if Result = '' then
-    Result := 'места не хватит'
+  Info.cbSize := KZ_SCROLLINFO_SIZE;
+  Info.fMask := KZ_SIF_ALL;
+  { No scroll bar (the text fits) → nothing to scroll, accept right away. }
+  if not KzGetScrollInfo(WizardForm.LicenseMemo.Handle, KZ_SB_VERT, Info) then
+    Result := True
+  else if (Info.nPage = 0) or (Info.nMax <= Integer(Info.nPage)) then
+    Result := True
   else
-    Result := 'хватит на: ' + Result;
+    Result := Info.nPos + Integer(Info.nPage) + 1 >= Info.nMax;
 end;
 
-procedure InitializeWizard;
-var
-  I, Selected: Integer;
-  Lines: TArrayOfString;
-  Label_, Free: String;
+procedure StopLicenseTimer;
 begin
-  if IsUpgrade then
-    Exit;
-  DrivePage := CreateInputOptionPage(wpInfoBefore, 'Где хранить библиотеку',
-    'Выберите диск для статей, карт и книг',
-    'Библиотеке нужно много места. Рядом с каждым диском написано, какие наборы на нём поместятся: ' +
-    '«Аптечка» (около 5 ГБ), «Библиотека» (около 25 ГБ), «Всё» (70 ГБ и больше).', True, False);
-  LoadStringsFromFile(ExpandConstant('{tmp}\kladez-checks.txt'), Lines);
-  for I := 0 to GetArrayLength(Lines) - 1 do
-    if Field(Lines[I], 0) = 'drive' then
-    begin
-      Label_ := Field(Lines[I], 2);
-      Free := Field(Lines[I], 3);
-      DrivePage.Add(Field(Lines[I], 1) + ':  ' + Label_ + ' — свободно ' + Free + ' ГБ — ' + FitsText(Field(Lines[I], 4)));
-    end;
-  Selected := DriveDefault;
-  for I := 0 to GetArrayLength(DriveLetters) - 1 do
+  if LicenseTimer <> 0 then
   begin
-    if DriveFits[I] = '' then
-      DrivePage.CheckListBox.ItemEnabled[I] := False;
-    if DirExists(DriveLetters[I] + ':\Kladez\library') then
-      Selected := I;
-    if (ResumeDrive <> '') and (CompareText(DriveLetters[I], ResumeDrive) = 0) then
-      Selected := I;
+    KzKillTimer(0, LicenseTimer);
+    LicenseTimer := 0;
   end;
-  if GetArrayLength(DriveLetters) > 0 then
-    DrivePage.SelectedValueIndex := Selected;
 end;
 
-function ShouldSkipPage(PageID: Integer): Boolean;
+procedure LicenseTimerProc(Wnd: LongWord; Msg: LongWord; IdEvent: LongWord; Time: LongWord);
 begin
-  Result := (DrivePage <> nil) and (PageID = DrivePage.ID) and (IsUpgrade or (IsResume and (ResumeDrive <> '')));
+  if LicenseScrolledToEnd then
+  begin
+    WizardForm.LicenseAcceptedRadio.Enabled := True;
+    StopLicenseTimer;
+  end;
 end;
 
-function NextButtonClick(CurPageID: Integer): Boolean;
+procedure StartLicenseTimer;
 begin
-  Result := True;
-  if (DrivePage <> nil) and (CurPageID = DrivePage.ID) then
-    if (DrivePage.SelectedValueIndex < 0) or (DriveFits[DrivePage.SelectedValueIndex] = '') then
-    begin
-      MsgBox('На этом диске не хватит места даже для «Аптечки». Выберите другой диск.', mbError, MB_OK);
-      Result := False;
-    end;
+  WizardForm.LicenseAcceptedRadio.Enabled := False;
+  WizardForm.LicenseNotAcceptedRadio.Checked := True;
+  if LicenseTimer = 0 then
+    LicenseTimer := KzSetTimer(0, 0, 300, CreateCallback(@LicenseTimerProc));
 end;
 
-function SelectedDrive: String;
-begin
-  if (ResumeDrive <> '') and IsResume then
-    Result := ResumeDrive
-  else
-    Result := DriveLetters[DrivePage.SelectedValueIndex];
-end;
-
-function OriginalUser: String;
-var
-  Lines: TArrayOfString;
-  Code: Integer;
-  F: String;
-begin
-  Result := '';
-  F := ExpandConstant('{tmp}\kladez-user.txt');
-  ExecAsOriginalUser(PowerShellExe, '-NoProfile -Command "[Security.Principal.WindowsIdentity]::GetCurrent().Name | Out-File -Encoding utf8 -FilePath ''' + F + '''"',
-    '', SW_HIDE, ewWaitUntilTerminated, Code);
-  if LoadStringsFromFile(F, Lines) and (GetArrayLength(Lines) > 0) then
-    Result := Trim(Lines[0]);
-end;
+{ ── Progress: percent while unpacking, «Шаг N из M» and overall percent during the steps ── }
 
 procedure SetStatus(const Text: String);
 begin
@@ -385,17 +505,222 @@ begin
   WizardForm.FilenameLabel.Caption := '';
 end;
 
+function ElapsedText(Seconds: Integer): String;
+begin
+  if Seconds < 60 then
+    Result := IntToStr(Seconds) + ' с'
+  else
+    Result := IntToStr(Seconds div 60) + ' мин ' + IntToStr(Seconds mod 60) + ' с';
+end;
+
+procedure UpdateStepProgress;
+var
+  Elapsed, Inside, Pct: Integer;
+begin
+  Elapsed := (KzGetTickCount - StepStartTick) div 1000;
+  { Estimate inside the step by time, never reaching its end before the step really finishes. }
+  if StepExpectedSec > 0 then
+    Inside := (StepWeight * Elapsed) div StepExpectedSec
+  else
+    Inside := 0;
+  if Inside > StepWeight - 1 then
+    Inside := StepWeight - 1;
+  Pct := StepStartPct + Inside;
+  WizardForm.ProgressGauge.Position := Pct;
+  WizardForm.FilenameLabel.Caption := StepHint + 'Прошло ' + ElapsedText(Elapsed) + '. Всего готово: ' + IntToStr(Pct) + ' %';
+end;
+
+procedure StepTimerProc(Wnd: LongWord; Msg: LongWord; IdEvent: LongWord; Time: LongWord);
+begin
+  UpdateStepProgress;
+end;
+
+procedure StopStepTimer;
+begin
+  if StepTimer <> 0 then
+  begin
+    KzKillTimer(0, StepTimer);
+    StepTimer := 0;
+  end;
+end;
+
+{ Weights add up to 100 (features 5, WSL 15, integrate 3, distro 12, first run 65). }
+procedure BeginStep(Number, Total, StartPct, Weight, ExpectedSec: Integer; const Text, Hint: String);
+begin
+  StopStepTimer;
+  StepNumber := Number;
+  StepTotal := Total;
+  StepStartPct := StartPct;
+  StepWeight := Weight;
+  StepExpectedSec := ExpectedSec;
+  StepText := Text;
+  StepHint := Hint;
+  StepStartTick := KzGetTickCount;
+  WizardForm.ProgressGauge.Style := npbstNormal;
+  WizardForm.ProgressGauge.Min := 0;
+  WizardForm.ProgressGauge.Max := 100;
+  WizardForm.StatusLabel.Caption := 'Шаг ' + IntToStr(StepNumber) + ' из ' + IntToStr(StepTotal) + ': ' + StepText;
+  UpdateStepProgress;
+  { Exec keeps processing window messages while it waits, so the timer ticks during long steps. }
+  StepTimer := KzSetTimer(0, 0, 1000, CreateCallback(@StepTimerProc));
+end;
+
+procedure EndStep;
+begin
+  StopStepTimer;
+  WizardForm.ProgressGauge.Position := StepStartPct + StepWeight;
+end;
+
+procedure CurInstallProgressChanged(CurProgress, MaxProgress: Integer);
+var
+  Pct: Integer;
+begin
+  if MaxProgress <= 0 then
+    Exit;
+  Pct := Trunc(CurProgress / MaxProgress * 100);
+  WizardForm.StatusLabel.Caption := 'Распаковка файлов… ' + IntToStr(Pct) + ' %';
+end;
+
+{ ── Wizard pages ──────────────────────────────────────────────────────────── }
+
+procedure InitializeWizard;
+begin
+  WizardForm.LicenseLabel1.Caption := 'Прочитайте соглашение. Прокрутите текст до конца — ' +
+    'тогда станет доступно «Я принимаю условия соглашения».';
+  if IsUpgrade then
+    Exit;
+  LibPage := CreateInputDirPage(wpSelectDir, 'Где хранить библиотеку',
+    'Выберите папку для статей, карт и книг',
+    'Библиотеке нужно много места. Нажмите «Обзор…», чтобы выбрать другую папку. ' +
+    'Подходят встроенные диски компьютера (не флешки и не внешние диски).', False, '');
+  LibPage.Add('');
+  LibPage.Values[0] := DefaultLibDir;
+  LibInfo := TNewStaticText.Create(LibPage);
+  LibInfo.Parent := LibPage.Surface;
+  LibInfo.AutoSize := False;
+  LibInfo.WordWrap := True;
+  LibInfo.Left := 0;
+  LibInfo.Top := LibPage.Edits[0].Top + LibPage.Edits[0].Height + ScaleY(16);
+  LibInfo.Width := LibPage.SurfaceWidth;
+  LibInfo.Height := ScaleY(80);
+  LibInfo.Caption := LibDriveInfo(LibPage.Values[0]);
+  LibPage.Edits[0].OnChange := @LibDirChanged;
+  LibTouched := False;
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  { After the reboot the person already agreed and chose the folders: continue straight away. }
+  if (PageID = wpLicense) and (IsResume or IsUpgrade) then
+    Result := True
+  else if (PageID = wpSelectDir) and IsResume then
+    Result := True
+  else if (PageID = wpReady) and IsResume then
+    Result := True
+  else if (LibPage <> nil) and (PageID = LibPage.ID) and (IsUpgrade or (IsResume and (ResumeLibDir <> ''))) then
+    Result := True;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpLicense then
+    StartLicenseTimer
+  else
+    StopLicenseTimer;
+
+  { The library follows the program folder's drive until the person edits it. }
+  if (LibPage <> nil) and (CurPageID = LibPage.ID) then
+  begin
+    if not LibTouched then
+    begin
+      LibPage.Values[0] := DefaultLibDir;
+      LibTouched := False;
+    end;
+    LibInfo.Caption := LibDriveInfo(Trim(LibPage.Values[0]));
+  end;
+
+  if (CurPageID = wpFinished) and InstallFailed then
+  begin
+    WizardForm.FinishedHeadingLabel.Caption := 'Установка не завершена';
+    WizardForm.FinishedLabel.Caption := 'Установка «Кладезъ» не закончилась. Перезагрузите компьютер и запустите ' +
+      'установщик ещё раз — он продолжит с того места, где остановился.' + #13#10#13#10 +
+      'Журнал для помощника: ' + LogPath;
+  end
+  else if (CurPageID = wpFinished) and NeedsReboot then
+  begin
+    WizardForm.FinishedHeadingLabel.Caption := 'Нужна перезагрузка';
+    WizardForm.FinishedLabel.Caption := 'Windows включила компоненты, нужные «Кладезъ». Чтобы закончить установку, ' +
+      'компьютер нужно перезагрузить.' + #13#10#13#10 +
+      'Сохраните открытые документы и нажмите «Завершить» — компьютер перезагрузится, ' +
+      'а установка продолжится сама после входа в Windows.';
+  end;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  P: String;
+  I: Integer;
+begin
+  Result := True;
+  if (LibPage <> nil) and (CurPageID = LibPage.ID) then
+  begin
+    P := SelectedLibDir;
+    I := DriveIndex(PathDrive(P));
+    if (PathDrive(P) = '') or (Length(P) <= 3) then
+    begin
+      MsgBox('Выберите папку для библиотеки (не весь диск целиком), например ' + DefaultLibDir + '.', mbError, MB_OK);
+      Result := False;
+    end
+    else if I < 0 then
+    begin
+      MsgBox('Этот диск не подходит для библиотеки: нужен встроенный диск компьютера (не флешка и не внешний диск) ' +
+        'с файловой системой NTFS. Выберите папку на другом диске.', mbError, MB_OK);
+      Result := False;
+    end
+    else if DriveFits[I] = '' then
+    begin
+      MsgBox('На диске ' + DriveLetters[I] + ': не хватит места даже для «Аптечки». Выберите папку на другом диске.', mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
+{ ── Install steps ─────────────────────────────────────────────────────────── }
+
+{ The original (non-elevated) user, for the autostart task. Written to ProgramData\Kladez\logs:
+  Setup's temporary folder is protected: a non-elevated process cannot write to (0.1.3 bug). }
+function OriginalUser: String;
+var
+  Lines: TArrayOfString;
+  Code: Integer;
+  F: String;
+begin
+  Result := '';
+  ForceDirectories(LogDir);
+  F := ExpandConstant('{commonappdata}\Kladez\logs\kladez-user.txt');
+  DeleteFile(F);
+  ExecAsOriginalUser(PowerShellExe, '-NoProfile -Command "[Security.Principal.WindowsIdentity]::GetCurrent().Name | Out-File -Encoding utf8 -FilePath ''' + F + '''"',
+    '', SW_HIDE, ewWaitUntilTerminated, Code);
+  if LoadStringsFromFile(F, Lines) and (GetArrayLength(Lines) > 0) then
+    Result := Trim(Lines[0]);
+  DeleteFile(F);
+end;
+
 procedure Fail(const What: String);
 begin
+  StopStepTimer;
   InstallFailed := True;
   MsgBox(What + #13#10#13#10 + 'Перезагрузите компьютер и запустите установку ещё раз.' + #13#10 +
     'Если не поможет, отправьте помощнику файл журнала:' + #13#10 + LogPath, mbError, MB_OK);
 end;
 
-procedure ScheduleResume(const Drive: String);
+procedure ScheduleResume(const Lib: String);
 begin
+  StopStepTimer;
   { The original setup file is started again after the reboot; nothing is copied (it is ~1.5 GB). }
-  RegWriteStringValue(HKLM, RunOnceKey, 'KladezSetup', '"' + ExpandConstant('{srcexe}') + '" /RESUME /DRIVE=' + Drive);
+  RegWriteStringValue(HKLM, RunOnceKey, 'KladezSetup', '"' + ExpandConstant('{srcexe}') + '" /RESUME /LIBDIR="' + Lib +
+    '" /DIR="' + WizardDirValue + '"');
   NeedsReboot := True;
 end;
 
@@ -417,87 +742,100 @@ begin
   SaveStringsToUTF8File(IniPath, Lines, False);
 end;
 
-procedure WriteSettings(const Drive: String);
+procedure WriteSettings(const Lib, Sys: String);
 var
   Lines: TArrayOfString;
+  Root: String;
 begin
-  ForceDirectories(ExpandConstant('{commonappdata}\Kladez\logs'));
+  ForceDirectories(LogDir);
   { First line is a header: if a BOM survives reading, it lands here and not on a key. }
   SetArrayLength(Lines, 5);
   Lines[0] := '[Kladez]';
   Lines[1] := 'AdminPort=' + AdminPort;
   Lines[2] := 'KiwixPort=' + KiwixPort;
-  Lines[3] := 'LibraryDir=' + Drive + ':\Kladez\library';
-  Lines[4] := 'SystemDir=' + Drive + ':\Kladez\system';
+  Lines[3] := 'LibraryDir=' + Lib;
+  Lines[4] := 'SystemDir=' + Sys;
   SaveStringsToUTF8File(IniPath, Lines, False);
 
-  ForceDirectories(Drive + ':\Kladez\library');
-  SetArrayLength(Lines, 3);
-  Lines[0] := 'Здесь хранится программа «Кладезъ» и её библиотека (статьи, карты, книги).';
-  Lines[1] := 'Не удаляйте и не переносите эти папки вручную.';
-  Lines[2] := 'Чтобы удалить программу, откройте «Параметры → Приложения → Кладезъ → Удалить».';
-  SaveStringsToUTF8File(Drive + ':\Kladez\Что это за папка.txt', Lines, False);
+  ForceDirectories(Lib);
+  Root := ExtractFileDir(Sys);
+  ForceDirectories(Root);
+  SetArrayLength(Lines, 4);
+  Lines[0] := 'Здесь хранится служебная часть программы «Кладезъ».';
+  Lines[1] := 'Библиотека (статьи, карты, книги): ' + Lib;
+  Lines[2] := 'Не удаляйте и не переносите эти папки вручную.';
+  Lines[3] := 'Чтобы удалить программу, откройте «Параметры → Приложения → Кладезъ → Удалить».';
+  SaveStringsToUTF8File(Root + '\Что это за папка.txt', Lines, False);
 end;
 
 procedure RunInstallSteps;
 var
-  Payload, Drive, Lib, Sys: String;
+  Payload, Lib, Sys: String;
   Code: Integer;
 begin
   Payload := ExpandConstant('{app}\payload');
-  WizardForm.ProgressGauge.Style := npbstMarquee;
 
   if IsUpgrade then
   begin
-    SetStatus('Обновляю программы «Кладезъ»…');
+    BeginStep(1, 1, 0, 100, 240, 'Обновляю программы «Кладезъ»…', 'Это займёт несколько минут — компьютер не завис. ');
     if Step('upgrade', '-BundlePath "' + Payload + '\kladez-images.tar.zst" -LinuxDir "' + Payload + '\linux"', True) <> 0 then
       Fail('Не удалось обновить «Кладезъ».')
     else
+    begin
+      EndStep;
       Finished := True;
+    end;
     Exit;
   end;
 
 #ifndef UpdateOnly
-  Drive := SelectedDrive;
-  Lib := Drive + ':\Kladez\library';
-  Sys := Drive + ':\Kladez\system';
+  Lib := SelectedLibDir;
+  { The system part (WSL disk) lives on the library's drive. }
+  Sys := PathDrive(Lib) + ':\Kladez\system';
 
-  SetStatus('Включаю компоненты Windows…');
+  BeginStep(1, 5, 0, 5, 30, 'Включаю компоненты Windows…', '');
   Code := Step('features', '', False);
-  if Code = 3010 then begin ScheduleResume(Drive); Exit; end;
+  if Code = 3010 then begin ScheduleResume(Lib); Exit; end;
   if Code <> 0 then begin Fail('Не удалось включить компоненты Windows.'); Exit; end;
+  EndStep;
 
-  SetStatus('Устанавливаю WSL…');
+  BeginStep(2, 5, 5, 15, 120, 'Устанавливаю WSL…', '');
   Code := Step('wsl', '-WindowsPathKind ' + WindowsPathKind + ' -WslMsi "' + Payload + '\{#WslMsi}" -LegacyKernelMsi "' +
     Payload + '\{#LegacyMsi}"', False);
-  if Code = 3010 then begin ScheduleResume(Drive); Exit; end;
+  if Code = 3010 then begin ScheduleResume(Lib); Exit; end;
   if Code <> 0 then begin Fail('Не удалось установить WSL.'); Exit; end;
+  EndStep;
 
-  WriteSettings(Drive);
+  WriteSettings(Lib, Sys);
 
-  SetStatus('Настраиваю автозапуск и доступ для телефонов…');
+  BeginStep(3, 5, 20, 3, 15, 'Настраиваю автозапуск и доступ для телефонов…', '');
   if Step('integrate', '-LauncherPath "' + ExpandConstant('{app}\Kladez.exe') + '" -NetScriptPath "' +
-    ExpandConstant('{app}\scripts\kladez-net.ps1') + '" -UserId "' + OriginalUser + '" -AdminPort ' + AdminPort +
-    ' -KiwixPort ' + KiwixPort, False) <> 0 then
+    ExpandConstant('{app}\scripts\kladez-net.ps1') + '" -UserId "' + OriginalUser + '" -FallbackUserId "' +
+    ExpandConstant('{computername}\{username}') + '" -AdminPort ' + AdminPort + ' -KiwixPort ' + KiwixPort, False) <> 0 then
   begin
     Fail('Не удалось настроить автозапуск и доступ для телефонов.');
     Exit;
   end;
+  EndStep;
 
-  SetStatus('Устанавливаю системный модуль «Кладезъ»…');
+  BeginStep(4, 5, 23, 12, 60, 'Устанавливаю системный модуль «Кладезъ»…', '');
   if Step('distro', '-SystemDir "' + Sys + '" -RootfsPath "' + Payload + '\kladez-rootfs.tar.gz"', True) <> 0 then
   begin
     Fail('Не удалось установить системный модуль «Кладезъ».');
     Exit;
   end;
+  EndStep;
 
-  SetStatus('Распаковываю программу. Это займёт 3–7 минут…');
+  BeginStep(5, 5, 35, 65, 480, 'Распаковываю и запускаю программу…',
+    'Это займёт до 8 минут — компьютер не завис. ');
   if Step('firstrun', '-BundlePath "' + Payload + '\kladez-images.tar.zst" -LibraryDir "' + Lib + '" -AdminPort ' +
     AdminPort + ' -KiwixPort ' + KiwixPort, True) <> 0 then
   begin
     Fail('Не удалось запустить «Кладезъ» в первый раз.');
     Exit;
   end;
+  EndStep;
+  SetStatus('Готово: всего 100 %');
   MarkInstalled;
   Finished := True;
 #endif
@@ -507,25 +845,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
     RunInstallSteps;
-end;
-
-procedure CurPageChanged(CurPageID: Integer);
-begin
-  if (CurPageID = wpFinished) and InstallFailed then
-  begin
-    WizardForm.FinishedHeadingLabel.Caption := 'Установка не завершена';
-    WizardForm.FinishedLabel.Caption := 'Установка «Кладезъ» не закончилась. Перезагрузите компьютер и запустите ' +
-      'установщик ещё раз — он продолжит с того места, где остановился.' + #13#10#13#10 +
-      'Журнал для помощника: ' + LogPath;
-  end
-  else if (CurPageID = wpFinished) and NeedsReboot then
-  begin
-    WizardForm.FinishedHeadingLabel.Caption := 'Нужна перезагрузка';
-    WizardForm.FinishedLabel.Caption := 'Windows включила компоненты, нужные «Кладезъ». Чтобы закончить установку, ' +
-      'компьютер нужно перезагрузить.' + #13#10#13#10 +
-      'Сохраните открытые документы и нажмите «Завершить» — компьютер перезагрузится, ' +
-      'а установка продолжится сама после входа в Windows.';
-  end;
 end;
 
 { Inno asks NeedRestart before ssPostInstall, where our steps find out a reboot is needed, so its own
@@ -539,6 +858,8 @@ procedure DeinitializeSetup;
 var
   Code: Integer;
 begin
+  StopLicenseTimer;
+  StopStepTimer;
   if NeedsReboot and not InstallFailed and not WizardSilent then
     Exec(ExpandConstant('{sys}\shutdown.exe'), '/r /t 5 /c "Кладезъ: перезагрузка для завершения установки"',
       '', SW_HIDE, ewNoWait, Code);
@@ -548,6 +869,8 @@ function SetupFinished: Boolean;
 begin
   Result := Finished;
 end;
+
+{ ── Uninstall ─────────────────────────────────────────────────────────────── }
 
 function InitializeUninstall: Boolean;
 var

@@ -87,4 +87,32 @@ function Invoke-KladezUninstall {
     'Программа удалена. Библиотека оставлена.'
 }
 
-Export-ModuleMember -Function Register-KladezTasks, Unregister-KladezTasks, Test-KladezLibrarySafeToDelete, Invoke-KladezUninstall
+# Who gets the autostart task. The installer passes the original (non-elevated) user; if that came
+# back empty, the person at the computer is the owner of explorer.exe in this session; the elevated
+# account is only the last resort (wrong when a standard user typed an administrator's password).
+function Resolve-KladezTaskUser {
+    param(
+        [AllowEmptyString()][string]$UserId = '',
+        [AllowEmptyCollection()][object[]]$ExplorerOwners = @(),
+        [int]$SessionId = -1,
+        [AllowEmptyString()][string]$Fallback = ''
+    )
+    if ($UserId -and $UserId.Trim()) { return $UserId.Trim() }
+    $owner = $ExplorerOwners | Where-Object { $_.SessionId -eq $SessionId -and $_.Owner } | Select-Object -First 1
+    if ($owner) { return [string]$owner.Owner }
+    $f = $Fallback.Trim()
+    if ($f -and $f -notmatch '^\\|\\$') { return $f }
+    $null
+}
+
+function Get-KladezExplorerOwners {
+    foreach ($p in @(Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" -ErrorAction SilentlyContinue)) {
+        try {
+            $o = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction Stop
+            if ($o.User) { [pscustomobject]@{ SessionId = [int]$p.SessionId; Owner = "$($o.Domain)\$($o.User)" } }
+        } catch { }
+    }
+}
+
+Export-ModuleMember -Function Register-KladezTasks, Unregister-KladezTasks, Test-KladezLibrarySafeToDelete, Invoke-KladezUninstall,
+    Resolve-KladezTaskUser, Get-KladezExplorerOwners

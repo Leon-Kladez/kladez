@@ -92,3 +92,25 @@ Describe 'Invoke-KladezUninstall' {
         $script:wsl | Should -Contain '--unregister Kladez'
     }
 }
+
+Describe 'Resolve-KladezTaskUser (who gets the autostart task)' {
+    BeforeAll {
+        $owners = @(
+            [pscustomobject]@{ SessionId = 0; Owner = 'NT AUTHORITY\SYSTEM' },
+            [pscustomobject]@{ SessionId = 1; Owner = 'PC\Пётр Иванович' },
+            [pscustomobject]@{ SessionId = 2; Owner = 'PC\Гость' }
+        )
+    }
+    It 'name from the installer (original user) wins' {
+        Resolve-KladezTaskUser -UserId 'PC\Пётр Иванович' -ExplorerOwners $owners -SessionId 2 -Fallback 'PC\Admin' | Should -Be 'PC\Пётр Иванович'
+    }
+    It 'empty name → owner of explorer.exe in this session (the person sitting at the computer)' {
+        Resolve-KladezTaskUser -UserId '' -ExplorerOwners $owners -SessionId 1 -Fallback 'PC\Admin' | Should -Be 'PC\Пётр Иванович'
+    }
+    It 'no explorer in this session → fallback name' {
+        Resolve-KladezTaskUser -UserId '  ' -ExplorerOwners $owners -SessionId 5 -Fallback 'PC\Admin' | Should -Be 'PC\Admin'
+    }
+    It 'nothing at all → empty (the step then stops with a clear message)' {
+        Resolve-KladezTaskUser -UserId '' -ExplorerOwners @() -SessionId 1 -Fallback '\' | Should -BeNullOrEmpty
+    }
+}
