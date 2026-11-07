@@ -3,14 +3,16 @@
 #   -ShutdownWhenDone  — выключить этот компьютер в конце (по просьбе автора).
 param(
     [string]$InstallerZipGlob = 'D:\Загрузки\kladez-installer*.zip',
-    [switch]$ShutdownWhenDone
+    [switch]$ShutdownWhenDone,
+    [switch]$UseDownloaded,  # reuse the installer already unpacked in preview\installer
+    [string[]]$Only = @('kladez-win11', 'kladez-win10')
 )
 $ErrorActionPreference = 'Stop'
 $root = 'D:\ПРОЕКТЫ\Кладезъ'
 $here = Join-Path $root 'installer\vm'
 $images = Join-Path $root 'vm-images'
 $report = Join-Path $images 'test-report.txt'
-Start-Transcript -Path (Join-Path $images 'test-run.log') -Force | Out-Null
+Start-Transcript -Path (Join-Path $images "test-run-$(Get-Date -Format 'MMdd-HHmmss').log") -Force | Out-Null
 $pw = ConvertTo-SecureString 'Kladez-test-2026' -AsPlainText -Force   # test account inside the test VM only
 $cred = New-Object System.Management.Automation.PSCredential('tester', $pw)
 
@@ -27,10 +29,13 @@ function Wait-Guest($vm, [int]$minutes = 60) {
 
 function Save-Screenshot($vm, $file) {
     try {
-        $svc = Get-CimInstance -Namespace root\virtualization\v2 -ClassName Msvm_VirtualSystemManagementService
-        $set = Get-CimInstance -Namespace root\virtualization\v2 -ClassName Msvm_VirtualSystemSettingData -Filter "ElementName='$vm' AND VirtualSystemType='Microsoft:Hyper-V:System:Realized'"
+        # Classic WMI: the CIM call returns an empty ImageData for this method.
+        $svc = Get-WmiObject -Namespace root\virtualization\v2 -Class Msvm_VirtualSystemManagementService
+        $cs = Get-WmiObject -Namespace root\virtualization\v2 -Class Msvm_ComputerSystem -Filter "ElementName='$vm'"
+        $set = $cs.GetRelated('Msvm_VirtualSystemSettingData') | Where-Object VirtualSystemType -eq 'Microsoft:Hyper-V:System:Realized' | Select-Object -First 1
         $w = 1280; $h = 800
-        $res = Invoke-CimMethod -InputObject $svc -MethodName GetVirtualSystemThumbnailImage -Arguments @{ TargetSystem = $set; WidthPixels = [uint16]$w; HeightPixels = [uint16]$h }
+        $res = $svc.GetVirtualSystemThumbnailImage($set, $w, $h)
+        if (-not $res.ImageData) { throw "пустой кадр (код $($res.ReturnValue))" }
         Add-Type -AssemblyName System.Drawing
         $bmp = New-Object System.Drawing.Bitmap($w, $h, [System.Drawing.Imaging.PixelFormat]::Format16bppRgb565)
         $rect = New-Object System.Drawing.Rectangle(0, 0, $w, $h)
@@ -43,6 +48,19 @@ function Save-Screenshot($vm, $file) {
 
 function Run-AsTester($vm, $cmdLine, $taskName) {
     # Start a program in tester's interactive desktop session, elevated — like a person double-clicking it.
+    # Needs tester's desktop to be up (autologon can lag behind PowerShell Direct); retry a few times.
+    for ($try = 1; $try -le 10; $try++) {
+        try {
+            Invoke-Command -VMName $vm -Credential $cred -ErrorAction Stop -ScriptBlock {
+                if (-not (Get-Process explorer -IncludeUserName -ErrorAction SilentlyContinue | Where-Object UserName -like '*tester')) { throw 'рабочий стол tester ещё не готов' }
+            }
+            break
+        } catch {
+            Say "Жду рабочий стол в машине (попытка $try): $($_.Exception.Message)"
+            if ($try -eq 3) { Restart-VM -Name $vm -Force; Start-Sleep 90 }
+            Start-Sleep 30
+        }
+    }
     Invoke-Command -VMName $vm -Credential $cred -ArgumentList $cmdLine, $taskName -ScriptBlock {
         param($cmdLine, $taskName)
         $a = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c $cmdLine"
@@ -57,14 +75,24 @@ function Wait-NoSetup($vm, [int]$minutes) {
     Start-Sleep 30
     while ((Get-Date) -lt $until) {
         try {
-            $n = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock {
-                @(Get-Process | Where-Object { $_.Path -like 'C:\Kladez-test\*' -or $_.Path -like '*\is-*.tmp\*' }).Count
+            $s = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock {
+                # By name, not Path: Path is empty for elevated processes seen from this session,
+                # which made the setup look finished while it was still running.
+                $n = @(Get-Process | Where-Object { $_.Name -like 'setup*' }).Count
+                $log = Get-ChildItem 'C:\Kladez-test\setup-*.log' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
+                $stuck = $false
+                if ($log -and ((Get-Date) - $log.LastWriteTime).TotalMinutes -gt 3) {
+                    $stuck = [bool]((Get-Content $log.FullName -Tail 8) -match 'Message box')
+                }
+                @{ n = $n; stuck = $stuck }
             } -ErrorAction Stop
-            if ($n -eq 0) { return $true }
+            if ($s.n -eq 0) { return 'done' }
+            # A question window nobody can answer (/SUPPRESSMSGBOXES does not cover script MsgBox): stop waiting.
+            if ($s.stuck) { return 'msgbox' }
         } catch {}
         Start-Sleep 30
     }
-    return $false
+    return 'timeout'
 }
 
 function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
@@ -79,13 +107,29 @@ function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
     Checkpoint-VM -Name $vm -SnapshotName 'чистая'
 
     Say "Копирую установщик в машину"
-    Copy-VMFile -Name $vm -SourcePath $setupExe -DestinationPath 'C:\Kladez-test\setup.exe' -CreateFullPath -FileSource Host -Force
+    # Copy-VMFile sometimes fails right after first logon ("media is write protected", 0x80070013);
+    # PowerShell Direct copy is slower to start but reliable.
+    $copied = $false
+    for ($try = 1; $try -le 3 -and -not $copied; $try++) {
+        try { Copy-VMFile -Name $vm -SourcePath $setupExe -DestinationPath 'C:\Kladez-test\setup.exe' -CreateFullPath -FileSource Host -Force; $copied = $true }
+        catch { Say "Копирование через Hyper-V не вышло (попытка $try): $($_.Exception.Message.Split([char]10)[0])"; Start-Sleep 30 }
+    }
+    if (-not $copied) {
+        $s = New-PSSession -VMName $vm -Credential $cred
+        try {
+            Invoke-Command -Session $s -ScriptBlock { New-Item -ItemType Directory -Force 'C:\Kladez-test' | Out-Null }
+            Copy-Item -Path $setupExe -Destination 'C:\Kladez-test\setup.exe' -ToSession $s -Force
+            Say 'Скопировал через PowerShell Direct'
+        } finally { Remove-PSSession $s }
+    }
 
     $start = Get-Date
     Say "Запускаю установщик (как человек: на рабочем столе, с правами администратора; без вопросов — /SILENT)"
     Run-AsTester $vm 'C:\Kladez-test\setup.exe /SILENT /SUPPRESSMSGBOXES /NORESTART /LOG=C:\Kladez-test\setup-1.log' 'KladezSetup1'
     for ($round = 1; $round -le 3; $round++) {
-        if (-not (Wait-NoSetup $vm 90)) { Say "ПРОВАЛ: установщик работает дольше 90 минут"; break }
+        $w = Wait-NoSetup $vm 90
+        if ($w -eq 'msgbox') { Say "ПРОВАЛ: установщик остановился на окне с вопросом (см. журнал и снимок)"; Save-Screenshot $vm (Join-Path $images "$vm-question.png"); break }
+        if ($w -eq 'timeout') { Say "ПРОВАЛ: установщик работает дольше 90 минут"; Save-Screenshot $vm (Join-Path $images "$vm-timeout.png"); break }
         $resume = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock {
             (Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce' -ErrorAction SilentlyContinue).KladezSetup
         }
@@ -120,29 +164,41 @@ function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
     }
     foreach ($k in $check.Keys) { Say "  ${k}: $($check[$k])" }
     try {
-        $logs = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock { Get-ChildItem 'C:\Kladez-test\*.log' | ForEach-Object { @{ n = $_.Name; t = (Get-Content $_.FullName -Raw) } } }
+        $logs = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock {
+            Get-ChildItem 'C:\Kladez-test\*.log', 'C:\ProgramData\Kladez\logs\*' -File -ErrorAction SilentlyContinue |
+                ForEach-Object { @{ n = $_.Name; t = (Get-Content $_.FullName -Raw) } }
+        }
         foreach ($l in $logs) { Set-Content -Path (Join-Path $images "$vm-$($l.n)") -Value $l.t -Encoding UTF8 }
     } catch {}
     Run-AsTester $vm 'start "" "http://localhost:8080/"' 'KladezOpen'
     Start-Sleep 40
     Save-Screenshot $vm (Join-Path $images "$vm-result.png")
-    if ($check['Панель http://localhost:8080 отвечает'] -and $check['Ярлык «Кладезъ» есть']) { Say "ИТОГ ${vm}: УСПЕХ" } else { Say "ИТОГ ${vm}: ЕСТЬ ПРОБЛЕМЫ — см. журналы" }
-    Stop-VM -Name $vm -Force -ErrorAction SilentlyContinue
+    if ($check['Панель http://localhost:8080 отвечает'] -and $check['Ярлык «Кладезъ» есть']) { Say "ИТОГ ${vm}: УСПЕХ" }
+    else { Say "ИТОГ ${vm}: ЕСТЬ ПРОБЛЕМЫ — см. журналы. Машину оставляю включённой для разбора."; return }
+    Stop-VM -Name $vm -TurnOff -Force -ErrorAction SilentlyContinue
+    # A tested VM takes ~25-30 GB; logs and screenshots are kept, the disk is not.
+    Remove-VM -Name $vm -Force -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force (Join-Path $images "vms\$vm") -ErrorAction SilentlyContinue
+    Remove-Item -Force (Join-Path $images "vms\$vm-answer.iso") -ErrorAction SilentlyContinue
+    Say "Машина $vm удалена (журналы и снимки остались в vm-images)"
 }
 
 try {
-    Set-Content -Path $report -Value "Проверка установщика «Кладезъ» — $(Get-Date -Format 'yyyy-MM-dd HH:mm')" -Encoding UTF8
-    Say "Жду, пока скачается установщик…"
-    $zip = $null
-    for ($i = 0; $i -lt 360 -and -not $zip; $i++) { $zip = Get-ChildItem $InstallerZipGlob -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $zip) { Start-Sleep 10 } }
-    if (-not $zip) { throw 'Установщик так и не скачался за час.' }
-    Start-Sleep 5
+    Add-Content -Path $report -Value "
+"; Add-Content -Path $report -Value "Проверка установщика «Кладезъ» — $(Get-Date -Format 'yyyy-MM-dd HH:mm')" -Encoding UTF8
     $dest = Join-Path $root 'preview\installer'
-    Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
-    New-Item -ItemType Directory -Force $dest | Out-Null
-    Move-Item $zip.FullName $dest
-    Expand-Archive -Path (Join-Path $dest $zip.Name) -DestinationPath $dest -Force
-    Remove-Item (Join-Path $dest $zip.Name)
+    if (-not $UseDownloaded) {
+        Say "Жду, пока скачается установщик…"
+        $zip = $null
+        for ($i = 0; $i -lt 360 -and -not $zip; $i++) { $zip = Get-ChildItem $InstallerZipGlob -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $zip) { Start-Sleep 10 } }
+        if (-not $zip) { throw 'Установщик так и не скачался за час.' }
+        Start-Sleep 5
+        Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force $dest | Out-Null
+        Move-Item $zip.FullName $dest
+        Expand-Archive -Path (Join-Path $dest $zip.Name) -DestinationPath $dest -Force
+        Remove-Item (Join-Path $dest $zip.Name)
+    }
     $exe = Get-ChildItem $dest -Recurse -Filter *.exe | Sort-Object Length -Descending | Select-Object -First 1
     Say "Установщик: $($exe.Name), $([math]::Round($exe.Length / 1MB)) МБ"
     $sums = Get-ChildItem $dest -Recurse -Filter 'SHA256SUMS*' | Select-Object -First 1
@@ -152,8 +208,15 @@ try {
         Say "Контрольная сумма: $(if ($want -and $got -ieq $want) { 'совпадает' } else { "НЕ СОВПАДАЕТ или нет записи (ждали $want, получили $got)" })"
     }
 
-    Test-Installer 'kladez-win11' (Get-ChildItem $images -Filter 'Windows11*.iso' | Select-Object -First 1).FullName -Win11 $exe.FullName
-    Test-Installer 'kladez-win10' (Join-Path $images 'Windows10.iso') $exe.FullName
+    foreach ($old in $Only) {
+        if (Get-VM -Name $old -ErrorAction SilentlyContinue) { Stop-VM -Name $old -TurnOff -Force -ErrorAction SilentlyContinue; Remove-VM -Name $old -Force }
+        Remove-Item -Recurse -Force (Join-Path $images "vms\$old") -ErrorAction SilentlyContinue
+    }
+    Say 'Старые проверочные машины удалены'
+    if ($Only -contains 'kladez-win11') { try { Test-Installer 'kladez-win11' (Get-ChildItem $images -Filter 'Windows11*.iso' | Select-Object -First 1).FullName -Win11 $exe.FullName }
+    catch { Say "ОШИБКА на kladez-win11: $($_.Exception.Message) — $($_.ScriptStackTrace)"; Save-Screenshot 'kladez-win11' (Join-Path $images 'kladez-win11-error.png') } }
+    if ($Only -contains 'kladez-win10') { try { Test-Installer 'kladez-win10' (Join-Path $images 'Windows10.iso') $exe.FullName }
+    catch { Say "ОШИБКА на kladez-win10: $($_.Exception.Message) — $($_.ScriptStackTrace)"; Save-Screenshot 'kladez-win10' (Join-Path $images 'kladez-win10-error.png') } }
     Say 'Проверка закончена.'
 } catch {
     Say "ОШИБКА СЦЕНАРИЯ: $($_.Exception.Message) — $($_.ScriptStackTrace)"
