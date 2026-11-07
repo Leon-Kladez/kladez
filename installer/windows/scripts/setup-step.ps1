@@ -39,6 +39,8 @@ try {
         'integrate' {
             # Autostart, the elevated network task and the firewall rule for phones (spec Б6–Б7).
             Import-Module (Join-Path $PSScriptRoot 'Kladez.Tasks.psm1') -Force
+            # Tasks imports Network as a nested module, so its functions are not visible here: import it too.
+            Import-Module (Join-Path $PSScriptRoot 'Kladez.Network.psm1') -Force
             if (-not $UserId) { throw 'Не удалось определить пользователя Windows для автозапуска.' }
             Register-KladezTasks -LauncherPath $LauncherPath -NetScriptPath $NetScriptPath -UserId $UserId
             New-KladezFirewallRule -Ports @($AdminPort, $KiwixPort)

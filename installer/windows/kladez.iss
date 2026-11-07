@@ -517,12 +517,31 @@ begin
     WizardForm.FinishedLabel.Caption := 'Установка «Кладезъ» не закончилась. Перезагрузите компьютер и запустите ' +
       'установщик ещё раз — он продолжит с того места, где остановился.' + #13#10#13#10 +
       'Журнал для помощника: ' + LogPath;
+  end
+  else if (CurPageID = wpFinished) and NeedsReboot then
+  begin
+    WizardForm.FinishedHeadingLabel.Caption := 'Нужна перезагрузка';
+    WizardForm.FinishedLabel.Caption := 'Windows включила компоненты, нужные «Кладезъ». Чтобы закончить установку, ' +
+      'компьютер нужно перезагрузить.' + #13#10#13#10 +
+      'Сохраните открытые документы и нажмите «Завершить» — компьютер перезагрузится, ' +
+      'а установка продолжится сама после входа в Windows.';
   end;
 end;
 
+{ Inno asks NeedRestart before ssPostInstall, where our steps find out a reboot is needed, so its own
+  restart prompt never appears. We restart ourselves when the person presses «Завершить». }
 function NeedRestart: Boolean;
 begin
   Result := NeedsReboot;
+end;
+
+procedure DeinitializeSetup;
+var
+  Code: Integer;
+begin
+  if NeedsReboot and not InstallFailed and not WizardSilent then
+    Exec(ExpandConstant('{sys}\shutdown.exe'), '/r /t 5 /c "Кладезъ: перезагрузка для завершения установки"',
+      '', SW_HIDE, ewNoWait, Code);
 end;
 
 function SetupFinished: Boolean;

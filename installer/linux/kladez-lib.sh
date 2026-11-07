@@ -36,7 +36,9 @@ kz_ensure_dockerd() {
     docker info >/dev/null 2>&1 && return 0
     kz_log "starting dockerd"
     mkdir -p "$KZ_LOG_DIR"
-    nohup dockerd >> "$KZ_LOG_DIR/dockerd.log" 2>&1 &
+    # Own session (setsid), not just nohup: when the wsl.exe call that started us ends, the session's
+    # SIGHUP made dockerd reload and killed its docker-proxy children, so Windows lost localhost:8080.
+    setsid -f dockerd >> "$KZ_LOG_DIR/dockerd.log" 2>&1 < /dev/null
     for ((i = 0; i < timeout; i++)); do
         docker info >/dev/null 2>&1 && return 0
         sleep 1
