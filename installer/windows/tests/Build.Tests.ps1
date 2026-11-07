@@ -276,3 +276,32 @@ Describe 'kladez.iss: uninstall leaves no empty folders (author''s PC: empty C:\
         $u | Should -Match "-SystemDir \`$ini\['SystemDir'\]"
     }
 }
+
+Describe 'kladez.iss: phones work right after install/upgrade, honest error advice (author''s PC, 0.1.5 → 0.1.6)' {
+    BeforeAll {
+        $steps = Get-Content (Join-Path $PSScriptRoot '..\scripts\setup-step.ps1') -Raw -Encoding UTF8
+        $install = [regex]::Match($iss, '(?s)procedure RunInstallSteps;.*?\nend;').Value
+    }
+    It 'starts the tasks after the first run and after an upgrade (elevated, after success only)' {
+        $install | Should -Match "(?s)Fail\('Не удалось запустить «Кладезъ» в первый раз\.'.*MarkInstalled;\s*ActivateTasks\(Lib\);"
+        $install | Should -Match "(?s)EndStep;\s*ActivateTasks\(''\);\s*Finished := True;"
+        $iss | Should -Match "Step\('activate', '-LibraryDir `"' \+ Lib \+ '`"', False\)"
+    }
+    It 'advises a reboot only after Windows components and WSL' {
+        @([regex]::Matches($install, 'AdviceReboot\)')).Count | Should -Be 2
+        $install | Should -Match "Fail\('Не удалось включить компоненты Windows\.', AdviceReboot\)"
+        $install | Should -Match "Fail\('Не удалось установить WSL\.', AdviceReboot\)"
+        $install | Should -Match "Fail\('Не удалось обновить «Кладезъ»\.', AdviceUpgrade\)"
+        $iss | Should -Match "Ваши книги и настройки целы\. Запустите установщик ещё раз\."
+    }
+    It 'the generic message no longer always says «Перезагрузите»' {
+        $fail = [regex]::Match($iss, '(?s)procedure Fail\(.*?\nend;').Value
+        $fail | Should -Not -Match 'Перезагрузите'
+        $fail | Should -Match 'Advice'
+    }
+    It 'setup-step: activate step exists and failed firstrun/upgrade copy kladez-start.log into setup.log' {
+        $steps | Should -Match "'activate' \{"
+        $steps | Should -Match 'Start-KladezTasks -LibraryDir'
+        $steps | Should -Match "(?s)if \(\`$Step -in 'firstrun', 'upgrade'\).*Get-KladezStartLogTail"
+    }
+}

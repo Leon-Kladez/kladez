@@ -34,6 +34,41 @@ function Register-KladezTasks {
     Register-ScheduledTask -TaskName $script:NetworkTask -Action $net -Principal $admin -Settings $settings -Force | Out-Null
 }
 
+# Right after install/upgrade: the tasks were registered but would first run only at the next logon,
+# so phones had no portproxy/firewall/addresses file (no QR) until then. Runs «Кладезъ — сеть», waits
+# for a fresh addresses file, then «Кладезъ» (keepalive). Never throws: the next logon does it anyway.
+function Start-KladezTasks {
+    param(
+        [AllowEmptyString()][string]$LibraryDir = '',
+        [int]$TimeoutSec = 60
+    )
+    $notes = New-Object System.Collections.Generic.List[string]
+    $since = Get-Date
+    try {
+        Start-ScheduledTask -TaskName $script:NetworkTask -ErrorAction Stop
+        $notes.Add('network task started')
+        if ($LibraryDir) {
+            $file = Join-Path $LibraryDir '.kladez-network.json'
+            $ready = $false
+            for ($i = 0; $i -lt $TimeoutSec; $i++) {
+                $f = Get-Item -LiteralPath $file -ErrorAction SilentlyContinue
+                if ($f -and $f.LastWriteTime -ge $since.AddSeconds(-2)) { $ready = $true; break }
+                Start-Sleep -Seconds 1
+            }
+            $notes.Add($(if ($ready) { "addresses file ready: $file" } else { "no fresh addresses file after $TimeoutSec s (phones work, QR after next start)" }))
+        }
+    } catch {
+        $notes.Add("network task ERROR: $($_.Exception.Message)")
+    }
+    try {
+        Start-ScheduledTask -TaskName $script:AutostartTask -ErrorAction Stop
+        $notes.Add('autostart task started')
+    } catch {
+        $notes.Add("autostart task ERROR: $($_.Exception.Message)")
+    }
+    $notes -join '; '
+}
+
 function Unregister-KladezTasks {
     foreach ($t in $script:AutostartTask, $script:NetworkTask) {
         Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue
@@ -152,5 +187,5 @@ function Get-KladezExplorerOwners {
     }
 }
 
-Export-ModuleMember -Function Register-KladezTasks, Unregister-KladezTasks, Test-KladezLibrarySafeToDelete, Invoke-KladezUninstall,
+Export-ModuleMember -Function Register-KladezTasks, Start-KladezTasks, Unregister-KladezTasks, Test-KladezLibrarySafeToDelete, Invoke-KladezUninstall,
     Resolve-KladezTaskUser, Get-KladezExplorerOwners

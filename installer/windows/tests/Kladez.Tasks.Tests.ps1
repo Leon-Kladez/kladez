@@ -29,6 +29,40 @@ Describe 'Register-KladezTasks' {
     }
 }
 
+Describe 'Start-KladezTasks (right after install/upgrade, not only at next logon)' {
+    BeforeEach {
+        $script:started = New-Object System.Collections.Generic.List[string]
+        $script:sleeps = 0
+        $script:lib = Join-Path $TestDrive ('lib' + [guid]::NewGuid())
+        New-Item -ItemType Directory -Force $script:lib | Out-Null
+        $script:netFile = Join-Path $script:lib '.kladez-network.json'
+        Mock -ModuleName Kladez.Tasks Start-ScheduledTask { $script:started.Add($TaskName) }
+        # The network task writes the addresses file a moment after it is started.
+        Mock -ModuleName Kladez.Tasks Start-Sleep { $script:sleeps++; if ($script:sleeps -eq 2) { Set-Content $script:netFile '{}' } }
+    }
+    It 'runs «Кладезъ — сеть», waits for the addresses file, then starts «Кладезъ»' {
+        $r = Start-KladezTasks -LibraryDir $script:lib -TimeoutSec 10
+        $script:started | Should -Be @('Кладезъ — сеть', 'Кладезъ')
+        $script:sleeps | Should -Be 2
+        $r | Should -Match 'addresses file ready'
+    }
+    It 'an old addresses file (previous version) does not count — waits for a fresh one' {
+        Set-Content $script:netFile '{}'
+        (Get-Item $script:netFile).LastWriteTime = (Get-Date).AddHours(-1)
+        Mock -ModuleName Kladez.Tasks Start-Sleep { $script:sleeps++ }
+        $r = Start-KladezTasks -LibraryDir $script:lib -TimeoutSec 3
+        $script:sleeps | Should -Be 3
+        $r | Should -Match 'no fresh addresses file'
+        $script:started | Should -Contain 'Кладезъ'
+    }
+    It 'a failing network task neither stops autostart nor fails the installer' {
+        Mock -ModuleName Kladez.Tasks Start-ScheduledTask { if ($TaskName -eq 'Кладезъ — сеть') { throw 'task missing' }; $script:started.Add($TaskName) }
+        $r = Start-KladezTasks -LibraryDir $script:lib -TimeoutSec 3
+        $script:started | Should -Be @('Кладезъ')
+        $r | Should -Match 'network task ERROR'
+    }
+}
+
 Describe 'Test-KladezLibrarySafeToDelete' {
     It 'only known subfolders and marker files → safe' {
         $lib = Join-Path $TestDrive 'lib1'

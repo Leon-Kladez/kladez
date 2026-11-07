@@ -138,6 +138,7 @@ var
   StepNumber, StepTotal, StepStartPct, StepWeight, StepExpectedSec: Integer;
   StepStartTick: LongWord;
   StepText, StepHint: String;
+  FailAdvice: String;
   MusicReady, MusicMuted: Boolean;
   SoundButton: TNewButton;
   TipLabel: TNewStaticText;
@@ -809,10 +810,18 @@ begin
 
   if (CurPageID = wpFinished) and InstallFailed then
   begin
-    WizardForm.FinishedHeadingLabel.Caption := 'Установка не завершена';
-    WizardForm.FinishedLabel.Caption := 'Установка «Кладезъ» не закончилась. Перезагрузите компьютер и запустите ' +
-      'установщик ещё раз — он продолжит с того места, где остановился.' + #13#10#13#10 +
-      'Журнал для помощника: ' + LogPath;
+    if IsUpgrade then
+    begin
+      WizardForm.FinishedHeadingLabel.Caption := 'Обновление не завершено';
+      WizardForm.FinishedLabel.Caption := 'Обновление «Кладезъ» не закончилось. ' + FailAdvice + #13#10#13#10 +
+        'Журнал для помощника: ' + LogPath;
+    end
+    else
+    begin
+      WizardForm.FinishedHeadingLabel.Caption := 'Установка не завершена';
+      WizardForm.FinishedLabel.Caption := 'Установка «Кладезъ» не закончилась. ' + FailAdvice + #13#10#13#10 +
+        'Журнал для помощника: ' + LogPath;
+    end;
   end
   else if (CurPageID = wpFinished) and NeedsReboot then
   begin
@@ -874,13 +883,32 @@ begin
   DeleteFile(F);
 end;
 
-procedure Fail(const What: String);
+{ What to do after a failed step. A reboot helps only after Windows components or WSL were installed;
+  for the later steps it only misleads (author's PC, 0.1.5 -> 0.1.6 upgrade). }
+function AdviceReboot: String;
+begin
+  Result := 'Перезагрузите компьютер и запустите установщик ещё раз — он продолжит с того места, где остановился.';
+end;
+
+function AdviceRetry: String;
+begin
+  Result := 'Запустите установщик ещё раз — он продолжит с того места, где остановился.';
+end;
+
+function AdviceUpgrade: String;
+begin
+  Result := 'Ваши книги и настройки целы. Запустите установщик ещё раз.';
+end;
+
+procedure Fail(const What, Advice: String);
 begin
   StopStepTimer;
   InstallFailed := True;
-  MsgBox(What + #13#10#13#10 + 'Перезагрузите компьютер и запустите установку ещё раз.' + #13#10 +
+  FailAdvice := Advice;
+  MsgBox(What + #13#10#13#10 + Advice + #13#10 +
     'Если не поможет, отправьте помощнику файл журнала:' + #13#10 + LogPath, mbError, MB_OK);
 end;
+
 
 procedure ScheduleResume(const Lib: String);
 begin
@@ -894,6 +922,18 @@ end;
 function Step(const Name, Params: String; AsOriginalUser: Boolean): Integer;
 begin
   Result := RunScript(ExpandConstant('{app}\scripts\setup-step.ps1'), '-Step ' + Name + ' ' + Params, AsOriginalUser);
+end;
+
+{ Phones (portproxy, firewall, addresses file for the QR code) and keepalive right away, not only at the
+  next logon. Elevated: the network task runs with highest privileges. Never fails the install. }
+procedure ActivateTasks(const Lib: String);
+var
+  Code: Integer;
+begin
+  SetStatus('Включаю доступ для телефонов…');
+  Code := Step('activate', '-LibraryDir "' + Lib + '"', False);
+  if Code <> 0 then
+    Log('activate step returned ' + IntToStr(Code));
 end;
 
 procedure MarkInstalled;
@@ -946,10 +986,11 @@ begin
   begin
     BeginStep(1, 1, 0, 100, 240, 'Обновляю программы «Кладезъ»…', 'Это займёт несколько минут — компьютер не завис. ');
     if Step('upgrade', '-BundlePath "' + Payload + '\kladez-images.tar.zst" -LinuxDir "' + Payload + '\linux"', True) <> 0 then
-      Fail('Не удалось обновить «Кладезъ».')
+      Fail('Не удалось обновить «Кладезъ».', AdviceUpgrade)
     else
     begin
       EndStep;
+      ActivateTasks('');
       Finished := True;
     end;
     Exit;
@@ -963,14 +1004,14 @@ begin
   BeginStep(1, 5, 0, 5, 30, 'Включаю компоненты Windows…', '');
   Code := Step('features', '', False);
   if Code = 3010 then begin ScheduleResume(Lib); Exit; end;
-  if Code <> 0 then begin Fail('Не удалось включить компоненты Windows.'); Exit; end;
+  if Code <> 0 then begin Fail('Не удалось включить компоненты Windows.', AdviceReboot); Exit; end;
   EndStep;
 
   BeginStep(2, 5, 5, 15, 120, 'Устанавливаю WSL…', '');
   Code := Step('wsl', '-WindowsPathKind ' + WindowsPathKind + ' -WslMsi "' + Payload + '\{#WslMsi}" -LegacyKernelMsi "' +
     Payload + '\{#LegacyMsi}"', False);
   if Code = 3010 then begin ScheduleResume(Lib); Exit; end;
-  if Code <> 0 then begin Fail('Не удалось установить WSL.'); Exit; end;
+  if Code <> 0 then begin Fail('Не удалось установить WSL.', AdviceReboot); Exit; end;
   EndStep;
 
   WriteSettings(Lib, Sys);
@@ -980,7 +1021,7 @@ begin
     ExpandConstant('{app}\scripts\kladez-net.ps1') + '" -UserId "' + OriginalUser + '" -FallbackUserId "' +
     ExpandConstant('{computername}\{username}') + '" -AdminPort ' + AdminPort + ' -KiwixPort ' + KiwixPort, False) <> 0 then
   begin
-    Fail('Не удалось настроить автозапуск и доступ для телефонов.');
+    Fail('Не удалось настроить автозапуск и доступ для телефонов.', AdviceRetry);
     Exit;
   end;
   EndStep;
@@ -988,7 +1029,7 @@ begin
   BeginStep(4, 5, 23, 12, 60, 'Устанавливаю системный модуль «Кладезъ»…', '');
   if Step('distro', '-SystemDir "' + Sys + '" -RootfsPath "' + Payload + '\kladez-rootfs.tar.gz"', True) <> 0 then
   begin
-    Fail('Не удалось установить системный модуль «Кладезъ».');
+    Fail('Не удалось установить системный модуль «Кладезъ».', AdviceRetry);
     Exit;
   end;
   EndStep;
@@ -998,12 +1039,13 @@ begin
   if Step('firstrun', '-BundlePath "' + Payload + '\kladez-images.tar.zst" -LibraryDir "' + Lib + '" -AdminPort ' +
     AdminPort + ' -KiwixPort ' + KiwixPort, True) <> 0 then
   begin
-    Fail('Не удалось запустить «Кладезъ» в первый раз.');
+    Fail('Не удалось запустить «Кладезъ» в первый раз.', AdviceRetry);
     Exit;
   end;
   EndStep;
-  SetStatus('Готово: всего 100 %');
   MarkInstalled;
+  ActivateTasks(Lib);
+  SetStatus('Готово: всего 100 %');
   Finished := True;
 #endif
 end;

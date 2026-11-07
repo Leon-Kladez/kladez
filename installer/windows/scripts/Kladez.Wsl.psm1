@@ -173,6 +173,17 @@ function Update-KladezDistroFiles {
     }
 }
 
+# Last lines of kladez-start.log inside the distro (compose and docker output land there), for
+# setup.log when a step fails — otherwise the log only says «Не удалось запустить программы».
+function Get-KladezStartLogTail {
+    param([int]$Lines = 40)
+    try {
+        $r = Invoke-KladezWsl -Arguments @('-d', $script:DistroName, '-u', 'root', '--', 'tail', '-n', [string]$Lines, '/var/log/kladez-start.log')
+        if ($r.ExitCode -ne 0) { return @() }
+        @($r.Output -split "`r?`n" | Where-Object { $_.Trim() })
+    } catch { @() }
+}
+
 function Get-KladezWslState {
     $features = @('Microsoft-Windows-Subsystem-Linux', 'VirtualMachinePlatform') | ForEach-Object {
         (Get-WindowsOptionalFeature -Online -FeatureName $_).State -eq 'Enabled'
@@ -199,4 +210,5 @@ function Set-KladezWslOobeDone {
 Export-ModuleMember -Function ConvertFrom-WslOutput, Get-KladezWslVersion, Get-KladezInstallAction,
     Test-KladezDistroExists, ConvertTo-KladezArgumentString, Invoke-KladezNative, Invoke-KladezWsl,
     Install-KladezDistro, Invoke-KladezFirstRun, Invoke-KladezUpgrade, Enable-KladezFeatures,
-    Install-KladezWslPackage, Get-KladezWslState, Update-KladezDistroFiles, Set-KladezWslOobeDone
+    Install-KladezWslPackage, Get-KladezWslState, Update-KladezDistroFiles, Set-KladezWslOobeDone,
+    Get-KladezStartLogTail

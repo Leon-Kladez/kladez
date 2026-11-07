@@ -179,3 +179,16 @@ Describe 'Set-KladezWslOobeDone (no «Welcome to WSL» window after install)' {
         { Set-KladezWslOobeDone -KeyPath 'TestRegistry:\Lxss3' } | Should -Not -Throw
     }
 }
+
+Describe 'Get-KladezStartLogTail (why firstrun/upgrade failed, into setup.log)' {
+    It 'returns the last lines of /var/log/kladez-start.log from the distro' {
+        Mock -ModuleName Kladez.Wsl Invoke-KladezWsl { [pscustomobject]@{ ExitCode = 0; Output = "line 1`r`n`r`nNo such image: x:0.1.0`n" } } -ParameterFilter { ($Arguments -join ' ') -like '*tail -n 40 /var/log/kladez-start.log' }
+        Get-KladezStartLogTail | Should -Be @('line 1', 'No such image: x:0.1.0')
+    }
+    It 'no distro or no log → nothing, never throws' {
+        Mock -ModuleName Kladez.Wsl Invoke-KladezWsl { [pscustomobject]@{ ExitCode = 1; Output = 'There is no distribution' } }
+        @(Get-KladezStartLogTail).Count | Should -Be 0
+        Mock -ModuleName Kladez.Wsl Invoke-KladezWsl { throw 'wsl.exe missing' }
+        { Get-KladezStartLogTail } | Should -Not -Throw
+    }
+}
