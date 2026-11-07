@@ -2093,7 +2093,8 @@ export class RagService {
       const dirContents = await listDirectoryContentsRecursive(DOCS_DIR)
       for (const entry of dirContents) {
         if (entry.type === 'file') {
-          filesToEmbed.push({ path: entry.key, source: join('docs', entry.name) })
+          // docs/ru/home.md и docs/en/home.md — разные файлы: источник с папкой языка.
+          filesToEmbed.push({ path: entry.key, source: join('docs', relative(DOCS_DIR, entry.key)) })
         }
       }
 

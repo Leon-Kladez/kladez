@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 230" role="img" aria-label="Схема: сразу после перезагрузки часто нажимайте клавишу Del или F2, пока не откроется BIOS">
+  <rect x="20" y="20" width="300" height="180" rx="10" fill="#222"/>
+  <text x="170" y="105" fill="#ddd" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">Экран погас,</text>
+  <text x="170" y="135" fill="#ddd" font-size="22" text-anchor="middle" font-family="Segoe UI, Arial">появился логотип</text>
+  <path d="M340 110 h70" stroke="#5a3b12" stroke-width="6" marker-end="url(#a1)"/>
+  <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5a3b12"/></marker></defs>
+  <g font-family="Segoe UI, Arial" font-weight="bold">
+    <rect x="440" y="60" width="120" height="90" rx="12" fill="#fff" stroke="#5a3b12" stroke-width="5"/>
+    <text x="500" y="120" font-size="40" text-anchor="middle" fill="#5a3b12">Del</text>
+    <rect x="590" y="60" width="120" height="90" rx="12" fill="#fff" stroke="#5a3b12" stroke-width="5"/>
+    <text x="650" y="120" font-size="40" text-anchor="middle" fill="#5a3b12">F2</text>
+  </g>
+  <text x="575" y="190" font-size="22" text-anchor="middle" fill="#5a3b12" font-family="Segoe UI, Arial">нажимайте часто: тук-тук-тук</text>
+</svg>
