@@ -99,7 +99,9 @@ transmit.registerRoutes()
 
 router.get('/', [HomeController, 'index'])
 router.get('/home', [HomeController, 'home'])
-router.get('/knowledge', [HomeController, 'knowledge'])
+router.get('/library', [HomeController, 'library'])
+// Старый адрес «Скачать знания» — теперь часть «Библиотеки».
+router.get('/knowledge', ({ response }) => response.redirect().toPath('/library#add'))
 router.on('/about').renderInertia('about')
 router.get('/chat', [ChatsController, 'inertia'])
 router.get('/maps', [MapsController, 'index'])
@@ -782,6 +784,11 @@ router
       summary: 'Browse a ZIM library',
       tags: ['zim'],
       query: browseLibraryValidator,
+    })
+
+    documented(router.get('/library-books', [ZimController, 'libraryBooks']), {
+      summary: 'List books in the Kiwix library (Kladez «My books»)',
+      tags: ['zim'],
     })
 
     documented(router.post('/rescan-library', [ZimController, 'rescanLibrary']), {

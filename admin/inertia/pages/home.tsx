@@ -348,7 +348,7 @@ export default function Home(props: {
                 </a>
                 {canChange && (
                   <Link
-                    href="/knowledge"
+                    href="/library#add"
                     className="absolute bottom-2 right-2 rounded bg-surface-primary px-2 py-1 text-xs font-semibold text-text-primary shadow hover:bg-surface-secondary"
                   >
                     {t('library.addBooks')}

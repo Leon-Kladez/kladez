@@ -4,7 +4,9 @@ The library is everything you downloaded: Wikipedia, medicine, textbooks, dictio
 
 ## How to open it
 
-On the Kladez home page click the **Read** tile (in Advanced mode it is called **Library**; it shows how many books and articles are downloaded). It opens in a new browser tab.
+On the Kladez home page click the **Library** tile — it shows how many books and articles you have. At the top of the page is **My books**: each book has a **Read** button (it opens in a new tab), and above the list you can search all books at once.
+
+In Advanced mode the home page also has a tile for the reader itself (Kiwix), which opens the shelf of books directly. It opens in a new browser tab.
 
 You will see a “shelf” — a card for each downloaded item: Wikipedia, Medicine and so on. Click a card to open it.
 
@@ -25,7 +27,7 @@ Most of the material in the Kladez catalog is in Russian. There is also an Engli
 
 ## Adding or removing material
 
-- **Add:** the **[Download knowledge](/knowledge)** tile on the home page (or the **Add books** button on the library card). It has ready-made sets, Wikipedia and individual books by topic, with sizes. Even more is in Advanced mode: Settings → **[Content Explorer](/settings/zim/remote-explorer)**.
+- **Add:** on the **[Library](/library#add)** page, section **Add books**. Ready-made sets are at the top, topics below: Medicine and first aid, Wikipedia, Study, Books and dictionaries, Repair and more. Open a topic and click **Download** next to a book: the same row shows a progress bar and the time left, and the finished book appears in My books by itself. Even more is in Advanced mode: Settings → **[Content Explorer](/settings/zim/remote-explorer)**.
 - **Remove:** in Advanced mode only: Settings → **[Content Manager](/settings/zim)**. Removing frees disk space.
 
 ## Where the files are

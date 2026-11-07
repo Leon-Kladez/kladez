@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, router } from '@inertiajs/react'
 import {
   IconBook2,
-  IconCloudDownload,
   IconDeviceMobile,
   IconHelp,
   IconMapRoute,
@@ -12,7 +11,6 @@ import {
 import Alert from '~/components/Alert'
 import StyledModal from '~/components/StyledModal'
 import OpenOnPhone from '~/components/phones/OpenOnPhone'
-import { getServiceLink } from '~/lib/navigation'
 import { SERVICE_NAMES } from '../../../constants/service_names'
 import type { ServiceSlim } from '../../../types/services'
 import { t, formatNumber } from '../../../constants/i18n'
@@ -21,8 +19,6 @@ export type LibrarySummary = { books: number; articles: number; nearlyEmpty: boo
 
 const TILE =
   'relative rounded border-desert-green border-2 bg-desert-green hover:bg-transparent hover:text-text-primary text-white transition-colors shadow-sm h-48 flex flex-col items-center justify-center cursor-pointer text-center px-4 w-full'
-const TILE_BIG =
-  'relative rounded border-desert-orange border-2 bg-desert-orange hover:bg-transparent hover:text-text-primary text-white transition-colors shadow-sm min-h-48 flex flex-col items-center justify-center cursor-pointer text-center px-4 py-6 w-full'
 
 /** «12 книг · 34 567 статей». */
 export function libraryStats(library: LibrarySummary): string {
@@ -76,13 +72,7 @@ export default function SimpleHome({
   canChange: boolean
 }) {
   const [phoneOpen, setPhoneOpen] = useState(false)
-  const kiwix = services.find((s) => s.service_name === SERVICE_NAMES.KIWIX && s.installed)
   const ai = services.find((s) => s.service_name === SERVICE_NAMES.OLLAMA && s.installed)
-  const readHref = kiwix && (kiwix.ui_location || kiwix.custom_url)
-    ? getServiceLink(kiwix.ui_location || '', kiwix.custom_url)
-    : null
-  // Пустая библиотека: вместо «Читать» — крупно «Скачать знания» (если отсюда можно что-то менять).
-  const showRead = readHref && !(library.nearlyEmpty && canChange)
 
   return (
     <div className="p-4">
@@ -98,41 +88,24 @@ export default function SimpleHome({
               variant: 'primary',
               children: t('simple.empty.button'),
               icon: 'IconCloudDownload',
-              onClick: () => router.visit('/knowledge'),
+              onClick: () => router.visit('/library#add'),
             }}
           />
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {showRead ? (
-          <a href={readHref!} target="_blank" rel="noopener noreferrer">
-            <div className={TILE}>
-              <TileBody
-                icon={<IconBook2 size={48} />}
-                title={t('simple.read.title')}
-                description={t('simple.read.description')}
-                extra={
-                  library.books > 0 ? <p className="text-sm opacity-90 mt-1">{libraryStats(library)}</p> : null
-                }
-              />
-            </div>
-          </a>
-        ) : null}
-
-        {canChange && (
-          <Link href="/knowledge" className={library.nearlyEmpty ? 'sm:col-span-2 lg:col-span-1' : ''}>
-            <div className={library.nearlyEmpty ? TILE_BIG : TILE}>
-              <TileBody
-                icon={<IconCloudDownload size={library.nearlyEmpty ? 64 : 48} />}
-                title={t('simple.download.title')}
-                description={
-                  library.nearlyEmpty ? t('simple.download.emptyDescription') : t('simple.download.description')
-                }
-              />
-            </div>
-          </Link>
-        )}
+        {/* «Библиотека» — одно место: мои книги (Читать) и «Добавить книги». */}
+        <Link href={library.nearlyEmpty && canChange ? '/library#add' : '/library'}>
+          <div className={TILE}>
+            <TileBody
+              icon={<IconBook2 size={48} />}
+              title={t('simple.library.title')}
+              description={t('simple.library.description')}
+              extra={library.books > 0 ? <p className="text-sm opacity-90 mt-1">{libraryStats(library)}</p> : null}
+            />
+          </div>
+        </Link>
 
         <Link href="/maps">
           <div className={TILE}>

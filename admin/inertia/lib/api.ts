@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance } from 'axios'
+import type { LibraryBook } from '../../app/utils/library_summary.js'
 import {
   ListCatalogLanguagesResponse,
   ListRemoteZimFilesResponse,
@@ -973,6 +974,14 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.delete<{ message: string }>(`/zim/${filename}`)
       return response.data
+    })()
+  }
+
+  /** Kladez: «Мои книги» — книги из библиотеки Kiwix. */
+  async listLibraryBooks() {
+    return catchInternal(async () => {
+      const response = await this.client.get<{ books: LibraryBook[] }>('/zim/library-books')
+      return response.data.books
     })()
   }
 

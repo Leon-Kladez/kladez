@@ -15,6 +15,9 @@ import { rename } from 'fs/promises'
 import { join, resolve, sep } from 'path'
 import { ZIM_STORAGE_PATH, ensureDirectoryExists, sanitizeFilename } from '../utils/fs.js'
 import { t } from '../../constants/i18n/index.js'
+import { KiwixLibraryService } from '#services/kiwix_library_service'
+import { libraryBooks } from '../utils/library_summary.js'
+import { STARTER_ZIM } from '../../constants/kladez.js'
 
 @inject()
 export default class ZimController {
@@ -64,6 +67,11 @@ export default class ZimController {
       tierSlug: payload.tierSlug,
       resources,
     }
+  }
+
+  /** Kladez: «Мои книги» — что уже есть в библиотеке Kiwix (из library.xml). */
+  async libraryBooks({}: HttpContext) {
+    return { books: libraryBooks(await new KiwixLibraryService().listBooks(), STARTER_ZIM.filename) }
   }
 
   async rescanLibrary({}: HttpContext) {

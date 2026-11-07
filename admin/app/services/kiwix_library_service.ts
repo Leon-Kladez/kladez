@@ -192,10 +192,18 @@ export class KiwixLibraryService {
    * file doesn't exist yet. Used to report a before/after delta on a manual rescan.
    */
   /** Kladez: книги из library.xml (путь и число статей) — для сводки на главной. */
-  async listBooks(): Promise<{ path: string; articleCount?: number }[]> {
+  async listBooks(): Promise<
+    { path: string; articleCount?: number; title?: string; description?: string; size?: number }[]
+  > {
     try {
       const content = await readFile(this.getLibraryFilePath(), 'utf-8')
-      return this._parseExistingBooks(content).map((b) => ({ path: b.path, articleCount: b.articleCount }))
+      return this._parseExistingBooks(content).map((b) => ({
+        path: b.path,
+        articleCount: b.articleCount,
+        title: b.title,
+        description: b.description,
+        size: b.size,
+      }))
     } catch {
       return []
     }

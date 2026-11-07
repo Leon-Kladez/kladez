@@ -35,9 +35,10 @@ export default class HomeController {
         })
     }
 
-    /** «Кладезъ»: «Скачать знания» — наборы и отдельные книги в одном месте. */
-    async knowledge({ inertia }: HttpContext) {
-        return inertia.render('knowledge', { library: await this.librarySummary() })
+    /** «Кладезъ»: «Библиотека» — «Мои книги» и «Добавить книги» в одном месте. */
+    async library({ inertia }: HttpContext) {
+        const services = await this.systemService.getServices({ installedOnly: true })
+        return inertia.render('library', { library: await this.librarySummary(), system: { services } })
     }
 
     private async librarySummary(): Promise<LibrarySummary> {

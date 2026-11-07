@@ -8,15 +8,15 @@ Kladez does not report anything about you to anyone. There are no ads and nothin
 
 ## Where to start
 
-1. On the home page, click **[Download knowledge](/knowledge)** and pick a ready-made set: «Аптечка» (First Aid Kit), «Библиотека» (Library) or «Всё» (Everything). The page shows how much space each set needs and whether it fits on the disk.
-2. Wait for the downloads to finish. You can keep using the computer as usual.
-3. Read: the **Read** tile on the home page. Details: [Reading the library](/docs/library).
+1. On the home page, click the **[Library](/library)** tile. The medical Wikipedia is already there — it comes with Kladez.
+2. Below, under **Add books**, pick a ready-made set («Аптечка» — First Aid Kit, «Библиотека» — Library, «Всё» — Everything) or open a topic and click **Download** next to a book. You can see how much space it needs and whether it fits.
+3. Wait for the download: its row shows the percentage and the time left. Then the book appears in **My books** by itself — click **Read**. Details: [Reading the library](/docs/library).
 
 ## Simple and Advanced mode
 
 At the top of the home page, on either side of the name, there are two buttons: **Simple** and **Advanced**.
 
-- **Simple** (on by default) — only what most people need: Read, Maps, Download knowledge, On your phone, Ask the assistant (if installed) and Help. There are no buttons here that can break anything.
+- **Simple** (on by default) — only what most people need: Library, Maps, On your phone, Ask the assistant (if installed) and Help. There are no buttons here that can break anything.
 - **Advanced** — everything else: the App depot, Settings, Easy Setup and your own links on the home page. If in doubt, switch back to Simple.
 
 The mode is the same on every computer at home. Phones always see Simple mode.
