@@ -209,3 +209,55 @@ Describe 'kladez.iss Pascal Script: every routine is declared above its first us
         $script:codeText | Should -Not -Match '[А-Яа-яЁё]{3,}'
     }
 }
+
+Describe 'kladez.iss: оформление «Кладезъ», мелодия и подсказки' {
+    BeforeAll {
+        $assets = Join-Path $PSScriptRoot '..\assets'
+        function Get-BmpSize([string]$path) {
+            $b = [IO.File]::ReadAllBytes($path)
+            [pscustomobject]@{ Ok = ($b[0] -eq 0x42 -and $b[1] -eq 0x4D); W = [BitConverter]::ToInt32($b, 18); H = [Math]::Abs([BitConverter]::ToInt32($b, 22)) }
+        }
+    }
+    It 'uses the logo pictures for 100/125/150/200 % and every referenced picture exists with the size in its name' {
+        foreach ($key in 'WizardImageFile', 'WizardSmallImageFile') {
+            $line = [regex]::Match($iss, "(?m)^$key=(.+)$").Groups[1].Value.Trim()
+            $files = $line -split ',' | ForEach-Object { $_.Trim() -replace '^\{#RepoRoot\}\\installer\\windows\\assets\\', '' }
+            $files.Count | Should -Be 4 -Because $key
+            foreach ($f in $files) {
+                $p = Join-Path $assets $f
+                Test-Path $p | Should -BeTrue -Because $f
+                $s = Get-BmpSize $p
+                $s.Ok | Should -BeTrue
+                "$($s.W)x$($s.H)" | Should -Be ([regex]::Match($f, '(\d+x\d+)').Groups[1].Value)
+            }
+        }
+    }
+    It 'pictures use the logo colours (#f6efe0 background, #5a3b12 ink)' {
+        Add-Type -AssemblyName System.Drawing
+        $bmp = [Drawing.Bitmap]::new((Join-Path $assets 'wizard-164x314.bmp'))
+        try {
+            $bmp.GetPixel(2, 2).ToArgb() -band 0xFFFFFF | Should -Be 0xF6EFE0
+            $inks = 0
+            for ($x = 0; $x -lt $bmp.Width; $x += 2) { for ($y = 0; $y -lt $bmp.Height; $y += 2) { if (($bmp.GetPixel($x, $y).ToArgb() -band 0xFFFFFF) -eq 0x5A3B12) { $inks++ } } }
+            $inks | Should -BeGreaterThan 100
+        } finally { $bmp.Dispose() }
+    }
+    It 'plays the melody in a loop through winmm, quietly, and never in silent mode' {
+        $iss | Should -Match 'Source: "\{#RepoRoot\}\\installer\\windows\\assets\\kladez-melody\.mp3"; DestDir: "\{tmp\}"; Flags: dontcopy'
+        $iss | Should -Match "external 'mciSendStringW@winmm\.dll stdcall'"
+        $iss | Should -Match "'play kzmusic repeat'"
+        $iss | Should -Match "volume to 350"
+        $iss | Should -Match 'if WizardSilent then'
+        $iss | Should -Match "'close kzmusic'"
+    }
+    It 'has a visible «Звук» button and remembers the choice (also after the reboot)' {
+        $iss | Should -Match "'♪ Звук: вкл'"
+        $iss | Should -Match "'♪ Звук: выкл'"
+        $iss | Should -Match "'Software\\Kladez', 'InstallerMute'"
+    }
+    It 'shows changing tips about Кладезъ during long steps, every 12 seconds' {
+        ([regex]::Matches($iss, "Tips\[\d+\] := '")).Count | Should -BeGreaterOrEqual 6
+        $iss | Should -Match 'KzSetTimer\(0, 0, 12000, CreateCallback\(@TipTimerProc\)\)'
+        $iss | Should -Match 'ничего не сообщает о вас'
+    }
+}

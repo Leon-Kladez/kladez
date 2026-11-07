@@ -42,6 +42,10 @@ UninstallDisplayIcon={app}\Kladez.exe
 UninstallDisplayName=Кладезъ
 ; Соглашение: «Я принимаю» становится доступным только после прокрутки текста до конца (см. [Code]).
 LicenseFile={#RepoRoot}\installer\windows\agreement-ru.txt
+; Оформление «Кладезъ»: логотип на пергаменте (installer\windows\assets\make_wizard_images.py),
+; размеры для масштабов 100/125/150/200 % — Inno берёт ближайший.
+WizardImageFile={#RepoRoot}\installer\windows\assets\wizard-164x314.bmp,{#RepoRoot}\installer\windows\assets\wizard-192x386.bmp,{#RepoRoot}\installer\windows\assets\wizard-246x459.bmp,{#RepoRoot}\installer\windows\assets\wizard-328x604.bmp
+WizardSmallImageFile={#RepoRoot}\installer\windows\assets\wizard-small-55x55.bmp,{#RepoRoot}\installer\windows\assets\wizard-small-64x68.bmp,{#RepoRoot}\installer\windows\assets\wizard-small-83x80.bmp,{#RepoRoot}\installer\windows\assets\wizard-small-110x106.bmp
 OutputDir={#Dist}
 #ifdef UpdateOnly
 OutputBaseFilename=Кладезъ-обновление-{#AppVersion}
@@ -68,6 +72,8 @@ Source: "{#RepoRoot}\installer\windows\docs\*"; DestDir: "{app}\docs"; Flags: ig
 Source: "{#RepoRoot}\installer\windows\docs\bios\index.html"; DestDir: "{tmp}\bios"; Flags: dontcopy
 Source: "{#RepoRoot}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "{#RepoRoot}\NOTICE"; DestDir: "{app}"; DestName: "NOTICE.txt"; Flags: ignoreversion
+; Мелодия мастера (дал автор): только во временную папку, в программу не ставится.
+Source: "{#RepoRoot}\installer\windows\assets\kladez-melody.mp3"; DestDir: "{tmp}"; Flags: dontcopy
 Source: "{#Dist}\kladez-images.tar.zst"; DestDir: "{app}\payload"; Flags: ignoreversion deleteafterinstall
 ; New scripts and image list: on upgrade they replace the copies baked into the first rootfs.
 Source: "{#RepoRoot}\installer\linux\kladez-start"; DestDir: "{app}\payload\linux"; Flags: ignoreversion deleteafterinstall
@@ -131,6 +137,12 @@ var
   StepNumber, StepTotal, StepStartPct, StepWeight, StepExpectedSec: Integer;
   StepStartTick: LongWord;
   StepText, StepHint: String;
+  MusicReady, MusicMuted: Boolean;
+  SoundButton: TNewButton;
+  TipLabel: TNewStaticText;
+  Tips: TArrayOfString;
+  TipIndex: Integer;
+  TipTimer: LongWord;
 
 function KzGetScrollInfo(Wnd: HWND; BarFlag: Integer; var ScrollInfo: TKladezScrollInfo): BOOL;
   external 'GetScrollInfo@user32.dll stdcall';
@@ -140,6 +152,8 @@ function KzKillTimer(Wnd: LongWord; uIDEvent: LongWord): BOOL;
   external 'KillTimer@user32.dll stdcall';
 function KzGetTickCount: LongWord;
   external 'GetTickCount@kernel32.dll stdcall';
+function KzMciSendString(Command: String; ReturnString: String; ReturnLength: LongWord; Callback: LongWord): LongWord;
+  external 'mciSendStringW@winmm.dll stdcall';
 
 { ── Small helpers ─────────────────────────────────────────────────────────── }
 
@@ -581,12 +595,159 @@ begin
   WizardForm.StatusLabel.Caption := 'Распаковка файлов… ' + IntToStr(Pct) + ' %';
 end;
 
+{ ── Melody: plays in a loop from the first page to the end; «Звук» button; remembered choice ── }
+
+function MuteRemembered: Boolean;
+var
+  V: Cardinal;
+begin
+  Result := RegQueryDWordValue(HKCU, 'Software\Kladez', 'InstallerMute', V) and (V = 1);
+end;
+
+procedure RememberMute(Muted: Boolean);
+begin
+  if Muted then
+    RegWriteDWordValue(HKCU, 'Software\Kladez', 'InstallerMute', 1)
+  else
+    RegWriteDWordValue(HKCU, 'Software\Kladez', 'InstallerMute', 0);
+end;
+
+procedure UpdateSoundButton;
+begin
+  if SoundButton = nil then
+    Exit;
+  if MusicMuted then
+    SoundButton.Caption := '♪ Звук: выкл'
+  else
+    SoundButton.Caption := '♪ Звук: вкл';
+end;
+
+{ Any MCI error means «no sound on this computer»: the installer then simply stays silent. }
+procedure StartMusic;
+var
+  F: String;
+begin
+  MusicReady := False;
+  if WizardSilent then
+    Exit;
+  try
+    ExtractTemporaryFile('kladez-melody.mp3');
+    F := ExpandConstant('{tmp}\kladez-melody.mp3');
+    if KzMciSendString('open "' + F + '" type mpegvideo alias kzmusic', '', 0, 0) <> 0 then
+      Exit;
+    KzMciSendString('setaudio kzmusic volume to 350', '', 0, 0);
+    MusicReady := True;
+    if not MusicMuted then
+      KzMciSendString('play kzmusic repeat', '', 0, 0);
+  except
+    MusicReady := False;
+  end;
+end;
+
+procedure StopMusic;
+begin
+  if MusicReady then
+  begin
+    KzMciSendString('stop kzmusic', '', 0, 0);
+    KzMciSendString('close kzmusic', '', 0, 0);
+    MusicReady := False;
+  end;
+end;
+
+procedure SoundButtonClick(Sender: TObject);
+begin
+  MusicMuted := not MusicMuted;
+  RememberMute(MusicMuted);
+  if MusicReady then
+  begin
+    if MusicMuted then
+      KzMciSendString('pause kzmusic', '', 0, 0)
+    else
+      KzMciSendString('play kzmusic repeat', '', 0, 0);
+  end;
+  UpdateSoundButton;
+end;
+
+procedure CreateSoundButton;
+begin
+  SoundButton := TNewButton.Create(WizardForm);
+  SoundButton.Parent := WizardForm;
+  SoundButton.Left := ScaleX(16);
+  SoundButton.Top := WizardForm.CancelButton.Top;
+  SoundButton.Height := WizardForm.CancelButton.Height;
+  SoundButton.Width := ScaleX(120);
+  SoundButton.OnClick := @SoundButtonClick;
+  UpdateSoundButton;
+  { Without a working sound device the button would do nothing — hide it. }
+  SoundButton.Visible := MusicReady;
+end;
+
+{ ── Tips about Кладезъ under the progress bar during the long steps, every 12 seconds ── }
+
+procedure InitTips;
+begin
+  SetArrayLength(Tips, 7);
+  Tips[0] := 'В «Кладезъ» можно положить всю Википедию на русском — она откроется без интернета.';
+  Tips[1] := 'Есть подборки по медицине и первой помощи — пригодятся, когда до врача не добраться.';
+  Tips[2] := 'Карты любой страны: выберите свой регион, и карта будет работать без интернета.';
+  Tips[3] := 'Телефоны в доме смогут открыть библиотеку по Wi-Fi в обычном браузере, ничего не устанавливая.';
+  Tips[4] := 'ИИ-помощник отвечает по статьям библиотеки и показывает, откуда взял ответ.';
+  Tips[5] := 'Программа ничего не сообщает о вас и не показывает рекламу.';
+  Tips[6] := 'Если интернет пропадёт посреди скачивания, «Кладезъ» продолжит с того же места, когда он вернётся.';
+  TipIndex := 0;
+end;
+
+procedure ShowNextTip;
+begin
+  if (TipLabel = nil) or (GetArrayLength(Tips) = 0) then
+    Exit;
+  TipLabel.Caption := Tips[TipIndex];
+  TipIndex := (TipIndex + 1) mod GetArrayLength(Tips);
+end;
+
+procedure TipTimerProc(Wnd: LongWord; Msg: LongWord; IdEvent: LongWord; Time: LongWord);
+begin
+  ShowNextTip;
+end;
+
+procedure StartTips;
+begin
+  if TipLabel = nil then
+  begin
+    TipLabel := TNewStaticText.Create(WizardForm);
+    TipLabel.Parent := WizardForm.InstallingPage;
+    TipLabel.AutoSize := False;
+    TipLabel.WordWrap := True;
+    TipLabel.Left := WizardForm.ProgressGauge.Left;
+    TipLabel.Width := WizardForm.ProgressGauge.Width;
+    TipLabel.Top := WizardForm.FilenameLabel.Top + WizardForm.FilenameLabel.Height + ScaleY(28);
+    TipLabel.Height := ScaleY(60);
+    TipLabel.Font.Color := $123B5A;   { #5a3b12 as BGR }
+  end;
+  ShowNextTip;
+  if TipTimer = 0 then
+    TipTimer := KzSetTimer(0, 0, 12000, CreateCallback(@TipTimerProc));
+end;
+
+procedure StopTips;
+begin
+  if TipTimer <> 0 then
+  begin
+    KzKillTimer(0, TipTimer);
+    TipTimer := 0;
+  end;
+end;
+
 { ── Wizard pages ──────────────────────────────────────────────────────────── }
 
 procedure InitializeWizard;
 begin
   WizardForm.LicenseLabel1.Caption := 'Прочитайте соглашение. Прокрутите текст до конца — ' +
     'тогда станет доступно «Я принимаю условия соглашения».';
+  MusicMuted := MuteRemembered;
+  StartMusic;
+  CreateSoundButton;
+  InitTips;
   if IsUpgrade then
     Exit;
   LibPage := CreateInputDirPage(wpSelectDir, 'Где хранить библиотеку',
@@ -628,6 +789,11 @@ begin
     StartLicenseTimer
   else
     StopLicenseTimer;
+
+  if CurPageID = wpInstalling then
+    StartTips
+  else
+    StopTips;
 
   { The library follows the program folder's drive until the person edits it. }
   if (LibPage <> nil) and (CurPageID = LibPage.ID) then
@@ -860,6 +1026,8 @@ var
 begin
   StopLicenseTimer;
   StopStepTimer;
+  StopTips;
+  StopMusic;
   if NeedsReboot and not InstallFailed and not WizardSilent then
     Exec(ExpandConstant('{sys}\shutdown.exe'), '/r /t 5 /c "Кладезъ: перезагрузка для завершения установки"',
       '', SW_HIDE, ewNoWait, Code);
