@@ -6,6 +6,7 @@ param(
     [switch]$ShutdownWhenDone,
     [switch]$UseDownloaded,  # reuse the installer already unpacked in preview\installer
     [string[]]$Only = @('kladez-win11', 'kladez-win10'),
+    [switch]$HumanResume,    # after the first reboot leave RunOnce as is and stop (wizard is driven by hand)
     [switch]$ReuseVm         # continue with an existing VM (e.g. after the runner was interrupted)
 )
 $ErrorActionPreference = 'Stop'
@@ -29,6 +30,8 @@ function Wait-Guest($vm, [int]$minutes = 60) {
 }
 
 function Save-Screenshot($vm, $file) {
+    try { & (Join-Path $here 'Save-KladezVmScreen.ps1') -Name $vm -Path $file | Out-Null; Say "Снимок экрана: $file"; return }
+    catch { Say "Снимок экрана не получился: $($_.Exception.Message)"; return }
     try {
         # Classic WMI: the CIM call returns an empty ImageData for this method.
         $svc = Get-WmiObject -Namespace root\virtualization\v2 -Class Msvm_VirtualSystemManagementService
@@ -58,7 +61,7 @@ function Run-AsTester($vm, $cmdLine, $taskName) {
             break
         } catch {
             Say "Жду рабочий стол в машине (попытка $try): $($_.Exception.Message)"
-            if ($try -eq 3) { Restart-VM -Name $vm -Force; Start-Sleep 90 }
+            if ($try -eq 3) { Restart-VM -Name $vm -Force; Start-Sleep 90 }   # stuck desktop: a hard reset is fine here
             Start-Sleep 30
         }
     }
@@ -139,12 +142,24 @@ function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
         }
         if (-not $resume) { break }
         $n = $round + 1
+        if ($HumanResume) {
+            # Like a person: reboot and leave RunOnce untouched; the visible wizard is then driven by hand.
+            Say "Установщик попросил перезагрузку. Перезагружаю как человек (RunOnce не трогаю); дальше — вручную."
+            Invoke-Command -VMName $vm -Credential $cred -ScriptBlock { shutdown.exe /r /t 5 }   # a normal restart: Restart-VM -Force is a hard reset that loses fresh registry writes (RunOnce)
+            Start-Sleep 60
+            [void](Wait-Guest $vm 20)
+            Start-Sleep 90
+            $seen = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock { @(Get-Process | Where-Object { $_.Name -like 'setup*' }).Count }
+            Say "После входа установщик $(if ($seen) { 'запустился сам' } else { 'НЕ запустился сам' })"
+            Save-Screenshot $vm (Join-Path $images "$vm-after-reboot.png")
+            return
+        }
         Say "Установщик попросил перезагрузку (этап $round). Перезагружаю; после входа он продолжит сам."
         Invoke-Command -VMName $vm -Credential $cred -ArgumentList $resume, $n -ScriptBlock {
             param($resume, $n)
             Set-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce' -Name KladezSetup -Value "$resume /SILENT /SUPPRESSMSGBOXES /NORESTART /LOG=C:\Kladez-test\setup-$n.log"
         }
-        Restart-VM -Name $vm -Force
+        Invoke-Command -VMName $vm -Credential $cred -ScriptBlock { shutdown.exe /r /t 5 }   # a normal restart: Restart-VM -Force is a hard reset that loses fresh registry writes (RunOnce)
         Start-Sleep 60
         if (-not (Wait-Guest $vm 20)) { Say "ПРОВАЛ: машина не загрузилась после перезагрузки"; return }
     }
