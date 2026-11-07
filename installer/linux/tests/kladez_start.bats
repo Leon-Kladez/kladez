@@ -9,6 +9,9 @@ setup() {
   mkdir -p "$STUB_STATE" "$KZ_ROOT/opt/project-nomad"
   : > "$STUB_LOG"
   cp "$LINUX_DIR/compose.template.yaml" "$LINUX_DIR/images.lock" "$KZ_ROOT/opt/project-nomad/"
+  # git has zero digests for admin/updater (CI puts the real ones in); a real build never has zeros.
+  LOCK="$KZ_ROOT/opt/project-nomad/images.lock"
+  sed -i -E 's/sha256:0{64}/sha256:'"$(printf 'a%.0s' {1..64})"'/' "$LOCK"
   BUNDLE="$BATS_TEST_TMPDIR/kladez-images.tar.zst"; echo "fake-bundle" > "$BUNDLE"
   LIB="$BATS_TEST_TMPDIR/lib"
   START="$LINUX_DIR/kladez-start"
@@ -24,8 +27,8 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   l_dockerd=$(line_of 'dockerd')
   l_load=$(line_of 'docker load')
   l_up=$(line_of 'docker compose .* up -d')
-  [ -n "$l_mount" ] && [ -n "$l_dockerd" ] && [ -n "$l_load" ] && [ -n "$l_up" ]
-  [ "$l_mount" -lt "$l_dockerd" ] && [ "$l_dockerd" -lt "$l_load" ] && [ "$l_load" -lt "$l_up" ]
+  [ -n "$l_mount" ]; [ -n "$l_dockerd" ]; [ -n "$l_load" ]; [ -n "$l_up" ]
+  [ "$l_mount" -lt "$l_dockerd" ]; [ "$l_dockerd" -lt "$l_load" ]; [ "$l_load" -lt "$l_up" ]
   [ "$(cat "$STUB_STATE/loaded-images")" = "fake-bundle" ]
 }
 
@@ -68,6 +71,39 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   grep -qx "$pw" "$KZ_ROOT/opt/project-nomad/.secrets"
   grep -q "DB_PASSWORD=${pw#DB_PASSWORD=}$" "$KZ_ROOT/opt/project-nomad/compose.yml"
   grep -q '"8180:8080"' "$KZ_ROOT/opt/project-nomad/compose.yml"
+}
+
+@test "zero digests in images.lock: clear message before anything is loaded (first run and upgrade)" {
+  cp "$LINUX_DIR/images.lock" "$LOCK"
+  run first_run
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Установщик собран с ошибкой"* ]]
+  run grep -E 'docker (load|compose)' "$STUB_LOG"
+  [ "$status" -eq 1 ]
+  run "$START" --upgrade --bundle "$BUNDLE"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"книги и настройки целы"* ]]
+}
+
+@test "upgrade to a new version removes old admin/updater containers before compose up" {
+  first_run; : > "$STUB_LOG"
+  sed -i -e 's|kladez:0.1.0@|kladez:0.1.6@|' -e 's|updater:0.1.0@|updater:0.1.6@|' "$LOCK"
+  run "$START" --upgrade --bundle "$BUNDLE"
+  [ "$status" -eq 0 ]
+  l_rm=$(line_of 'docker compose .* rm -sf admin updater')
+  l_up=$(line_of 'docker compose .* up -d')
+  [ -n "$l_rm" ]
+  [ -n "$l_up" ]
+  [ "$l_rm" -lt "$l_up" ]
+  grep -q 'image: ghcr.io/leon-kladez/kladez:0.1.6$' "$KZ_ROOT/opt/project-nomad/compose.yml"
+}
+
+@test "upgrade with the same versions does not remove containers" {
+  first_run; : > "$STUB_LOG"
+  run "$START" --upgrade --bundle "$BUNDLE"
+  [ "$status" -eq 0 ]
+  run grep 'rm -sf' "$STUB_LOG"
+  [ "$status" -eq 1 ]
 }
 
 @test "dockerd is not started when docker already answers" {

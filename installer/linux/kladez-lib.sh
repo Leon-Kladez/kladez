@@ -46,6 +46,34 @@ kz_ensure_dockerd() {
     kz_die "Не удалось запустить Docker внутри «Кладезъ». Перезагрузите компьютер и попробуйте ещё раз."
 }
 
+# A build that missed the real image list has zero digests (the placeholder from git, 0.1.0):
+# compose would then name images that the bundle does not contain («No such image: …:0.1.0»).
+# Checked before anything is loaded or recreated, so the running version stays untouched.
+kz_check_lock() {
+    local lock="$KZ_HOME/images.lock"
+    [ -f "$lock" ] || kz_die "Не найден список программ «Кладезъ» ($lock). Скачайте установщик заново."
+    if grep -qE '@sha256:0{64}' "$lock"; then
+        kz_die "Установщик собран с ошибкой: в списке программ нет настоящих версий. Ничего не изменено — ваши книги и настройки целы. Скачайте установщик заново или отправьте помощнику файл журнала."
+    fi
+}
+
+# "service image" of admin and updater in a compose file, e.g. "admin ghcr.io/…:0.1.6" (empty when no file).
+kz_compose_images() {
+    [ -f "$1" ] || return 0
+    awk '/^  [A-Za-z_]+:$/ { svc = $1; sub(":", "", svc) } /^    image:/ && (svc == "admin" || svc == "updater") { print svc, $2 }' "$1"
+}
+
+# A new version of admin/updater: remove their old containers first, so compose creates them from
+# the new images instead of depending on how the old ones (and their old tags) were set up.
+kz_recreate_changed() {
+    local before="$1" after
+    after=$(kz_compose_images "$KZ_COMPOSE")
+    [ "$before" = "$after" ] && return 0
+    kz_log "new versions: removing old admin/updater containers"
+    docker compose -p "$KZ_PROJECT" -f "$KZ_COMPOSE" rm -sf admin updater >> "$KZ_LOG_DIR/kladez-start.log" 2>&1 \
+        || kz_log "rm -sf admin updater failed (compose up will try to recreate them)"
+}
+
 kz_load_images() {
     local bundle="$1"
     [ -f "$bundle" ] || kz_die "Не найден файл с программами: $bundle"

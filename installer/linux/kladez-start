@@ -41,6 +41,7 @@ render_and_up() {
     mkdir -p "$LIBRARY_DIR"
     kz_write_gpu_marker
     kz_render_compose "$KZ_HOME/compose.template.yaml" "$KZ_COMPOSE"
+    [ $# -gt 0 ] && kz_recreate_changed "$1"
     kz_up
 }
 
@@ -49,6 +50,7 @@ case "$mode" in
         [ -n "$bundle" ] && [ -n "$library" ] && [ -n "$admin_port" ] && [ -n "$kiwix_port" ] || usage
         kz_write_conf "$library" "$admin_port" "$kiwix_port"
         kz_read_conf
+        kz_check_lock
         start_stack
         [ -f "$KZ_FIRST_RUN_MARKER" ] || kz_load_images "$bundle"
         render_and_up
@@ -59,9 +61,11 @@ case "$mode" in
     upgrade)
         [ -n "$bundle" ] || usage
         kz_read_conf
+        kz_check_lock
+        before=$(kz_compose_images "$KZ_COMPOSE")
         start_stack
         kz_load_images "$bundle"
-        render_and_up
+        render_and_up "$before"
         kz_log "upgrade complete"
         ;;
     keepalive)
