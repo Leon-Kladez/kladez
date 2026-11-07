@@ -38,9 +38,9 @@ export const legalRu: Record<keyof typeof legalEn, string> = {
   'legal.medical.l4': 'Медицинские сведения устаревают. Важное по возможности проверяйте по свежим профессиональным источникам.',
   'legal.storage.title': 'Где хранятся данные',
   'legal.storage.intro': 'Все данные программы хранятся на вашем компьютере:',
-  'legal.storage.installDir': 'Папка установки:',
-  'legal.storage.contentDir': 'Скачанные материалы:',
-  'legal.storage.appData': 'Данные программ:',
-  'legal.storage.appDataText': 'в томах Docker на этом компьютере',
+  'legal.storage.contentDir': 'Библиотека (всё, что вы скачали):',
+  'legal.storage.contentDirFallback': 'папка библиотеки, выбранная при установке',
+  'legal.storage.appData': 'Сама программа и её настройки:',
+  'legal.storage.appDataText': 'в отдельном отсеке Windows «Kladez» (WSL) на этом компьютере',
   'legal.storage.control': 'Ваши данные полностью в ваших руках. Если удалить программу или эти папки, данные пропадут навсегда.',
 }

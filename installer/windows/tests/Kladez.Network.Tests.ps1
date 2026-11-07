@@ -145,5 +145,28 @@ Describe 'ConvertTo-KladezNetworkJson / Write-KladezNetworkFile' {
     }
     It 'no addresses → empty array' {
         (ConvertTo-KladezNetworkJson -Addresses @() -AdminPort 8080) | Should -Match '"addresses":\s*\[\s*\]'
+        (ConvertTo-KladezNetworkJson -Addresses @() -AdminPort 8080) | Should -Not -Match 'memoryBytes|disks'
+    }
+}
+
+Describe 'Get-KladezHostDisk / memory and disks in the network file' {
+    It 'keeps local fixed disks only, sorted' {
+        $ld = @(
+            [pscustomobject]@{ DeviceID = 'D:'; DriveType = 3; Size = 1000GB; FreeSpace = 600GB },
+            [pscustomobject]@{ DeviceID = 'C:'; DriveType = 3; Size = 500GB; FreeSpace = 100GB },
+            [pscustomobject]@{ DeviceID = 'E:'; DriveType = 5; Size = 4GB; FreeSpace = 0 },
+            [pscustomobject]@{ DeviceID = 'Z:'; DriveType = 4; Size = 2TB; FreeSpace = 1TB }
+        )
+        $r = @(Get-KladezHostDisk -LogicalDisks $ld)
+        $r.Count | Should -Be 2
+        $r[0].name | Should -Be 'C:'; $r[1].name | Should -Be 'D:'
+        $r[1].freeBytes | Should -Be (600GB)
+    }
+    It 'writes memoryBytes and disks when given' {
+        $d = @([pscustomobject]@{ name = 'D:'; sizeBytes = 1000GB; freeBytes = 600GB })
+        $data = ConvertTo-KladezNetworkJson -Addresses @() -AdminPort 8080 -MemoryBytes 32GB -Disks $d | ConvertFrom-Json
+        $data.memoryBytes | Should -Be (32GB)
+        @($data.disks).Count | Should -Be 1
+        $data.disks[0].name | Should -Be 'D:'
     }
 }

@@ -8,12 +8,18 @@ import { getSettingSchema, updateSettingSchema, validateSettingValue } from '#va
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import env from '#start/env'
+import app from '@adonisjs/core/services/app'
+import { existsSync } from 'node:fs'
 import { parseMinRelevance } from '../utils/misc.js'
 import { isRelevanceCheckEnabled } from '../utils/relevance_judge.js'
 import { parseResponseStyle } from '../utils/sampler.js'
 import { RAG_MIN_FINAL_SCORE } from '../../constants/ollama.js'
 import { t } from '../../constants/i18n/index.js'
 import { PHONE_READ_ONLY_CODE } from '../utils/phone_access.js'
+import { toWindowsPath } from '../utils/windows_path.js'
+import { readHostInfo } from '../utils/host_info.js'
+
+const THANKS_QR_FILES = ['kladez-thanks-qr.png', 'kladez-thanks-qr.jpg', 'kladez-thanks-qr.svg']
 
 @inject()
 export default class SettingsController {
@@ -26,10 +32,14 @@ export default class SettingsController {
   ) {}
 
   async system({ inertia }: HttpContext) {
-    const systemInfo = await this.systemService.getSystemInfo()
+    const [systemInfo, host] = await Promise.all([
+      this.systemService.getSystemInfo(),
+      readHostInfo(),
+    ])
     return inertia.render('settings/system', {
       system: {
         info: systemInfo,
+        host,
       },
     })
   }
@@ -44,11 +54,15 @@ export default class SettingsController {
   }
 
   async legal({ inertia }: HttpContext) {
-    return inertia.render('settings/legal')
+    return inertia.render('settings/legal', {
+      libraryPath: toWindowsPath(env.get('NOMAD_STORAGE_PATH', '')),
+    })
   }
 
   async support({ inertia }: HttpContext) {
-    return inertia.render('settings/support')
+    // QR для «Поблагодарить» кладёт автор в public/thanks/; нет файла — нет и карточки.
+    const qr = THANKS_QR_FILES.find((f) => existsSync(app.publicPath(`thanks/${f}`)))
+    return inertia.render('settings/support', { thanksQr: qr ? `/thanks/${qr}` : null })
   }
 
   async maps({ inertia }: HttpContext) {

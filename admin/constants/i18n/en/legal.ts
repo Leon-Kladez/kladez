@@ -36,9 +36,9 @@ export const legalEn = {
   'legal.medical.l4': 'Medical information may become outdated. Verify critical information with current professional sources when possible.',
   'legal.storage.title': 'Data Storage',
   'legal.storage.intro': 'All data associated with Kladez is stored locally on your device:',
-  'legal.storage.installDir': 'Installation Directory:',
-  'legal.storage.contentDir': 'Downloaded Content:',
-  'legal.storage.appData': 'Application Data:',
-  'legal.storage.appDataText': 'Stored in Docker volumes on your local system',
+  'legal.storage.contentDir': 'Library (everything you downloaded):',
+  'legal.storage.contentDirFallback': 'the library folder chosen during installation',
+  'legal.storage.appData': 'The program itself and its settings:',
+  'legal.storage.appDataText': 'in a separate Windows compartment «Kladez» (WSL) on this computer',
   'legal.storage.control': 'You maintain full control over your data. Uninstalling Kladez or deleting these directories will permanently remove all associated data.',
 } as const

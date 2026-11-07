@@ -32,6 +32,8 @@ export const systemRu: Record<keyof typeof systemEn, string> = {
   'system.vendor': 'Производитель',
   'system.na': 'нет данных',
   'system.memory': 'Оперативная память',
+  'system.hostRam': 'В компьютере',
+  'system.kladezShare': 'Из них Windows выделяет Кладезъ до {total} — столько он может занять, если понадобится. Остальной компьютер от этого не тормозит: память берётся по мере надобности.',
   'system.totalRam': 'Всего',
   'system.usedRam': 'Занято',
   'system.availableRam': 'Свободно',

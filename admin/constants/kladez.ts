@@ -9,6 +9,14 @@ export const KLADEZ_REPO = 'Leon-Kladez/kladez'
  */
 export const KLADEZ_PROJECT_URL = `https://github.com/${KLADEZ_REPO}`
 export const KLADEZ_ISSUES_URL = `${KLADEZ_PROJECT_URL}/issues`
+/**
+ * Kladez: открыт ли репозиторий всем. Пока нет — ссылки на GitHub в «Как помочь»
+ * не показываются (у посторонних они открывали бы «404»), а «Поделиться» шлёт
+ * текст без ссылки. После публикации: поставить true (и при смене адреса — KLADEZ_REPO).
+ */
+export const KLADEZ_REPO_PUBLIC = false
+/** Kladez: адрес, по которому люди скачивают Кладезъ (для «Поделиться»); пусто — пока не опубликован. */
+export const KLADEZ_DOWNLOAD_URL = KLADEZ_REPO_PUBLIC ? `${KLADEZ_PROJECT_URL}/releases/latest` : ''
 export const KLADEZ_RELEASES_API_URL = `https://api.github.com/repos/${KLADEZ_REPO}/releases`
 
 /**

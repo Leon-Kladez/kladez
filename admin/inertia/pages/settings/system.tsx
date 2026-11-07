@@ -13,9 +13,15 @@ import StatusCard from '~/components/systeminfo/StatusCard'
 import { IconCpu, IconDatabase, IconServer, IconDeviceDesktop, IconComponents } from '@tabler/icons-react'
 import { t, formatDateTime } from '../../../constants/i18n'
 
+type HostInfo = {
+  memoryBytes: number | null
+  disks: Array<{ name: string; sizeBytes: number; freeBytes: number }>
+}
+
 export default function SettingsPage(props: {
-  system: { info: SystemInformationResponse | undefined }
+  system: { info: SystemInformationResponse | undefined; host?: HostInfo }
 }) {
+  const host = props.system.host
   const { data: info } = useSystemInfo({
     initialData: props.system.info,
   })
@@ -44,7 +50,10 @@ export default function SettingsPage(props: {
       : t('system.uptimeM', { m: uptimeMinutes })
 
   // Build storage display items - fall back to fsSize when disk array is empty
-  const storageItems = getAllDiskDisplayItems(info?.disk, info?.fsSize)
+  // Кладезъ на Windows: показываем диски компьютера (C:, D:…), а не виртуальный диск отсека WSL.
+  const storageItems = host?.disks?.length
+    ? hostDiskItems(host.disks, getAllDiskDisplayItems(info?.disk, info?.fsSize))
+    : getAllDiskDisplayItems(info?.disk, info?.fsSize)
 
   return (
     <SettingsLayout>
@@ -169,14 +178,25 @@ export default function SettingsPage(props: {
             </h2>
             <div className="bg-desert-white rounded-lg p-8 border border-desert-stone-light shadow-sm hover:shadow-lg transition-shadow">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-desert-green mb-1">
-                    {formatBytes(info?.mem.total || 0)}
+                {host?.memoryBytes ? (
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-desert-green mb-1">
+                      {formatBytes(host.memoryBytes)}
+                    </div>
+                    <div className="text-sm text-desert-stone-dark uppercase tracking-wide">
+                      {t('system.hostRam')}
+                    </div>
                   </div>
-                  <div className="text-sm text-desert-stone-dark uppercase tracking-wide">
-                    {t('system.totalRam')}
+                ) : (
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-desert-green mb-1">
+                      {formatBytes(info?.mem.total || 0)}
+                    </div>
+                    <div className="text-sm text-desert-stone-dark uppercase tracking-wide">
+                      {t('system.totalRam')}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="text-center">
                   <div className="text-3xl font-bold text-desert-green mb-1">
                     {formatBytes(memoryUsed)}
@@ -205,6 +225,11 @@ export default function SettingsPage(props: {
                   </span>
                 </div>
               </div>
+              {host?.memoryBytes ? (
+                <p className="mt-4 text-sm text-desert-stone-dark">
+                  {t('system.kladezShare', { total: formatBytes(info?.mem.total || 0) })}
+                </p>
+              ) : null}
             </div>
           </section>
           <section className="mb-12">
@@ -258,4 +283,29 @@ export default function SettingsPage(props: {
       </div>
     </SettingsLayout>
   )
+}
+
+/**
+ * Диски Windows для «Диски». Свободное место диска с библиотекой берём «живое» (панель видит
+ * его сама и обновляет), остальные — из файла, который Windows пишет при запуске Кладезъ.
+ */
+function hostDiskItems(
+  disks: HostInfo['disks'],
+  live: ReturnType<typeof getAllDiskDisplayItems>
+): ReturnType<typeof getAllDiskDisplayItems> {
+  return disks.map((d) => {
+    const fresh = live.find((l) => l.label.toUpperCase().startsWith(d.name))
+    const label = d.name + '\\'
+    if (fresh) return { ...fresh, label }
+    const used = d.sizeBytes - d.freeBytes
+    return {
+      label,
+      value: Math.round((used / d.sizeBytes) * 100),
+      total: formatBytes(d.sizeBytes),
+      used: formatBytes(used),
+      subtext: `${formatBytes(used)} / ${formatBytes(d.sizeBytes)}`,
+      totalBytes: d.sizeBytes,
+      usedBytes: used,
+    }
+  })
 }

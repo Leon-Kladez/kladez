@@ -30,6 +30,8 @@ export const systemEn = {
   'system.vendor': 'Vendor',
   'system.na': 'N/A',
   'system.memory': 'Memory Allocation',
+  'system.hostRam': 'In this computer',
+  'system.kladezShare': 'Windows lets Kladez use up to {total} of it, taken only when needed — the rest of the computer is not slowed down.',
   'system.totalRam': 'Total RAM',
   'system.usedRam': 'Used RAM',
   'system.availableRam': 'Available RAM',

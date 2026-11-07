@@ -13,7 +13,7 @@ const THIRD_PARTY: Array<{ name: string; key: MessageKey; url: string }> = [
 
 const linkClass = 'text-blue-600 hover:underline break-all'
 
-export default function LegalPage() {
+export default function LegalPage({ libraryPath }: { libraryPath?: string }) {
   return (
     <SettingsLayout>
       <Head title={t('nav.settings.legal')} />
@@ -99,8 +99,10 @@ export default function LegalPage() {
             <h2 className="text-2xl font-semibold mb-4">{t('legal.storage.title')}</h2>
             <p className="text-text-primary mb-3">{t('legal.storage.intro')}</p>
             <ul className="list-disc list-inside space-y-2 text-text-primary">
-              <li><strong>{t('legal.storage.installDir')}</strong> /opt/project-nomad</li>
-              <li><strong>{t('legal.storage.contentDir')}</strong> /opt/project-nomad/storage</li>
+              <li>
+                <strong>{t('legal.storage.contentDir')}</strong>{' '}
+                {libraryPath ? <code className="break-all">{libraryPath}</code> : t('legal.storage.contentDirFallback')}
+              </li>
               <li><strong>{t('legal.storage.appData')}</strong> {t('legal.storage.appDataText')}</li>
             </ul>
             <p className="text-text-primary mt-3">{t('legal.storage.control')}</p>

@@ -114,13 +114,28 @@ function ConvertTo-KladezNetworkJson {
     param(
         [AllowEmptyCollection()][object[]]$Addresses = @(),
         [Parameter(Mandatory)][int]$AdminPort,
-        [datetime]$Now = (Get-Date)
+        [datetime]$Now = (Get-Date),
+        # Память и диски самого компьютера: панель в WSL видит только свою долю (обычно половину памяти)
+        # и виртуальный диск отсека, а человеку нужно то, что показывает Windows.
+        [long]$MemoryBytes = 0,
+        [AllowEmptyCollection()][object[]]$Disks = @()
     )
-    ConvertTo-Json -Depth 4 -InputObject ([ordered]@{
+    $data = [ordered]@{
         adminPort = $AdminPort
         updatedAt = $Now.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
         addresses = @($Addresses)
-    })
+    }
+    if ($MemoryBytes -gt 0) { $data.memoryBytes = $MemoryBytes }
+    if (@($Disks).Count) { $data.disks = @($Disks) }
+    ConvertTo-Json -Depth 4 -InputObject $data
+}
+
+# Локальные диски Windows (как в «Этот компьютер»): буква, объём, свободно.
+function Get-KladezHostDisk {
+    param([AllowEmptyCollection()][object[]]$LogicalDisks = @())
+    @($LogicalDisks | Where-Object { [int]$_.DriveType -eq 3 -and [long]$_.Size -gt 0 } | ForEach-Object {
+        [pscustomobject]@{ name = "$($_.DeviceID)"; sizeBytes = [long]$_.Size; freeBytes = [long]$_.FreeSpace }
+    } | Sort-Object name)
 }
 
 # Записать файл для панели (через временный файл, чтобы панель не прочла половину).
@@ -135,4 +150,4 @@ function Write-KladezNetworkFile {
 
 Export-ModuleMember -Function Get-KladezWslIp, ConvertFrom-KladezPortProxyShow, Get-KladezPortProxyPlan,
     Get-KladezPortProxyRemovePlan, New-KladezFirewallRule, Remove-KladezFirewallRule,
-    Test-KladezPrivateIPv4, Get-KladezLanAddress, ConvertTo-KladezNetworkJson, Write-KladezNetworkFile
+    Test-KladezPrivateIPv4, Get-KladezLanAddress, ConvertTo-KladezNetworkJson, Write-KladezNetworkFile, Get-KladezHostDisk
