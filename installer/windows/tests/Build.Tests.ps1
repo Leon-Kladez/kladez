@@ -261,3 +261,18 @@ Describe 'kladez.iss: оформление «Кладезъ», мелодия и
         $iss | Should -Match 'ничего не сообщает о вас'
     }
 }
+
+Describe 'kladez.iss: uninstall leaves no empty folders (author''s PC: empty C:\Program Files\Kladez)' {
+    It 'removes the program folder when it is empty' {
+        $iss | Should -Match '(?m)^Type: dirifempty; Name: "\{app\}"'
+    }
+    It 'removes an empty drive Kladez folder after Inno removed the program files' {
+        $iss | Should -Match "KladezRoot := ExtractFileDir\(IniValue\('SystemDir'\)\)"
+        $iss | Should -Match 'CurUninstallStep = usPostUninstall'
+        $iss | Should -Match 'RemoveDir\(KladezRoot\)'
+    }
+    It 'uninstall.ps1 forwards SystemDir from kladez.ini' {
+        $u = Get-Content (Join-Path $PSScriptRoot '..\scripts\uninstall.ps1') -Raw -Encoding UTF8
+        $u | Should -Match "-SystemDir \`$ini\['SystemDir'\]"
+    }
+}

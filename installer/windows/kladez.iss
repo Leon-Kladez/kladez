@@ -101,6 +101,7 @@ Filename: "{app}\Kladez.exe"; Description: "Открыть «Кладезъ» с
 Type: filesandordirs; Name: "{commonappdata}\Kladez"
 Type: dirifempty; Name: "{app}\payload\linux"
 Type: dirifempty; Name: "{app}\payload"
+Type: dirifempty; Name: "{app}"
 
 [Code]
 type
@@ -1040,11 +1041,18 @@ end;
 
 { ── Uninstall ─────────────────────────────────────────────────────────────── }
 
+var
+  { <drive>:\Kladez (parent of the system folder). Read before kladez.ini is deleted. }
+  KladezRoot: String;
+
 function InitializeUninstall: Boolean;
 var
   Lib: String;
 begin
   Lib := IniValue('LibraryDir');
+  KladezRoot := '';
+  if IniValue('SystemDir') <> '' then
+    KladezRoot := ExtractFileDir(IniValue('SystemDir'));
   RemoveLibraryChoice := MsgBox('Удалить также скачанную библиотеку (статьи, карты, книги)?' + #13#10 + Lib + #13#10#13#10 +
     'Если оставить её, при повторной установке ничего не придётся скачивать заново.',
     mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
@@ -1061,5 +1069,15 @@ begin
     if RemoveLibraryChoice then Flag := '1' else Flag := '0';
     Exec(PowerShellExe, ScriptParams(ExpandConstant('{app}\scripts\uninstall.ps1'), '-RemoveLibrary ' + Flag),
       '', SW_HIDE, ewWaitUntilTerminated, Code);
+  end
+  else if CurUninstallStep = usPostUninstall then
+  begin
+    { Program files are gone now. RemoveDir deletes only empty folders: the program folder
+      (e.g. C:\Program Files\Kladez or D:\Kladez) and then <drive>:\Kladez if nothing else is left. }
+    RemoveDir(ExpandConstant('{app}\payload\linux'));
+    RemoveDir(ExpandConstant('{app}\payload'));
+    RemoveDir(ExpandConstant('{app}'));
+    if (KladezRoot <> '') and (Length(KladezRoot) > 3) then
+      RemoveDir(KladezRoot);
   end;
 end;
