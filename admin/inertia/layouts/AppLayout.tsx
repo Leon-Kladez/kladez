@@ -4,13 +4,15 @@ import ChatButton from '~/components/chat/ChatButton'
 import ChatModal from '~/components/chat/ChatModal'
 import useServiceInstalledStatus from '~/hooks/useServiceInstalledStatus'
 import { SERVICE_NAMES } from '../../constants/service_names'
-import { Link, router } from '@inertiajs/react'
+import { Link, router, usePage } from '@inertiajs/react'
+import { hasBrief, type BriefSources } from '~/lib/brief'
 import { IconArrowLeft } from '@tabler/icons-react'
 import classNames from 'classnames'
 import KladezLogo from '~/components/KladezLogo'
 import { t } from '../../constants/i18n'
 import PhoneReadOnlyBanner from '~/components/phones/PhoneReadOnlyBanner'
 import ModeSwitch from '~/components/mode/ModeSwitch'
+import BriefButton from '~/components/brief/BriefButton'
 
 export default function AppLayout({
   children,
@@ -26,6 +28,8 @@ export default function AppLayout({
 }) {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const aiAssistantInstalled = useServiceInstalledStatus(SERVICE_NAMES.OLLAMA)
+  // На узком экране кнопка «Бриф» встала бы на «Продвинутый» — опускаем шапку под неё.
+  const briefShown = hasBrief(usePage<{ brief?: BriefSources }>().props.brief)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -33,6 +37,10 @@ export default function AppLayout({
           чтобы не попасть под «На главную» (у неё absolute-позиция внутри обёртки ниже). */}
       <PhoneReadOnlyBanner />
       <div className="relative flex-1 flex flex-col">
+      {/* «Кладезъ»: ролик «Бриф» — справа вверху на всех страницах (если файл ролика есть). */}
+      <div className="absolute right-2 top-2 z-20 sm:right-4 sm:top-4">
+        <BriefButton />
+      </div>
       {
         window.location.pathname !== '/home' && (
           <Link
@@ -49,7 +57,8 @@ export default function AppLayout({
       <div
         className={classNames(
           'flex cursor-pointer items-center justify-center',
-          compact ? 'gap-3 p-3 flex-row' : 'gap-2 p-2 flex-col'
+          compact ? 'gap-3 p-3 flex-row' : 'gap-2 p-2 flex-col',
+          briefShown && !compact && 'pt-12 sm:pt-2'
         )}
         onClick={() => router.visit('/home')}
       >
