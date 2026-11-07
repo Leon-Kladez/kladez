@@ -6,12 +6,14 @@ This page briefly covers how to get started with each app: whether you need to l
 
 ## Managing apps
 
-Every installed app has a **Manage** menu on its card:
+The App depot is on the home page in **Advanced mode**. Every installed app has an **Open** button and a **Manage** menu on its card. Only the simple items are shown right away:
 
 - **Docs** — opens this page at the app's section.
-- **Edit** — the app's settings: ports, folders, environment variables, memory limits. Rarely needed.
-- **Logs** and **Stats** — what the app reports about itself and how much memory it uses. Useful when something is wrong.
-- **Update** and **Remove**. If an app fails to start after an update, Kladez rolls back to the previous version automatically.
+- **Restart if it is not working** — the app stops for a moment and starts again. This helps most often.
+- **Update** (when a new version is out). If an app fails to start after an update, Kladez rolls back to the previous version automatically.
+- **Remove** — the app is removed from the computer; your books, maps and files stay on the disk.
+
+Everything else is under **For experienced users**: start and stop, **Logs** and **Stats** (what the app reports about itself and how much memory it uses), **Edit** (ports, folders, environment variables, memory limits), **Set custom URL**, auto-update and **Force Reinstall** (wipes the app's data).
 
 ## Your own app
 

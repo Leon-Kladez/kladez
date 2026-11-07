@@ -123,6 +123,7 @@ import { serverUpdateEn } from './en/serverUpdate.js'
 import { serverAutoEn } from './en/serverAuto.js'
 import { relTimeEn } from './en/relTime.js'
 import { languageEn } from './en/language.js'
+import { modeEn } from './en/mode.js'
 import { phonesEn } from './en/phones.js'
 
 export const en = {
@@ -249,6 +250,7 @@ export const en = {
   ...serverAutoEn,
   ...relTimeEn,
   ...languageEn,
+  ...modeEn,
   ...phonesEn,
 } as const
 

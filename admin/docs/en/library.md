@@ -4,7 +4,7 @@ The library is everything you downloaded: Wikipedia, medicine, textbooks, dictio
 
 ## How to open it
 
-On the Kladez home page click the **Library** tile. It opens in a new browser tab.
+On the Kladez home page click the **Read** tile (in Advanced mode it is called **Library**; it shows how many books and articles are downloaded). It opens in a new browser tab.
 
 You will see a “shelf” — a card for each downloaded item: Wikipedia, Medicine and so on. Click a card to open it.
 
@@ -25,8 +25,8 @@ Most of the material in the Kladez catalog is in Russian. There is also an Engli
 
 ## Adding or removing material
 
-- **Add:** Settings → **[Content Explorer](/settings/zim/remote-explorer)**. Everything is listed by topic, with sizes. Or run [Easy Setup](/easy-setup) again and pick a bigger set.
-- **Remove:** Settings → **[Content Manager](/settings/zim)**. Removing frees disk space.
+- **Add:** the **[Download knowledge](/knowledge)** tile on the home page (or the **Add books** button on the library card). It has ready-made sets, Wikipedia and individual books by topic, with sizes. Even more is in Advanced mode: Settings → **[Content Explorer](/settings/zim/remote-explorer)**.
+- **Remove:** in Advanced mode only: Settings → **[Content Manager](/settings/zim)**. Removing frees disk space.
 
 ## Where the files are
 

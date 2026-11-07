@@ -1,6 +1,8 @@
 # Easy Setup
 
-Easy Setup helps you choose what to download into Kladez in a few minutes. Open it with the **Easy Setup** tile on the home page or here: **[Open Easy Setup →](/easy-setup)**
+Easy Setup helps you choose what to download into Kladez and which apps to install, in a few minutes. Its tile is on the home page in **Advanced mode**; you can also open it here: **[Open Easy Setup →](/easy-setup)**
+
+In Simple mode the same thing for books and reference works is easier: use the **[Download knowledge](/knowledge)** tile.
 
 Everything you choose can be changed later: add or remove material, download more maps. You can run Easy Setup again at any time.
 

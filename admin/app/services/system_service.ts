@@ -38,6 +38,7 @@ import { invalidateResponseStyleCache } from '../utils/response_style.js'
 import { KiwixLibraryService } from '#services/kiwix_library_service'
 import { localizeService } from '../utils/service_i18n.js'
 import { applyLocale } from '../utils/locale_store.js'
+import { invalidateUiMode } from '../utils/ui_mode_store.js'
 import { t, formatBytes } from '../../constants/i18n/index.js'
 
 @inject()
@@ -920,6 +921,9 @@ export class SystemService {
     }
     if (key === 'ai.assistantCustomName') {
       invalidateAssistantNameCache()
+    }
+    if (key === 'ui.mode' || key === 'ui.advancedHintSeen') {
+      invalidateUiMode()
     }
     if (key === 'ui.language') {
       applyLocale(value)

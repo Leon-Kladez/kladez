@@ -8,9 +8,18 @@ Kladez does not report anything about you to anyone. There are no ads and nothin
 
 ## Where to start
 
-1. Open **[Easy Setup](/easy-setup)** and pick a ready-made set: «Аптечка» (First Aid Kit), «Библиотека» (Library) or «Всё» (Everything). Details: [Easy Setup](/docs/easy-setup).
+1. On the home page, click **[Download knowledge](/knowledge)** and pick a ready-made set: «Аптечка» (First Aid Kit), «Библиотека» (Library) or «Всё» (Everything). The page shows how much space each set needs and whether it fits on the disk.
 2. Wait for the downloads to finish. You can keep using the computer as usual.
-3. Read: the **Library** tile on the home page. Details: [Reading the library](/docs/library).
+3. Read: the **Read** tile on the home page. Details: [Reading the library](/docs/library).
+
+## Simple and Advanced mode
+
+At the top of the home page, on either side of the name, there are two buttons: **Simple** and **Advanced**.
+
+- **Simple** (on by default) — only what most people need: Read, Maps, Download knowledge, On your phone, Ask the assistant (if installed) and Help. There are no buttons here that can break anything.
+- **Advanced** — everything else: the App depot, Settings, Easy Setup and your own links on the home page. If in doubt, switch back to Simple.
+
+The mode is the same on every computer at home. Phones always see Simple mode.
 
 ## What Kladez has
 
@@ -19,7 +28,7 @@ Kladez does not report anything about you to anyone. There are no ads and nothin
 - **AI assistant** — answers questions from your library. It runs on this computer, without internet. [More](/docs/ai)
 - **Drug reference** — medicine labels (in English). [More](/docs/drug-reference)
 - **Phones at home** — open the library and maps over Wi-Fi, nothing to install. [More](/docs/phones)
-- **App depot** — extra apps: notes, e-book reader, PDF tools and more. [More](/docs/supply-depot-apps)
+- **App depot** (in Advanced mode) — extra apps: notes, e-book reader, PDF tools and more. [More](/docs/supply-depot-apps)
 
 ## How to open Kladez
 

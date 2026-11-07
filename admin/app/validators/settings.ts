@@ -4,6 +4,7 @@ import type { KVStoreKey } from "../../types/kv_store.js";
 import { CONTEXT_LADDER } from "../utils/context_window.js";
 import { RESPONSE_STYLE_PRESETS } from "../../constants/ollama.js";
 import { SUPPORTED_LOCALES, t } from '../../constants/i18n/index.js'
+import { UI_MODES } from '../utils/ui_mode.js'
 
 export const getSettingSchema = vine.compile(vine.object({
     key: vine.enum(SETTINGS_KEYS),
@@ -132,6 +133,14 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
             }
             return null
         }
+        case 'ui.mode':
+            if (value === '' || value === undefined || value === null) {
+                return null
+            }
+            if (typeof value !== 'string' || !(UI_MODES as readonly string[]).includes(value)) {
+                return t('serverValidate.uiMode', { values: UI_MODES.join(', ') })
+            }
+            return null
         case 'ui.language':
             if (value === '' || value === undefined || value === null) {
                 return null

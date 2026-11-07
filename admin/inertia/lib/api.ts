@@ -814,6 +814,17 @@ class API {
     })()
   }
 
+  /** Kladez: скачать готовый набор («Аптечка / Библиотека / Всё»). */
+  async installBundle(id: string) {
+    return catchInternal(async () => {
+      const response = await this.client.post<{ success: boolean; message?: string }>(
+        '/easy-setup/bundles/install',
+        { id }
+      )
+      return response.data
+    })()
+  }
+
   async listCuratedCategories() {
     return catchInternal(async () => {
       const response = await this.client.get<CategoryWithStatus[]>('/easy-setup/curated-categories')

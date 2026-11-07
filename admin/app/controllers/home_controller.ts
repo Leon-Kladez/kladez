@@ -3,6 +3,9 @@ import { DrugReferenceService } from '#services/drug_reference_service'
 import logger from '@adonisjs/core/services/logger'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
+import { KiwixLibraryService } from '#services/kiwix_library_service'
+import { summarizeLibrary, type LibrarySummary } from '../utils/library_summary.js'
+import { STARTER_ZIM } from '../../constants/kladez.js'
 
 @inject()
 export default class HomeController {
@@ -27,7 +30,23 @@ export default class HomeController {
             // so the tile appears the moment the user opts in and persists through
             // the long install, rather than popping in only at the very end.
             drugReferenceInstalled: await this.computeDrugReferenceInstalled(),
+            // «Кладезъ»: сколько книг и статей — для карточки «Читать» и плашки «почти пусто».
+            library: await this.librarySummary(),
         })
+    }
+
+    /** «Кладезъ»: «Скачать знания» — наборы и отдельные книги в одном месте. */
+    async knowledge({ inertia }: HttpContext) {
+        return inertia.render('knowledge', { library: await this.librarySummary() })
+    }
+
+    private async librarySummary(): Promise<LibrarySummary> {
+        try {
+            return summarizeLibrary(await new KiwixLibraryService().listBooks(), STARTER_ZIM.filename)
+        } catch (error) {
+            logger.warn(`[HomeController] Library summary unavailable: ${error instanceof Error ? error.message : error}`)
+            return { books: 0, articles: 0, nearlyEmpty: true }
+        }
     }
 
     /**

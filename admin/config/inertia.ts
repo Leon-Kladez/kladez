@@ -4,6 +4,8 @@ import { defineConfig } from '@adonisjs/inertia'
 import type { InferSharedProps } from '@adonisjs/inertia/types'
 import { getLocale, t } from '../constants/i18n/index.js'
 import { resolveDeviceAccess } from '../app/middleware/phone_access_middleware.js'
+import { effectiveUiMode } from '../app/utils/ui_mode.js'
+import { storedUiMode } from '../app/utils/ui_mode_store.js'
 
 let _assistantNameCache: { value: string; expiresAt: number } | null = null
 
@@ -27,6 +29,11 @@ const inertiaConfig = defineConfig({
     locale: () => getLocale(),
     // «Кладезъ»: компьютер или телефон, можно ли менять (телефоны по умолчанию только смотрят).
     device: (ctx) => resolveDeviceAccess(ctx),
+    // «Кладезъ»: «Обычный» / «Продвинутый» режим; телефонам, которые только смотрят, — обычный.
+    uiMode: async (ctx) => {
+      const [{ mode, hintSeen }, device] = await Promise.all([storedUiMode(), resolveDeviceAccess(ctx)])
+      return { mode: effectiveUiMode(mode, device.canChange), hintSeen, canSwitch: device.canChange }
+    },
     aiAssistantName: async () => {
       const now = Date.now()
       if (_assistantNameCache && now < _assistantNameCache.expiresAt) {

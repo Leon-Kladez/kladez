@@ -9,7 +9,7 @@ Phones and tablets at home can open the Kladez library and maps. Nothing needs t
 
 ## How to connect
 
-1. On the computer, open Kladez. The home page shows a **QR code for phones**.
+1. On the computer, open Kladez. On the home page, click the **On your phone** tile to see the **QR code for phones** (in Advanced mode it is at the bottom of the home page).
 2. On the phone, open the camera and point it at the QR code. Tap the link that appears.
 3. Kladez opens in the phone's browser.
 
