@@ -14,6 +14,7 @@ export const downloadEn = {
   'download.keep': 'Keep',
   'download.cancel': 'Cancel download',
   'download.waiting': 'Waiting...',
+  'download.retryingAfterError': 'Did not work, will try again shortly: {reason}',
   'download.downloading': 'Downloading...',
   'download.noDataFor': 'No data received for {n}m...',
   'download.noneActive': 'No active downloads',

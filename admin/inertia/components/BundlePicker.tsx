@@ -5,6 +5,8 @@ import classNames from 'classnames'
 import { IconCircleCheck, IconLoader2, IconPackage } from '@tabler/icons-react'
 import type { BundleWithStatus } from '../../types/collections'
 import { t, formatBytes } from '../../constants/i18n'
+import { canStartSet, type SetProgress } from '~/lib/set_progress'
+import SetDownloadStatus from './SetDownloadStatus'
 
 export interface BundlePickerProps {
   bundles: BundleWithStatus[]
@@ -13,6 +15,11 @@ export interface BundlePickerProps {
   /** Free bytes on the library disk; null when unknown. */
   freeBytes: number | null
   disabled?: boolean
+  /**
+   * Kladez: live state per bundle id (percent while downloading, «Скачано»,
+   * error). Given on «Библиотека», where picking a set starts the download.
+   */
+  progressById?: Record<string, SetProgress>
 }
 
 const BundlePicker: React.FC<BundlePickerProps> = ({
@@ -21,6 +28,7 @@ const BundlePicker: React.FC<BundlePickerProps> = ({
   onSelect,
   freeBytes,
   disabled,
+  progressById,
 }) => {
   if (bundles.length === 0) return null
 
@@ -42,7 +50,14 @@ const BundlePicker: React.FC<BundlePickerProps> = ({
           const selected = bundle.id === selectedId
           const tooBig =
             freeBytes !== null && bundle.status !== 'installed' && sizeBytes > freeBytes
-          const blocked = disabled || tooBig
+          const progress = selected ? undefined : progressById?.[bundle.id]
+          // Already downloading / on disk / nothing to fetch: a click would start nothing.
+          const settled = !!progress && !canStartSet(progress)
+          const blocked = disabled || tooBig || settled
+          // With live progress the line under the description says it all; the
+          // corner badge stays only for the in-session pick.
+          const showProgress =
+            !!progress && !(progress.state === 'idle' && progress.installed === 0)
           return (
             <button
               key={bundle.id}
@@ -53,7 +68,13 @@ const BundlePicker: React.FC<BundlePickerProps> = ({
               className={classNames(
                 'flex flex-col text-left bg-desert-green rounded-lg p-6 text-white border shadow-sm transition-shadow',
                 selected ? 'border-lime-400 border-2' : 'border-desert-green',
-                blocked ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-lg cursor-pointer'
+                settled && !disabled && !tooBig
+                  ? progress?.state === 'downloading'
+                    ? 'cursor-default'
+                    : 'opacity-75 cursor-default'
+                  : blocked
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'hover:shadow-lg cursor-pointer'
               )}
             >
               <div className="flex justify-between items-start mb-2 gap-2">
@@ -63,7 +84,7 @@ const BundlePicker: React.FC<BundlePickerProps> = ({
                     <IconCircleCheck className="w-5 h-5 mr-1" />
                     {t('bundles.picked')}
                   </span>
-                ) : bundle.status === 'installed' ? (
+                ) : progress ? null : bundle.status === 'installed' ? (
                   <span className="flex items-center text-lime-400 text-sm shrink-0">
                     <IconCircleCheck className="w-5 h-5 mr-1" />
                     {t('bundles.status.installed')}
@@ -83,7 +104,8 @@ const BundlePicker: React.FC<BundlePickerProps> = ({
                 {t('bundles.size', { size: formatBytes(sizeBytes) })}
               </p>
               <p className="text-gray-200 grow">{bundle.description}</p>
-              {tooBig ? (
+              {showProgress && <SetDownloadStatus progress={progress!} />}
+              {settled ? null : tooBig ? (
                 <p className="text-sm text-amber-300 mt-3">
                   {t('bundles.notEnoughSpace', {
                     need: formatBytes(sizeBytes),

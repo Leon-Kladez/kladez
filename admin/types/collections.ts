@@ -196,6 +196,8 @@ export type CollectionWithStatus = SpecCollection & {
   all_installed: boolean
   installed_count: number
   total_count: number
+  /** Kladez: id ресурсов набора, уже лежащих на диске, — для состояния карточки. */
+  installed_ids?: string[]
 }
 
 export type ResourceUpdateCheckRequest = {

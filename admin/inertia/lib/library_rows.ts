@@ -3,7 +3,8 @@
  * нашего каталога (collections-ru) и состояние каждой строки: есть, качается
  * (с % и «осталось ~N мин»), можно скачать. Без React — чтобы проверять тестами.
  */
-import type { CategoryWithStatus } from '../../types/collections.js'
+import type { Bundle, CategoryWithStatus } from '../../types/collections.js'
+import { bundleTierClosure } from '../../app/utils/bundles.js'
 import type { DownloadJobWithProgress, WikipediaCurrentSelection, WikipediaOption } from '../../types/downloads.js'
 
 export type BookRow = {
@@ -122,4 +123,55 @@ export function etaSeconds(job: DownloadJobWithProgress, bytesPerSecond: number)
 /** Минуты для «осталось ~N мин»: 0 — «меньше минуты»; округляем вверх. */
 export function etaMinutes(seconds: number): number {
   return seconds < 60 ? 0 : Math.ceil(seconds / 60)
+}
+
+/**
+ * Книги готового набора (Аптечка / Библиотека / Всё) — те же строки, что в
+ * списке по темам: его вариант Википедии и все книги его уровней (с вложенными).
+ * Наборы данных (лекарства) не книги и в счёт не идут. Неизвестный уровень — пусто
+ * (сервер такой набор тоже не поставит).
+ */
+export function bundleRows(
+  bundle: Pick<Bundle, 'wikipedia' | 'tiers'>,
+  categories: CategoryWithStatus[],
+  wikipediaOptions: WikipediaOption[]
+): BookRow[] {
+  let tiers
+  try {
+    tiers = bundleTierClosure(bundle.tiers, { spec_version: '', categories })
+  } catch {
+    return []
+  }
+  const rows: BookRow[] = []
+  const wiki = wikipediaOptions.find((o) => o.id === bundle.wikipedia)
+  if (wiki && wiki.id !== 'none' && wiki.url) {
+    rows.push({
+      key: `wikipedia:${wiki.id}`,
+      kind: 'wikipedia',
+      id: wiki.id,
+      title: wiki.name,
+      description: wiki.description,
+      sizeBytes: Math.round(wiki.size_mb * MB),
+      url: wiki.url,
+      filename: fileFromUrl(wiki.url),
+    })
+  }
+  const seen = new Set<string>()
+  for (const tier of tiers) {
+    for (const r of tier.resources ?? []) {
+      if (r.type === 'dataset' || seen.has(r.id)) continue
+      seen.add(r.id)
+      rows.push({
+        key: `zim:${r.id}`,
+        kind: 'zim',
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        sizeBytes: Math.round((r.size_mb ?? 0) * MB),
+        url: r.url,
+        filename: fileFromUrl(r.url),
+      })
+    }
+  }
+  return rows
 }

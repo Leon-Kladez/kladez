@@ -22,6 +22,7 @@ import { formatBytes } from '~/lib/util'
 import { hasDownloadedGlobalMap } from '~/lib/global_map_banner'
 import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
+import { mapSetItems, setProgress, type SetProgress } from '~/lib/set_progress'
 
 const CURATED_COLLECTIONS_KEY = 'curated-map-collections'
 const GLOBAL_MAP_INFO_KEY = 'global-map-info'
@@ -53,6 +54,8 @@ export default function MapsManager(props: {
   useEffect(() => {
     if (activeMapDownloads.length < prevMapDownloadCountRef.current) {
       router.reload({ only: ['maps'] })
+      // Kladez: the finished file is now installed — refresh the cards so they read «Скачано».
+      queryClient.invalidateQueries({ queryKey: [CURATED_COLLECTIONS_KEY] })
     }
     prevMapDownloadCountRef.current = activeMapDownloads.length
   }, [activeMapDownloads.length])
@@ -127,10 +130,31 @@ export default function MapsManager(props: {
     }
   }
 
+  // Kladez: live state of each set's card, from the same download-jobs poll as «Идущие загрузки».
+  function collectionProgress(collection: CollectionWithStatus): SetProgress {
+    return setProgress(mapSetItems(collection.resources, collection.installed_ids ?? [], activeMapDownloads))
+  }
+
   async function downloadCollection(record: CollectionWithStatus) {
     try {
-      await api.downloadMapCollection(record.slug)
+      const res = await api.downloadMapCollection(record.slug)
+      // The request itself failed: catchInternal has already shown the error.
+      if (!res) return
       invalidateDownloads()
+      queryClient.invalidateQueries({ queryKey: [CURATED_COLLECTIONS_KEY] })
+      // The server answers 200 even when it started nothing (every file still
+      // unpublished, blocked, or already on disk / in flight) — say so instead of
+      // a «queued» message for a download that will never appear.
+      if (!res.resources || res.resources.length === 0) {
+        const state = collectionProgress(record).state
+        if (state !== 'downloading' && state !== 'installed') {
+          addNotification({
+            type: 'error',
+            message: t('mapsManager.nothingStarted', { name: record.name }),
+          })
+        }
+        return
+      }
       addNotification({
         type: 'success',
         message: t('mapsManager.collectionQueued', { name: record.name }),
@@ -203,7 +227,7 @@ export default function MapsManager(props: {
         title={t('mapsManager.confirmDownload')}
         onConfirm={() => {
           if (isCollection) {
-            if (record.all_installed) {
+            if (collectionProgress(record).state === 'installed') {
               addNotification({
                 message: t('mapsManager.alreadyDownloaded', { name: record.name }),
                 type: 'info',
@@ -374,6 +398,7 @@ export default function MapsManager(props: {
               <CuratedCollectionCard
                 key={collection.slug}
                 collection={collection}
+                progress={collectionProgress(collection)}
                 onClick={(collection) => confirmDownload(collection)}
               />
             ))}

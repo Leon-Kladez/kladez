@@ -26,6 +26,7 @@ import { useDevice } from '~/hooks/useDevice'
 import { useNotifications } from '~/context/NotificationContext'
 import {
   buildTopics,
+  bundleRows,
   etaMinutes,
   etaSeconds,
   rowState,
@@ -33,6 +34,7 @@ import {
   type RowState,
 } from '~/lib/library_rows'
 import { articleReaderUrl, bookReaderUrl } from '~/lib/reader'
+import { setProgress, type SetProgress } from '~/lib/set_progress'
 import { SERVICE_NAMES } from '../../constants/service_names'
 import type { BundleWithStatus } from '../../types/collections'
 import type { DownloadJobWithProgress } from '../../types/downloads'
@@ -69,15 +71,22 @@ function useDownloadSpeeds(jobs: DownloadJobWithProgress[]): Map<string, number>
 function RowStatus({ state, speed }: { state: RowState; speed: number }) {
   if (state.state !== 'downloading') return null
   const seconds = state.job ? etaSeconds(state.job, speed) : null
-  const waiting = state.job?.status === 'waiting' || state.job?.status === 'delayed'
+  // delayed после сорвавшейся попытки — это повтор, а не очередь (BullMQ ждёт до ~4 ч).
+  const retrying =
+    state.job?.status === 'delayed' && (Boolean(state.job.failedReason) || (state.job.attemptsMade ?? 0) > 0)
+  const waiting = !retrying && (state.job?.status === 'waiting' || state.job?.status === 'delayed')
   return (
     <div className="mt-2 w-full">
       <div className="h-2 w-full overflow-hidden rounded-full bg-surface-secondary" aria-hidden="true">
         <div className="h-full bg-desert-green transition-all" style={{ width: `${state.percent}%` }} />
       </div>
       <p className="mt-1 text-sm text-text-secondary" role="status">
-        {waiting ? t('libraryPage.waiting') : t('libraryPage.downloading', { percent: state.percent })}
-        {!waiting && seconds !== null && (
+        {retrying
+          ? t('libraryPage.retrying', { percent: state.percent })
+          : waiting
+            ? t('libraryPage.waiting')
+            : t('libraryPage.downloading', { percent: state.percent })}
+        {!waiting && !retrying && seconds !== null && (
           <>
             {' · '}
             {etaMinutes(seconds) === 0 ? t('libraryPage.etaSoon') : t('libraryPage.eta', { count: etaMinutes(seconds) })}
@@ -153,6 +162,22 @@ export default function Library() {
     [categories, wikipediaState]
   )
   const installedFiles = useMemo(() => (books ?? []).map((b) => b.file), [books])
+  // Состояние каждого готового набора прямо на карточке: % пока качается, «Скачано», ошибка.
+  // Считается из тех же строк и того же опроса загрузок, что и список по темам ниже.
+  const bundleProgress = useMemo(() => {
+    if (!bundles || !categories || !wikipediaState || !books) return undefined
+    const out: Record<string, SetProgress> = {}
+    for (const bundle of bundles) {
+      const rows = bundleRows(bundle, categories, wikipediaState.options ?? [])
+      out[bundle.id] = setProgress(
+        rows.map((row) => ({
+          sizeBytes: row.sizeBytes,
+          ...rowState(row, installedFiles, activeJobs, wikipediaState.currentSelection ?? null),
+        }))
+      )
+    }
+    return out
+  }, [bundles, categories, wikipediaState, books, installedFiles, activeJobs])
   const [openTopic, setOpenTopic] = useState<string | null>(null)
   const [starting, setStarting] = useState<string | null>(null)
   const [pendingBundle, setPendingBundle] = useState<BundleWithStatus | null>(null)
@@ -355,6 +380,7 @@ export default function Library() {
                   onSelect={(bundle) => setPendingBundle(bundle)}
                   freeBytes={freeBytes}
                   disabled={disabled}
+                  progressById={bundleProgress}
                 />
               </div>
             )}

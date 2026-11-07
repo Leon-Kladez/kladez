@@ -90,6 +90,8 @@ export type DownloadJobWithProgress = {
   lastProgressTime?: number
   status?: 'active' | 'waiting' | 'delayed' | 'failed'
   failedReason?: string
+  /** Сколько попыток уже сорвалось (BullMQ attemptsMade): delayed после ошибки — это повтор, а не очередь. */
+  attemptsMade?: number
 }
 
 // Wikipedia selector types

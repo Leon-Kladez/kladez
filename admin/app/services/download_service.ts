@@ -80,6 +80,7 @@ export class DownloadService {
         lastProgressTime: parsed.lastProgressTime,
         status: state,
         failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
+        attemptsMade: job.attemptsMade || undefined,
       }
     })
 
@@ -97,6 +98,7 @@ export class DownloadService {
         lastProgressTime: parsed.lastProgressTime,
         status: state,
         failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
+        attemptsMade: job.attemptsMade || undefined,
       }
     })
 

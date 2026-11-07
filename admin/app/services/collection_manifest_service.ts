@@ -352,6 +352,7 @@ export class CollectionManifestService {
         all_installed: installedCount === collection.resources.length,
         installed_count: installedCount,
         total_count: collection.resources.length,
+        installed_ids: collection.resources.filter((r) => installedIds.has(r.id)).map((r) => r.id),
       }
     })
   }
