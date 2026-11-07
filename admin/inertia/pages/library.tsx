@@ -32,6 +32,7 @@ import {
   type BookRow,
   type RowState,
 } from '~/lib/library_rows'
+import { articleReaderUrl, bookReaderUrl } from '~/lib/reader'
 import { SERVICE_NAMES } from '../../constants/service_names'
 import type { BundleWithStatus } from '../../types/collections'
 import type { DownloadJobWithProgress } from '../../types/downloads'
@@ -157,6 +158,13 @@ export default function Library() {
   const [pendingBundle, setPendingBundle] = useState<BundleWithStatus | null>(null)
   const [installingBundle, setInstallingBundle] = useState(false)
   const [query, setQuery] = useState('')
+  const [submitted, setSubmitted] = useState('')
+  const { data: found, isFetching: searching } = useQuery({
+    queryKey: ['article-search', submitted],
+    queryFn: () => api.searchArticles(submitted),
+    enabled: Boolean(kiwixBase && submitted),
+    staleTime: 60_000,
+  })
 
   // Ссылка «Добавить книги» с главной ведёт сюда с #add.
   useEffect(() => {
@@ -209,7 +217,7 @@ export default function Library() {
   function search(e: React.FormEvent) {
     e.preventDefault()
     if (!kiwixBase || !query.trim()) return
-    window.open(`${kiwixBase}/search?pattern=${encodeURIComponent(query.trim())}`, '_blank', 'noopener')
+    setSubmitted(query.trim())
   }
 
   return (
@@ -219,6 +227,69 @@ export default function Library() {
         <h1 className="text-3xl sm:text-4xl font-semibold mb-2">{t('libraryPage.title')}</h1>
         <p className="text-text-muted mb-6">{t('libraryPage.subtitle')}</p>
 
+        {/* ── Найти статью: по тексту статей во всех книгах ───────────── */}
+        {kiwixBase && (
+          <section aria-labelledby="find" className="mb-10 rounded-lg border-2 border-desert-green bg-surface-primary p-4 sm:p-6">
+            <h2 id="find" className="flex items-center gap-2 text-2xl font-semibold">
+              <IconSearch className="size-7" aria-hidden="true" />
+              {t('libraryPage.findTitle')}
+            </h2>
+            <p className="text-text-muted mb-3">{t('libraryPage.findHint')}</p>
+            <form onSubmit={search} role="search" className="flex flex-col gap-2 sm:flex-row">
+              <label className="relative flex-1">
+                <span className="sr-only">{t('libraryPage.findTitle')}</span>
+                <IconSearch className="absolute left-3 top-1/2 size-6 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t('libraryPage.searchPlaceholder')}
+                  maxLength={200}
+                  className="w-full rounded-lg border-2 border-border-default bg-surface-primary py-3 pl-12 pr-3 text-xl focus:border-desert-green focus:outline-none"
+                />
+              </label>
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-desert-green px-6 py-3 text-xl font-semibold text-white hover:brightness-110"
+              >
+                {t('libraryPage.search')}
+              </button>
+            </form>
+
+            {submitted && (
+              <div className="mt-4" aria-live="polite">
+                {searching ? (
+                  <p className="text-lg text-text-secondary">{t('libraryPage.searching')}</p>
+                ) : found?.unavailable ? (
+                  <Alert title={t('libraryPage.searchUnavailable')} type="warning" variant="bordered" />
+                ) : !found || found.hits.length === 0 ? (
+                  <p className="text-lg text-text-secondary">{t('libraryPage.nothingFound', { query: submitted })}</p>
+                ) : (
+                  <>
+                    <p className="mb-2 text-sm text-text-muted">{t('libraryPage.foundCount', { count: found.hits.length })}</p>
+                    <ul className="divide-y divide-border-subtle rounded-lg border border-border-subtle">
+                      {found.hits.map((hit) => (
+                        <li key={`${hit.book}/${hit.path}`}>
+                          <a
+                            href={articleReaderUrl(kiwixBase, hit.book, hit.path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block p-3 hover:bg-surface-secondary focus:bg-surface-secondary focus:outline-none"
+                          >
+                            <span className="block text-lg font-semibold text-desert-green">{hit.title}</span>
+                            <span className="block text-sm text-text-muted">{t('libraryPage.fromBook', { book: hit.bookTitle })}</span>
+                            {hit.snippet && <span className="mt-1 block text-text-secondary">{hit.snippet}</span>}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* ── Мои книги ───────────────────────────────────────────── */}
         <section aria-labelledby="mine" className="mb-10">
           <h2 id="mine" className="flex items-center gap-2 text-2xl font-semibold mb-4">
@@ -226,28 +297,7 @@ export default function Library() {
             {t('libraryPage.mine')}
           </h2>
 
-          {kiwixBase ? (
-            <form onSubmit={search} className="mb-4 flex gap-2">
-              <label className="relative flex-1">
-                <span className="sr-only">{t('libraryPage.searchPlaceholder')}</span>
-                <IconSearch className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('libraryPage.searchPlaceholder')}
-                  className="w-full rounded-lg border-2 border-border-default bg-surface-primary py-2.5 pl-10 pr-3 text-lg focus:border-desert-green focus:outline-none"
-                />
-              </label>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-desert-green px-4 py-2 font-semibold text-white hover:brightness-110"
-              >
-                <IconSearch className="size-5" aria-hidden="true" />
-                {t('libraryPage.search')}
-              </button>
-            </form>
-          ) : (
+          {!kiwixBase && (
             <Alert title={t('libraryPage.noReader')} type="info" variant="bordered" className="!mb-4" />
           )}
 
@@ -269,7 +319,7 @@ export default function Library() {
                 </div>
                 {kiwixBase && (
                   <a
-                    href={`${kiwixBase}/content/${encodeURIComponent(book.name)}`}
+                    href={bookReaderUrl(kiwixBase, book.name)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-desert-green px-5 py-2 font-semibold text-white hover:brightness-110"

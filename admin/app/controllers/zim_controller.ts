@@ -18,6 +18,7 @@ import { t } from '../../constants/i18n/index.js'
 import { KiwixLibraryService } from '#services/kiwix_library_service'
 import { libraryBooks } from '../utils/library_summary.js'
 import { STARTER_ZIM } from '../../constants/kladez.js'
+import { searchArticles } from '../utils/article_search_run.js'
 
 @inject()
 export default class ZimController {
@@ -72,6 +73,12 @@ export default class ZimController {
   /** Kladez: «Мои книги» — что уже есть в библиотеке Kiwix (из library.xml). */
   async libraryBooks({}: HttpContext) {
     return { books: libraryBooks(await new KiwixLibraryService().listBooks(), STARTER_ZIM.filename) }
+  }
+
+  /** Kladez: «Найти статью» — полнотекстовый поиск по всем книгам библиотеки сразу. */
+  async articleSearch({ request }: HttpContext) {
+    const books = libraryBooks(await new KiwixLibraryService().listBooks(), STARTER_ZIM.filename)
+    return await searchArticles(String(request.input('q') ?? ''), books)
   }
 
   async rescanLibrary({}: HttpContext) {
