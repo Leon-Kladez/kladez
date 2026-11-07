@@ -1,7 +1,7 @@
 // Общие надписи: имя программы, подвал, кнопки, которые встречаются везде.
 export const commonEn = {
   'common.appName': 'Kladez',
-  'common.footer.version': 'Kladez v{version}',
+  'common.footer.version': 'Kladez {version}',
   'common.footer.basedOn': 'Based on Project NOMAD (Crosstalk Solutions)',
   'common.footer.debugInfo': 'Debug Info',
   'common.close': 'Close',

@@ -3,6 +3,12 @@
  * releases (plain GET, nothing about the user is sent).
  */
 export const KLADEZ_REPO = 'Leon-Kladez/kladez'
+/**
+ * Kladez: страница проекта и список ошибок/предложений — для «Как помочь «Кладезъ»».
+ * Репозиторий пока не публичный: адрес меняется здесь, в одном месте.
+ */
+export const KLADEZ_PROJECT_URL = `https://github.com/${KLADEZ_REPO}`
+export const KLADEZ_ISSUES_URL = `${KLADEZ_PROJECT_URL}/issues`
 export const KLADEZ_RELEASES_API_URL = `https://api.github.com/repos/${KLADEZ_REPO}/releases`
 
 /**

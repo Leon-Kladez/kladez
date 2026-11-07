@@ -40,6 +40,9 @@ RUN node ace build
 
 # Production stage
 FROM base
+# Номер версии для подвала панели; сборки установщика и пробные передают его через
+# --build-arg VERSION=… (.github/workflows/installer.yml, preview-admin-image.yml).
+# «dev» — только для сборки вручную при разработке.
 ARG VERSION=dev
 ARG BUILD_DATE
 ARG VCS_REF
