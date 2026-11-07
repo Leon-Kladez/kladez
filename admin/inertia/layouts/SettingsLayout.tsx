@@ -1,3 +1,4 @@
+import BriefButton from '~/components/brief/BriefButton'
 import {
   IconAdjustments,
   IconArrowBigUpLines,
@@ -62,6 +63,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="min-h-screen bg-surface-secondary/90">
+      {/* «Кладезъ»: ролик «Бриф» — справа вверху (если файл ролика есть). */}
+      <div className="fixed right-2 top-2 z-30 sm:right-4 sm:top-4">
+        <BriefButton />
+      </div>
       <div className="xl:pl-72">
         {/* Слева на телефоне — кнопка меню настроек. */}
         <PhoneReadOnlyBanner className="pl-16 xl:pl-4" />

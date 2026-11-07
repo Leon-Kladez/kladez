@@ -10,6 +10,10 @@ Kladez does not report anything about you to anyone. There are no ads and nothin
 2. Below, under **Add books**, pick a ready-made set («Аптечка» — First Aid Kit, «Библиотека» — Library, «Всё» — Everything) or open a topic and click **Download** next to a book. You can see how much space it needs and whether it fits.
 3. Wait for the download: its row shows the percentage and the time left. Then the book appears in **My books** by itself — click **Read**. Details: [Reading the library](/docs/library).
 
+## The «Brief» video
+
+The first time you open the home page, a short video (about 3 minutes) explains what Kladez is for. You can pause it, rewind, turn off the sound or click **Skip**. It will not appear by itself again — to watch it later, click **▶ Brief** in the top right corner of any page. The video is stored on this computer and works without the internet.
+
 ## Simple and Advanced mode
 
 At the top of the home page, on either side of the name, there are two buttons: **Simple** and **Advanced**.

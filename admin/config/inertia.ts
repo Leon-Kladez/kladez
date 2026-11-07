@@ -6,6 +6,8 @@ import { getLocale, t } from '../constants/i18n/index.js'
 import { resolveDeviceAccess } from '../app/middleware/phone_access_middleware.js'
 import { effectiveUiMode } from '../app/utils/ui_mode.js'
 import { storedUiMode } from '../app/utils/ui_mode_store.js'
+import app from '@adonisjs/core/services/app'
+import { cachedBriefSources } from '../app/utils/brief.js'
 
 let _assistantNameCache: { value: string; expiresAt: number } | null = null
 
@@ -29,6 +31,8 @@ const inertiaConfig = defineConfig({
     locale: () => getLocale(),
     // «Кладезъ»: компьютер или телефон, можно ли менять (телефоны по умолчанию только смотрят).
     device: (ctx) => resolveDeviceAccess(ctx),
+    // «Кладезъ»: приветственный ролик — адреса файлов, если они лежат в public/brief.
+    brief: () => cachedBriefSources(app.publicPath('brief')),
     // «Кладезъ»: «Обычный» / «Продвинутый» режим; телефонам, которые только смотрят, — обычный.
     uiMode: async (ctx) => {
       const [{ mode, hintSeen }, device] = await Promise.all([storedUiMode(), resolveDeviceAccess(ctx)])

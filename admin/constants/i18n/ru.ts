@@ -124,6 +124,7 @@ import { serverAutoRu } from './ru/serverAuto.js'
 import { relTimeRu } from './ru/relTime.js'
 import { languageRu } from './ru/language.js'
 import { modeRu } from './ru/mode.js'
+import { briefRu } from './ru/brief.js'
 import { libraryPageRu } from './ru/library.js'
 import { phonesRu } from './ru/phones.js'
 
@@ -252,6 +253,7 @@ export const ru: Record<MessageKey, string> = {
   ...relTimeRu,
   ...languageRu,
   ...modeRu,
+  ...briefRu,
   ...libraryPageRu,
   ...phonesRu,
 }
