@@ -5,7 +5,8 @@ param(
     [string]$InstallerZipGlob = 'D:\Загрузки\kladez-installer*.zip',
     [switch]$ShutdownWhenDone,
     [switch]$UseDownloaded,  # reuse the installer already unpacked in preview\installer
-    [string[]]$Only = @('kladez-win11', 'kladez-win10')
+    [string[]]$Only = @('kladez-win11', 'kladez-win10'),
+    [switch]$ReuseVm         # continue with an existing VM (e.g. after the runner was interrupted)
 )
 $ErrorActionPreference = 'Stop'
 $root = 'D:\ПРОЕКТЫ\Кладезъ'
@@ -70,23 +71,26 @@ function Run-AsTester($vm, $cmdLine, $taskName) {
     }
 }
 
-function Wait-NoSetup($vm, [int]$minutes) {
+function Wait-NoSetup($vm, [int]$minutes, [string]$logName = 'setup-1.log') {
     $until = (Get-Date).AddMinutes($minutes)
     Start-Sleep 30
     while ((Get-Date) -lt $until) {
         try {
-            $s = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock {
+            $s = Invoke-Command -VMName $vm -Credential $cred -ArgumentList $logName -ScriptBlock {
+                param($logName)
                 # By name, not Path: Path is empty for elevated processes seen from this session,
                 # which made the setup look finished while it was still running.
                 $n = @(Get-Process | Where-Object { $_.Name -like 'setup*' }).Count
-                $log = Get-ChildItem 'C:\Kladez-test\setup-*.log' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
+                $log = Get-Item (Join-Path 'C:\Kladez-test' $logName) -ErrorAction SilentlyContinue
                 $stuck = $false
                 if ($log -and ((Get-Date) - $log.LastWriteTime).TotalMinutes -gt 3) {
                     $stuck = [bool]((Get-Content $log.FullName -Tail 8) -match 'Message box')
                 }
-                @{ n = $n; stuck = $stuck }
+                # Inno writes «Log closed.» as its very last line: the only reliable «finished» signal.
+                $closed = [bool]($log -and ((Get-Content $log.FullName -Tail 2) -match 'Log closed\.'))
+                @{ n = $n; stuck = $stuck; closed = $closed }
             } -ErrorAction Stop
-            if ($s.n -eq 0) { return 'done' }
+            if ($s.n -eq 0 -and $s.closed) { return 'done' }
             # A question window nobody can answer (/SUPPRESSMSGBOXES does not cover script MsgBox): stop waiting.
             if ($s.stuck) { return 'msgbox' }
         } catch {}
@@ -98,13 +102,13 @@ function Wait-NoSetup($vm, [int]$minutes) {
 function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
     Say "=== ${vm}: создаю чистую машину ==="
     $old = Get-VM -Name $vm -ErrorAction SilentlyContinue
-    if ($old) { Stop-VM -Name $vm -TurnOff -Force -ErrorAction SilentlyContinue; Remove-VM -Name $vm -Force; Remove-Item -Recurse -Force (Join-Path $images "vms\$vm") -ErrorAction SilentlyContinue }
+    if ($old -and -not $ReuseVm) { Stop-VM -Name $vm -TurnOff -Force -ErrorAction SilentlyContinue; Remove-VM -Name $vm -Force; Remove-Item -Recurse -Force (Join-Path $images "vms\$vm") -ErrorAction SilentlyContinue }
     $a = @{ Name = $vm; IsoPath = $iso }; if ($Win11) { $a.Windows11 = $true }
-    & (Join-Path $here 'Start-KladezTestVm.ps1') @a | ForEach-Object { Say $_ }
+    if (-not ($old -and $ReuseVm)) { & (Join-Path $here 'Start-KladezTestVm.ps1') @a | ForEach-Object { Say $_ } } else { Say 'Продолжаю с уже созданной машиной' }
     if (-not (Wait-Guest $vm 75)) { Say "ПРОВАЛ: Windows в $vm не установилась за 75 минут"; Save-Screenshot $vm (Join-Path $images "$vm-fail.png"); return }
     Say "Windows установлена, тестовый пользователь вошёл"
     Start-Sleep 60   # let first logon finish (desktop, FirstLogonCommands)
-    Checkpoint-VM -Name $vm -SnapshotName 'чистая'
+    if (-not (Get-VMSnapshot -VMName $vm -Name 'чистая' -ErrorAction SilentlyContinue)) { Checkpoint-VM -Name $vm -SnapshotName 'чистая' }
 
     Say "Копирую установщик в машину"
     # Copy-VMFile sometimes fails right after first logon ("media is write protected", 0x80070013);
@@ -127,7 +131,7 @@ function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
     Say "Запускаю установщик (как человек: на рабочем столе, с правами администратора; без вопросов — /SILENT)"
     Run-AsTester $vm 'C:\Kladez-test\setup.exe /SILENT /SUPPRESSMSGBOXES /NORESTART /LOG=C:\Kladez-test\setup-1.log' 'KladezSetup1'
     for ($round = 1; $round -le 3; $round++) {
-        $w = Wait-NoSetup $vm 90
+        $w = Wait-NoSetup $vm 90 "setup-$round.log"
         if ($w -eq 'msgbox') { Say "ПРОВАЛ: установщик остановился на окне с вопросом (см. журнал и снимок)"; Save-Screenshot $vm (Join-Path $images "$vm-question.png"); break }
         if ($w -eq 'timeout') { Say "ПРОВАЛ: установщик работает дольше 90 минут"; Save-Screenshot $vm (Join-Path $images "$vm-timeout.png"); break }
         $resume = Invoke-Command -VMName $vm -Credential $cred -ScriptBlock {
@@ -208,7 +212,7 @@ try {
         Say "Контрольная сумма: $(if ($want -and $got -ieq $want) { 'совпадает' } else { "НЕ СОВПАДАЕТ или нет записи (ждали $want, получили $got)" })"
     }
 
-    foreach ($old in $Only) {
+    foreach ($old in $(if ($ReuseVm) { @() } else { $Only })) {
         if (Get-VM -Name $old -ErrorAction SilentlyContinue) { Stop-VM -Name $old -TurnOff -Force -ErrorAction SilentlyContinue; Remove-VM -Name $old -Force }
         Remove-Item -Recurse -Force (Join-Path $images "vms\$old") -ErrorAction SilentlyContinue
     }
