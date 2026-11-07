@@ -140,6 +140,11 @@ export function validateSettingValue(key: KVStoreKey, value: unknown): string | 
                 return t('serverValidate.language', { values: SUPPORTED_LOCALES.join(', ') })
             }
             return null
+        case 'phones.allowChanges':
+            if (value === true || value === false || value === 'true' || value === 'false') {
+                return null
+            }
+            return t('phones.validate.boolean')
         default:
             return null
     }

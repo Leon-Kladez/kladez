@@ -123,6 +123,7 @@ import { serverUpdateEn } from './en/serverUpdate.js'
 import { serverAutoEn } from './en/serverAuto.js'
 import { relTimeEn } from './en/relTime.js'
 import { languageEn } from './en/language.js'
+import { phonesEn } from './en/phones.js'
 
 export const en = {
   ...testEn,
@@ -248,6 +249,7 @@ export const en = {
   ...serverAutoEn,
   ...relTimeEn,
   ...languageEn,
+  ...phonesEn,
 } as const
 
 export type MessageKey = keyof typeof en

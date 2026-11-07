@@ -21,6 +21,19 @@ import { chatStreamErrorMessage } from './chat_stream.js'
 import { t } from '../../constants/i18n/index.js'
 import { errorText } from './error_text.js'
 
+export type PhonesInfo = {
+  device: { isComputer: boolean; canChange: boolean }
+  allowChanges: boolean
+  seenFrom: string | null
+  addresses: Array<{
+    ip: string
+    kind: 'wifi' | 'ethernet' | 'other'
+    name: string
+    url: string
+    qr: { size: number; path: string }
+  }>
+}
+
 type OllamaChatRequestWithImages = OllamaChatRequest & { images?: File[] }
 
 function serializeChatRequest(chatRequest: OllamaChatRequestWithImages): {
@@ -1249,6 +1262,14 @@ class API {
       const response = await this.client.delete<{ success: boolean }>('/system/services/links', {
         data: { service_name },
       })
+      return response.data
+    })()
+  }
+
+  /** «Кладезъ»: адреса компьютера в домашней сети с QR-кодами. */
+  async getPhonesInfo() {
+    return catchInternal(async () => {
+      const response = await this.client.get<PhonesInfo>('/phones/info')
       return response.data
     })()
   }

@@ -1,3 +1,4 @@
+import { applyPhonesMayChange } from '../utils/phone_access_store.js'
 import Service from '#models/service'
 import { KLADEZ_RELEASES_API_URL } from '../../constants/kladez.js'
 import InstalledResource from '#models/installed_resource'
@@ -924,6 +925,9 @@ export class SystemService {
       applyLocale(value)
       // Имя ИИ-помощника по умолчанию зависит от языка.
       invalidateAssistantNameCache()
+    }
+    if (key === 'phones.allowChanges') {
+      applyPhonesMayChange(value)
     }
     if (key === 'rag.minRelevance') {
       invalidateMinRelevanceCache()

@@ -9,6 +9,7 @@ import { IconArrowLeft } from '@tabler/icons-react'
 import classNames from 'classnames'
 import KladezLogo from '~/components/KladezLogo'
 import { t } from '../../constants/i18n'
+import PhoneReadOnlyBanner from '~/components/phones/PhoneReadOnlyBanner'
 
 export default function AppLayout({
   children,
@@ -27,6 +28,10 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* «Кладезъ»: на телефоне — «изменять можно только на компьютере». Над всем остальным,
+          чтобы не попасть под «На главную» (у неё absolute-позиция внутри обёртки ниже). */}
+      <PhoneReadOnlyBanner />
+      <div className="relative flex-1 flex flex-col">
       {
         window.location.pathname !== '/home' && (
           <Link
@@ -58,6 +63,7 @@ export default function AppLayout({
         )} />
       <div className="flex-1 w-full bg-desert">{children}</div>
       <Footer />
+      </div>
 
       {aiAssistantInstalled && (
         <>
