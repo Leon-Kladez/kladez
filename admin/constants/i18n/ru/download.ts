@@ -16,6 +16,7 @@ export const downloadRu: Record<keyof typeof downloadEn, string> = {
   'download.keep': 'Оставить',
   'download.cancel': 'Отменить скачивание',
   'download.waiting': 'Ожидание…',
+  'download.retryingAfterError': 'Не получилось, скоро попробуем ещё раз: {reason}',
   'download.downloading': 'Скачивается…',
   'download.noDataFor': 'Данные не приходят уже {n} мин…',
   'download.noneActive': 'Сейчас ничего не скачивается',

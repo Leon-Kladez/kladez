@@ -1,7 +1,8 @@
 import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { buildTopics, etaMinutes, etaSeconds, fileFromUrl, rowState } from '../../inertia/lib/library_rows.js'
+import { buildTopics, bundleRows, etaMinutes, etaSeconds, fileFromUrl, rowState } from '../../inertia/lib/library_rows.js'
+import { setProgress } from '../../inertia/lib/set_progress.js'
 
 const res = (id: string, size = 100, extra: Record<string, unknown> = {}) => ({
   id,
@@ -56,4 +57,34 @@ test('«осталось ~N мин»: по скорости; меньше мин
   assert.equal(etaMinutes(30), 0)
   assert.equal(fileFromUrl('https://x/y/a_2026-10.zim?x=1'), 'a_2026-10.zim')
   assert.equal(fileFromUrl('https://x/y/a.meta4'), null)
+})
+
+test('готовый набор: Википедия + книги уровней (с вложенными), без наборов данных; % на карточке', () => {
+  const cats = [
+    {
+      slug: 'medicine',
+      name: 'М',
+      description: '',
+      tiers: [
+        { slug: 'm1', resources: [res('wikipedia_ru_medicine_maxi', 300)] },
+        { slug: 'm2', includesTier: 'm1', resources: [res('wikipedia_ru_molcell_maxi', 100), res('drug_data', 50, { type: 'dataset' })] },
+      ],
+    },
+  ] as any
+  const rows = bundleRows({ wikipedia: 'top-mini', tiers: ['m2'] }, cats, wiki)
+  assert.deepEqual(rows.map((r) => r.key).sort(), ['wikipedia:top-mini', 'zim:wikipedia_ru_medicine_maxi', 'zim:wikipedia_ru_molcell_maxi'])
+  assert.deepEqual(bundleRows({ wikipedia: 'none', tiers: ['m1'] }, cats, wiki).map((r) => r.id), ['wikipedia_ru_medicine_maxi'])
+  assert.deepEqual(bundleRows({ wikipedia: 'top-mini', tiers: ['no-such-tier'] }, cats, wiki), [])
+
+  const medicine = rows.find((r) => r.id === 'wikipedia_ru_medicine_maxi')!
+  const job = { jobId: '1', url: medicine.url!, progress: 50, filepath: `/app/storage/zim/${medicine.filename}`, filetype: 'zim', status: 'active' as const }
+  const items = (files: string[], jobs: any[], wikiSel: any) =>
+    rows.map((row) => ({ sizeBytes: row.sizeBytes, ...rowState(row, files, jobs, wikiSel) }))
+  // Википедия (231) и molcell (100) на диске, medicine (300) наполовину: (231+100+150)/631 = 76 %
+  const p = setProgress(items(['wikipedia_ru_molcell_maxi_2026-10.zim'], [job], { optionId: 'top-mini', status: 'installed' }))
+  assert.deepEqual(p, { state: 'downloading', percent: 76, phase: 'running' })
+  const done = setProgress(
+    items(['wikipedia_ru_molcell_maxi_2026-10.zim', 'wikipedia_ru_medicine_maxi_2026-10.zim'], [], { optionId: 'top-mini', status: 'installed' })
+  )
+  assert.deepEqual(done, { state: 'installed' })
 })

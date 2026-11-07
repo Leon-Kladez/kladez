@@ -16,6 +16,7 @@ export const libraryPageRu: Record<keyof typeof libraryPageEn, string> = {
   'libraryPage.download': 'Скачать',
   'libraryPage.downloading': 'Скачивается… {percent}%',
   'libraryPage.waiting': 'В очереди…',
+  'libraryPage.retrying': 'Не получилось, скоро попробуем ещё раз… {percent}%',
   'libraryPage.eta': 'осталось ~{count} минута|осталось ~{count} минуты|осталось ~{count} минут',
   'libraryPage.etaSoon': 'осталось меньше минуты',
   'libraryPage.have': 'Есть в библиотеке',

@@ -15,6 +15,7 @@ export const libraryPageEn = {
   'libraryPage.download': 'Download',
   'libraryPage.downloading': 'Downloading… {percent}%',
   'libraryPage.waiting': 'Waiting in line…',
+  'libraryPage.retrying': 'Did not work, trying again shortly… {percent}%',
   'libraryPage.eta': 'about {count} minute left|about {count} minutes left',
   'libraryPage.etaSoon': 'less than a minute left',
   'libraryPage.have': 'In your library',

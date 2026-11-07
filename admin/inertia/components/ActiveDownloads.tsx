@@ -15,14 +15,20 @@ function formatSpeed(bytesPerSec: number): string {
   return t('download.speed', { size: formatBytes(Math.max(0, bytesPerSec)) })
 }
 
-type DownloadStatus = 'queued' | 'active' | 'stalled' | 'failed'
+type DownloadStatus = 'queued' | 'retrying' | 'active' | 'stalled' | 'failed'
 
 function getDownloadStatus(download: {
   progress: number
   lastProgressTime?: number
   status?: string
+  failedReason?: string
+  attemptsMade?: number
 }): DownloadStatus {
   if (download.status === 'failed') return 'failed'
+  // Kladez: BullMQ parks a job in `delayed` between retries after an error (up to
+  // ~4 h of backoff). That is not «waiting in line» — show why it is not moving.
+  if (download.status === 'delayed' && (download.failedReason || (download.attemptsMade ?? 0) > 0))
+    return 'retrying'
   if (download.status === 'waiting' || download.status === 'delayed') return 'queued'
   // Fallback heuristic for model jobs and in-flight jobs from before this deploy
   if (download.progress === 0 && !download.lastProgressTime) return 'queued'
@@ -274,6 +280,14 @@ const ActiveDownloads = ({ filetype, withHeader = false }: ActiveDownloadProps) 
                         <>
                           <div className="w-2 h-2 rounded-full bg-desert-stone" />
                           <span className="text-xs text-text-muted">{t('download.waiting')}</span>
+                        </>
+                      )}
+                      {status === 'retrying' && (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-orange-500" />
+                          <span className="text-xs text-orange-600">
+                            {t('download.retryingAfterError', { reason: download.failedReason || t('download.failed') })}
+                          </span>
                         </>
                       )}
                       {status === 'active' && (
