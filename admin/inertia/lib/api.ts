@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from 'axios'
 import type { LibraryBook } from '../../app/utils/library_summary.js'
+import type { ArticleSearchResult } from '../../app/utils/article_search_run.js'
 import {
   ListCatalogLanguagesResponse,
   ListRemoteZimFilesResponse,
@@ -982,6 +983,14 @@ class API {
     return catchInternal(async () => {
       const response = await this.client.get<{ books: LibraryBook[] }>('/zim/library-books')
       return response.data.books
+    })()
+  }
+
+  /** «Кладезъ»: «Найти статью» во всех книгах. */
+  async searchArticles(q: string) {
+    return catchInternal(async () => {
+      const response = await this.client.get<ArticleSearchResult>('/zim/article-search', { params: { q } })
+      return response.data
     })()
   }
 

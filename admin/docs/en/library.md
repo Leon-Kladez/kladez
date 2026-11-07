@@ -4,7 +4,7 @@ The library is everything you downloaded: Wikipedia, medicine, textbooks, dictio
 
 ## How to open it
 
-On the Kladez home page click the **Library** tile — it shows how many books and articles you have. At the top of the page is **My books**: each book has a **Read** button (it opens in a new tab), and above the list you can search all books at once.
+On the Kladez home page click the **Library** tile — it shows how many books and articles you have. At the very top of the page is the **Find an article** box, and below it **My books**: each book has a **Read** button (the book opens in a new tab, right on its main page).
 
 In Advanced mode the home page also has a tile for the reader itself (Kiwix), which opens the shelf of books directly. It opens in a new browser tab.
 
@@ -12,8 +12,10 @@ You will see a “shelf” — a card for each downloaded item: Wikipedia, Medic
 
 ## How to find an article
 
-- **Inside one item** — the search box at the top of the page. For example, open Wikipedia and type “burn”.
-- **Across the whole library** — the search box on the shelf page.
+- **In all books at once** — the **Find an article** box at the very top of the [Library](/library) page. Type, for example, “burn” and click **Find**. A list appears below: the article title and which book it is from. Click an article to open it in a new tab.
+- **Inside one book** — the search box at the top of the open book.
+
+The search box on the Kiwix “shelf” only searches **book titles**, not articles. To find an article, use the Find an article box in the Library.
 
 Articles work like an ordinary website: follow the links, and the browser's Back button returns to the previous page.
 

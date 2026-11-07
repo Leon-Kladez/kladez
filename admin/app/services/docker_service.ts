@@ -1102,6 +1102,14 @@ export class DockerService {
       // Generate the initial kiwix library XML before the container is created
       const kiwixLibraryService = new KiwixLibraryService()
       await kiwixLibraryService.rebuildFromDisk()
+      // «Кладезъ»: запомнить, что стартовый файл положен, — если человек потом
+      // его удалит, панель при запуске не вернёт его (app/utils/starter_sync.ts).
+      try {
+        const KVStore = (await import('#models/kv_store')).default
+        await KVStore.setValue('kiwix.starterFile', filename)
+      } catch {
+        // Не запомнили — при запуске панель просто проверит ещё раз.
+      }
       this._broadcast(SERVICE_NAMES.KIWIX, 'preinstall', t('server.dockerService.generatedKiwixLibraryXml'))
     } catch (error: any) {
       this._broadcast(

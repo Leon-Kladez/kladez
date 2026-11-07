@@ -46,6 +46,9 @@ export const KV_STORE_SCHEMA = {
   'contentAutoUpdate.autoDisabledReason':  'string',
   'contentAutoUpdate.windowBytesUsed':   'string',
   'contentAutoUpdate.windowResetAt':     'string',
+  // «Кладезъ»: стартовый файл библиотеки, который панель положила последним
+  // (app/utils/starter_sync.ts). Служебное, в настройках не показывается.
+  'kiwix.starterFile':          'string',
   'ui.hasVisitedEasySetup':     'boolean',
   'ui.theme':                   'string',
   // Язык интерфейса: 'ru' | 'en'. Пусто — русский. Один на всю панель.

@@ -46,12 +46,20 @@ export default class KiwixMigrationProvider {
               ? '[KiwixMigrationProvider] Rebuilt missing/invalid Kiwix library XML on startup.'
               : '[KiwixMigrationProvider] Kiwix is already in library mode — no migration needed.'
           )
-          return
+        } else {
+          logger.info('[KiwixMigrationProvider] Kiwix on legacy config — running automatic migration to library mode.')
+          await dockerService.migrateKiwixToLibraryMode()
+          logger.info('[KiwixMigrationProvider] Startup migration complete.')
         }
 
-        logger.info('[KiwixMigrationProvider] Kiwix on legacy config — running automatic migration to library mode.')
-        await dockerService.migrateKiwixToLibraryMode()
-        logger.info('[KiwixMigrationProvider] Startup migration complete.')
+        // «Кладезъ»: после обновления панели — новый стартовый файл в библиотеку,
+        // прежний (если он из старого образа и человек его не выбирал) — убрать.
+        try {
+          const { runStarterSync } = await import('#services/starter_sync_service')
+          await runStarterSync()
+        } catch (err: any) {
+          logger.error(`[KiwixMigrationProvider] Starter ZIM sync failed: ${err.message}`)
+        }
       } catch (err: any) {
         logger.error(`[KiwixMigrationProvider] Startup migration failed: ${err.message}`)
         // Non-fatal: the next affectContainer('restart') call will retry via the

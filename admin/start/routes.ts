@@ -791,6 +791,11 @@ router
       tags: ['zim'],
     })
 
+    documented(router.get('/article-search', [ZimController, 'articleSearch']), {
+      summary: 'Full-text search across all library books (Kladez «Find an article»)',
+      tags: ['zim'],
+    })
+
     documented(router.post('/rescan-library', [ZimController, 'rescanLibrary']), {
       summary: 'Rescan the ZIM library',
       tags: ['zim'],
