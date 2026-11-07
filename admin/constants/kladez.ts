@@ -40,6 +40,19 @@ export const STARTER_ZIM = {
 } as const
 
 /**
+ * Kladez: прежние стартовые файлы. При обновлении панели такой файл убирается
+ * один раз, если это ровно файл из старого образа (та же SHA-256) и человек не
+ * выбирал его сам (см. app/utils/starter_sync.ts). Добавляйте сюда стартовый
+ * файл, когда меняете STARTER_ZIM.
+ */
+export const PREVIOUS_STARTER_ZIMS = [
+  {
+    filename: 'vikidia_ru_all_nopic_2026-09.zim',
+    sha256: 'bccae35511f9de614f72f409cda56a4153cf133fc66106d0cbc2fa747bf11e92',
+  },
+] as const
+
+/**
  * Kladez: features of upstream NOMAD that send data to NOMAD's servers and are
  * switched off in Kladez. The UI hides them; the server refuses them anyway.
  */

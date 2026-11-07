@@ -4,8 +4,6 @@ Kladez (“a well of knowledge”) is a free knowledge library that lives at hom
 
 Kladez does not report anything about you to anyone. There are no ads and nothing to pay for. Its code is open, so anyone can check what is inside.
 
-![The Kladez home page](/docs/kladez-home.png)
-
 ## Where to start
 
 1. On the home page, click the **[Library](/library)** tile. The medical Wikipedia is already there — it comes with Kladez.
