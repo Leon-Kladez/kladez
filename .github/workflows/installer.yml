@@ -58,6 +58,10 @@ jobs:
           uid=$(docker image inspect -f '{{.Id}}' "ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}")
           sed -i -e "s|^admin .*|admin ghcr.io/leon-kladez/kladez:${VERSION}@${id}|"                  -e "s|^updater .*|updater ghcr.io/leon-kladez/kladez-sidecar-updater:${VERSION}@${uid}|" installer/linux/images.lock
           cat installer/linux/images.lock
+          # The Windows job packs images.lock into the update payload (payload\linux): it must get
+          # this patched copy, not the placeholder from git (0.1.0 + zeros) — otherwise an update
+          # renders compose with images that do not exist («No such image: …:0.1.0»).
+          mkdir -p dist && cp installer/linux/images.lock dist/images.lock
 
       - name: Набор образов
         run: installer/linux/build-images-bundle.sh
@@ -76,6 +80,7 @@ jobs:
             dist/kladez-rootfs.sha256
             dist/kladez-images.tar.zst
             dist/kladez-images.sha256
+            dist/images.lock
           retention-days: 1
 
   windows:
@@ -98,6 +103,13 @@ jobs:
         with:
           name: linux-dist
           path: dist
+
+      - name: Настоящий images.lock в установщик и обновление
+        run: |
+          if (-not (Test-Path dist/images.lock)) { throw 'dist/images.lock missing from linux-dist' }
+          Copy-Item dist/images.lock installer/linux/images.lock -Force
+          Get-Content installer/linux/images.lock
+          if (Select-String -Path installer/linux/images.lock -Pattern 'sha256:0{64}' -Quiet) { throw 'images.lock still has placeholder digests' }
 
       # Хранилище артефактов ограничено (~2 ГБ): linux-dist (~1 ГБ) больше не нужен,
       # удаляем его сразу, чтобы поместился установщик (~1,5–1,8 ГБ). Без сторонних actions.
