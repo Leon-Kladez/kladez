@@ -6,7 +6,8 @@ param(
     [switch]$ShutdownWhenDone,
     [switch]$UseDownloaded,  # reuse the installer already unpacked in preview\installer
     [string[]]$Only = @('kladez-win11', 'kladez-win10'),
-    [switch]$HumanResume,    # after the first reboot leave RunOnce as is and stop (wizard is driven by hand)
+    [switch]$HumanResume,
+    [switch]$PrepareOnly,    # clean VM + installer copied inside, then stop: the wizard is driven by hand    # after the first reboot leave RunOnce as is and stop (wizard is driven by hand)
     [switch]$ReuseVm         # continue with an existing VM (e.g. after the runner was interrupted)
 )
 $ErrorActionPreference = 'Stop'
@@ -130,6 +131,7 @@ function Test-Installer($vm, $iso, [switch]$Win11, $setupExe) {
         } finally { Remove-PSSession $s }
     }
 
+    if ($PrepareOnly) { Say 'Машина готова, установщик в C:\Kladez-test\setup.exe — дальше вручную (как человек).'; return }
     $start = Get-Date
     Say "Запускаю установщик (как человек: на рабочем столе, с правами администратора; без вопросов — /SILENT)"
     Run-AsTester $vm 'C:\Kladez-test\setup.exe /SILENT /SUPPRESSMSGBOXES /NORESTART /LOG=C:\Kladez-test\setup-1.log' 'KladezSetup1'
