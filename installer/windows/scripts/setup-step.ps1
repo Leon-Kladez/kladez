@@ -5,6 +5,7 @@ param(
     [string]$LauncherPath,
     [string]$NetScriptPath,
     [string]$UserId,
+    [string]$FallbackUserId,      # COMPUTER\user of the elevated process — last resort
     [string]$WindowsPathKind = 'modern',   # modern | legacy (из checks.ps1)
     [string]$WslMsi,
     [string]$LegacyKernelMsi,
@@ -28,6 +29,7 @@ try {
     $result = switch ($Step) {
         'features' { Enable-KladezFeatures }
         'wsl' {
+            Set-KladezWslOobeDone   # no «Welcome to WSL» window (same account when elevated by its owner)
             $state = Get-KladezWslState
             switch (Get-KladezInstallAction -Path $WindowsPathKind -FeaturesEnabled $state.FeaturesEnabled -WslVersion $state.WslVersion) {
                 'enable-features' { Enable-KladezFeatures }
@@ -41,12 +43,17 @@ try {
             Import-Module (Join-Path $PSScriptRoot 'Kladez.Tasks.psm1') -Force
             # Tasks imports Network as a nested module, so its functions are not visible here: import it too.
             Import-Module (Join-Path $PSScriptRoot 'Kladez.Network.psm1') -Force
-            if (-not $UserId) { throw 'Не удалось определить пользователя Windows для автозапуска.' }
-            Register-KladezTasks -LauncherPath $LauncherPath -NetScriptPath $NetScriptPath -UserId $UserId
+            $user = Resolve-KladezTaskUser -UserId $UserId -ExplorerOwners @(Get-KladezExplorerOwners) `
+                -SessionId (Get-Process -Id $PID).SessionId -Fallback $FallbackUserId
+            if (-not $user) {
+                throw 'Не удалось определить пользователя Windows для автозапуска. Войдите в Windows под своей учётной записью и запустите установщик ещё раз.'
+            }
+            Write-StepLog "task user: $user (from installer: '$UserId')"
+            Register-KladezTasks -LauncherPath $LauncherPath -NetScriptPath $NetScriptPath -UserId $user
             New-KladezFirewallRule -Ports @($AdminPort, $KiwixPort)
             'ok'
         }
-        'distro' { New-Item -ItemType Directory -Force -Path $SystemDir | Out-Null; Install-KladezDistro -SystemDir $SystemDir -RootfsPath $RootfsPath }
+        'distro' { Set-KladezWslOobeDone; New-Item -ItemType Directory -Force -Path $SystemDir | Out-Null; Install-KladezDistro -SystemDir $SystemDir -RootfsPath $RootfsPath }
         'firstrun' {
             New-Item -ItemType Directory -Force -Path $LibraryDir | Out-Null
             [void](Invoke-KladezFirstRun -BundlePath $BundlePath -LibraryDir $LibraryDir -AdminPort $AdminPort -KiwixPort $KiwixPort)

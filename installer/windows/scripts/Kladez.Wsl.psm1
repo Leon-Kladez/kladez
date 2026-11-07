@@ -184,7 +184,19 @@ function Get-KladezWslState {
     }
 }
 
+# WSL shows its «Welcome to WSL» window (wslsettings OOBE) on the user's first WSL session unless
+# HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss has OOBEComplete=1 — microsoft/WSL,
+# LxssUserSession.cpp _LaunchOOBEIfNeeded, LXSS_OOBE_COMPLETE_NAME. The window means nothing to our
+# users, so we mark it as seen. Only this value of the user's WSL key is touched.
+function Set-KladezWslOobeDone {
+    param([string]$KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss')
+    try {
+        if (-not (Test-Path -LiteralPath $KeyPath)) { New-Item -Path $KeyPath -Force | Out-Null }
+        Set-ItemProperty -LiteralPath $KeyPath -Name 'OOBEComplete' -Value 1 -Type DWord
+    } catch { }
+}
+
 Export-ModuleMember -Function ConvertFrom-WslOutput, Get-KladezWslVersion, Get-KladezInstallAction,
     Test-KladezDistroExists, ConvertTo-KladezArgumentString, Invoke-KladezNative, Invoke-KladezWsl,
     Install-KladezDistro, Invoke-KladezFirstRun, Invoke-KladezUpgrade, Enable-KladezFeatures,
-    Install-KladezWslPackage, Get-KladezWslState, Update-KladezDistroFiles
+    Install-KladezWslPackage, Get-KladezWslState, Update-KladezDistroFiles, Set-KladezWslOobeDone

@@ -7,11 +7,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Kladez.Tasks.psm1') -Force
 
-$ini = @{ AdminPort = '8080'; KiwixPort = '8090'; LibraryDir = '' }
+$ini = @{ AdminPort = '8080'; KiwixPort = '8090'; LibraryDir = ''; SystemDir = '' }
 if (Test-Path -LiteralPath $IniPath) {
     foreach ($line in [IO.File]::ReadAllLines($IniPath)) {
         if ($line -match '^\s*([A-Za-z]+)\s*=\s*(.*)$') { $ini[$Matches[1]] = $Matches[2].Trim() }
     }
 }
-$message = Invoke-KladezUninstall -LibraryDir $ini['LibraryDir'] -Ports @([int]$ini['AdminPort'], [int]$ini['KiwixPort']) -RemoveLibrary ($RemoveLibrary -eq '1')
+$message = Invoke-KladezUninstall -LibraryDir $ini['LibraryDir'] -Ports @([int]$ini['AdminPort'], [int]$ini['KiwixPort']) -RemoveLibrary ($RemoveLibrary -eq '1') -SystemDir $ini['SystemDir']
 Write-Output $message

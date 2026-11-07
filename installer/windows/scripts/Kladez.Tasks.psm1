@@ -54,7 +54,8 @@ function Invoke-KladezUninstall {
     param(
         [Parameter(Mandatory)][AllowEmptyString()][string]$LibraryDir,
         [Parameter(Mandatory)][int[]]$Ports,
-        [Parameter(Mandatory)][bool]$RemoveLibrary
+        [Parameter(Mandatory)][bool]$RemoveLibrary,
+        [AllowEmptyString()][string]$SystemDir = ''
     )
     [void](Invoke-KladezNative -FilePath 'wsl.exe' -Arguments @('--terminate', 'Kladez'))
     [void](Invoke-KladezNative -FilePath 'wsl.exe' -Arguments @('--unregister', 'Kladez'))
@@ -66,7 +67,44 @@ function Invoke-KladezUninstall {
         [void](Invoke-KladezNative -FilePath 'netsh.exe' -Arguments $cmd)
     }
 
-    if (-not $LibraryDir) { return 'Программа удалена. Где лежит библиотека, неизвестно — она не тронута.' }
+    try {
+        if (-not $LibraryDir) { return 'Программа удалена. Где лежит библиотека, неизвестно — она не тронута.' }
+        return (Remove-KladezLibraryOrKeep -LibraryDir $LibraryDir -RemoveLibrary $RemoveLibrary)
+    } finally {
+        Remove-KladezLeftovers -SystemDir $SystemDir
+    }
+}
+
+# <drive>:\Kladez after uninstall: the system folder is empty once WSL unregistered the distro, and
+# «Что это за папка.txt» describes a program that is gone. Only empty folders are removed — never
+# anything else; Kladez itself stays while it still holds files (e.g. the program folder, which Inno
+# removes later and then deletes Kladez too).
+function Remove-KladezLeftovers {
+    param([AllowEmptyString()][string]$SystemDir = '')
+    if (-not $SystemDir) { return }
+    try {
+        if ((Test-Path -LiteralPath $SystemDir -PathType Container) -and
+            @(Get-ChildItem -LiteralPath $SystemDir -Force).Count -eq 0) {
+            Remove-Item -LiteralPath $SystemDir -Force
+        }
+        $root = Split-Path -Parent $SystemDir
+        if (-not $root -or $root -match '^[A-Za-z]:\\?$') { return }
+        $note = Join-Path $root 'Что это за папка.txt'
+        if (Test-Path -LiteralPath $note -PathType Leaf) { Remove-Item -LiteralPath $note -Force }
+        if ((Test-Path -LiteralPath $root -PathType Container) -and @(Get-ChildItem -LiteralPath $root -Force).Count -eq 0) {
+            Remove-Item -LiteralPath $root -Force
+        }
+    } catch { }
+}
+
+function Remove-KladezLibraryOrKeep {
+    param([Parameter(Mandatory)][string]$LibraryDir, [Parameter(Mandatory)][bool]$RemoveLibrary)
+    if (-not (Test-Path -LiteralPath $LibraryDir -PathType Container)) { return 'Программа удалена.' }
+    # Nothing downloaded yet (only empty folders) — there is nothing worth keeping.
+    if (@(Get-ChildItem -LiteralPath $LibraryDir -Recurse -Force -File).Count -eq 0) {
+        Remove-Item -LiteralPath $LibraryDir -Recurse -Force
+        return 'Программа удалена.'
+    }
     if ($RemoveLibrary -and (Test-KladezLibrarySafeToDelete -LibraryDir $LibraryDir)) {
         Remove-Item -LiteralPath $LibraryDir -Recurse -Force
         return 'Программа и библиотека удалены.'
@@ -87,4 +125,32 @@ function Invoke-KladezUninstall {
     'Программа удалена. Библиотека оставлена.'
 }
 
-Export-ModuleMember -Function Register-KladezTasks, Unregister-KladezTasks, Test-KladezLibrarySafeToDelete, Invoke-KladezUninstall
+# Who gets the autostart task. The installer passes the original (non-elevated) user; if that came
+# back empty, the person at the computer is the owner of explorer.exe in this session; the elevated
+# account is only the last resort (wrong when a standard user typed an administrator's password).
+function Resolve-KladezTaskUser {
+    param(
+        [AllowEmptyString()][string]$UserId = '',
+        [AllowEmptyCollection()][object[]]$ExplorerOwners = @(),
+        [int]$SessionId = -1,
+        [AllowEmptyString()][string]$Fallback = ''
+    )
+    if ($UserId -and $UserId.Trim()) { return $UserId.Trim() }
+    $owner = $ExplorerOwners | Where-Object { $_.SessionId -eq $SessionId -and $_.Owner } | Select-Object -First 1
+    if ($owner) { return [string]$owner.Owner }
+    $f = $Fallback.Trim()
+    if ($f -and $f -notmatch '^\\|\\$') { return $f }
+    $null
+}
+
+function Get-KladezExplorerOwners {
+    foreach ($p in @(Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" -ErrorAction SilentlyContinue)) {
+        try {
+            $o = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction Stop
+            if ($o.User) { [pscustomobject]@{ SessionId = [int]$p.SessionId; Owner = "$($o.Domain)\$($o.User)" } }
+        } catch { }
+    }
+}
+
+Export-ModuleMember -Function Register-KladezTasks, Unregister-KladezTasks, Test-KladezLibrarySafeToDelete, Invoke-KladezUninstall,
+    Resolve-KladezTaskUser, Get-KladezExplorerOwners

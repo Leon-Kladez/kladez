@@ -159,3 +159,23 @@ Describe 'Update-KladezDistroFiles (upgrade copies new scripts and image list in
         { Update-KladezDistroFiles -LinuxDir 'C:\temp' } | Should -Throw '*Не удалось обновить*'
     }
 }
+
+Describe 'Set-KladezWslOobeDone (no «Welcome to WSL» window after install)' {
+    It 'creates the key and sets OOBEComplete=1 (DWORD) — the value WSL checks before showing the window' {
+        $key = 'TestRegistry:\Lxss'
+        Set-KladezWslOobeDone -KeyPath $key
+        (Get-ItemProperty -Path $key -Name OOBEComplete).OOBEComplete | Should -Be 1
+        (Get-Item $key).GetValueKind('OOBEComplete') | Should -Be 'DWord'
+    }
+    It 'keeps other WSL values of the user' {
+        $key = 'TestRegistry:\Lxss2'
+        New-Item -Path $key -Force | Out-Null
+        New-ItemProperty -Path $key -Name DefaultDistribution -Value '{abc}' | Out-Null
+        Set-KladezWslOobeDone -KeyPath $key
+        (Get-ItemProperty -Path $key).DefaultDistribution | Should -Be '{abc}'
+    }
+    It 'never fails an install step' {
+        Mock -ModuleName Kladez.Wsl Set-ItemProperty { throw 'denied' }
+        { Set-KladezWslOobeDone -KeyPath 'TestRegistry:\Lxss3' } | Should -Not -Throw
+    }
+}

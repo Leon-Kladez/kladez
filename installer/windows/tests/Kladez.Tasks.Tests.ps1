@@ -62,7 +62,7 @@ Describe 'Invoke-KladezUninstall' {
         Mock -ModuleName Kladez.Tasks Unregister-KladezTasks { }
         Mock -ModuleName Kladez.Tasks Remove-KladezFirewallRule { }
         $lib = Join-Path $TestDrive ('lib' + [guid]::NewGuid())
-        New-Item -ItemType Directory -Force (Join-Path $lib 'zim') | Out-Null
+        New-Item -ItemType Directory -Force (Join-Path $lib 'zim') | Out-Null; Set-Content (Join-Path $lib 'zim/wikipedia_ru.zim') 'zim'
     }
     It 'keeps the library by default and leaves a note how to restore it' {
         Invoke-KladezUninstall -LibraryDir $lib -Ports @(8080, 8090) -RemoveLibrary $false
@@ -90,5 +90,68 @@ Describe 'Invoke-KladezUninstall' {
     It 'unknown library location (no kladez.ini) still removes the program' {
         { Invoke-KladezUninstall -LibraryDir '' -Ports @(8080) -RemoveLibrary $true } | Should -Not -Throw
         $script:wsl | Should -Contain '--unregister Kladez'
+    }
+
+    # ── Leftover folders after uninstall (author's PC: empty <drive>:\Kladez and «Что это за папка.txt») ──
+    Context 'leftovers in the drive Kladez folder' {
+        BeforeEach {
+            $root = Join-Path $TestDrive ('Kladez' + [guid]::NewGuid())
+            $sys = Join-Path $root 'system'
+            $rootLib = Join-Path $root 'library'
+            New-Item -ItemType Directory -Force $sys, $rootLib | Out-Null
+            Set-Content (Join-Path $root 'Что это за папка.txt') 'x'
+        }
+        It 'library removed → system folder, note and the whole Kladez folder are gone' {
+            New-Item -ItemType Directory (Join-Path $rootLib 'zim') | Out-Null
+            Invoke-KladezUninstall -LibraryDir $rootLib -SystemDir $sys -Ports @(8080) -RemoveLibrary $true
+            Test-Path $root | Should -BeFalse
+        }
+        It 'empty library is not kept (nothing to re-use) → Kladez folder gone even when keeping was chosen' {
+            Invoke-KladezUninstall -LibraryDir $rootLib -SystemDir $sys -Ports @(8080) -RemoveLibrary $false
+            Test-Path $root | Should -BeFalse
+        }
+        It 'kept library stays with its «how to restore» note; the system folder and the old note are removed' {
+            New-Item -ItemType Directory (Join-Path $rootLib 'zim') | Out-Null; Set-Content (Join-Path $rootLib 'zim/wikipedia_ru.zim') 'zim'
+            Invoke-KladezUninstall -LibraryDir $rootLib -SystemDir $sys -Ports @(8080) -RemoveLibrary $false
+            Test-Path (Join-Path $rootLib 'zim') | Should -BeTrue
+            Test-Path (Join-Path $rootLib 'Как вернуть библиотеку.txt') | Should -BeTrue
+            Test-Path $sys | Should -BeFalse
+            Test-Path (Join-Path $root 'Что это за папка.txt') | Should -BeFalse
+        }
+        It 'never removes anything that is not ours: a non-empty system folder and other files in Kladez stay' {
+            Set-Content (Join-Path $sys 'ext4.vhdx') 'still here'
+            Set-Content (Join-Path $root 'мои заметки.txt') 'x'
+            Invoke-KladezUninstall -LibraryDir $rootLib -SystemDir $sys -Ports @(8080) -RemoveLibrary $true
+            Test-Path (Join-Path $sys 'ext4.vhdx') | Should -BeTrue
+            Test-Path (Join-Path $root 'мои заметки.txt') | Should -BeTrue
+        }
+        It 'the program folder inside Kladez (still holding files at this moment) keeps Kladez for Inno to remove later' {
+            Set-Content (Join-Path $root 'Kladez.exe') 'x'
+            Invoke-KladezUninstall -LibraryDir $rootLib -SystemDir $sys -Ports @(8080) -RemoveLibrary $true
+            Test-Path (Join-Path $root 'Kladez.exe') | Should -BeTrue
+            Test-Path (Join-Path $root 'Что это за папка.txt') | Should -BeFalse
+        }
+    }
+}
+
+Describe 'Resolve-KladezTaskUser (who gets the autostart task)' {
+    BeforeAll {
+        $owners = @(
+            [pscustomobject]@{ SessionId = 0; Owner = 'NT AUTHORITY\SYSTEM' },
+            [pscustomobject]@{ SessionId = 1; Owner = 'PC\Пётр Иванович' },
+            [pscustomobject]@{ SessionId = 2; Owner = 'PC\Гость' }
+        )
+    }
+    It 'name from the installer (original user) wins' {
+        Resolve-KladezTaskUser -UserId 'PC\Пётр Иванович' -ExplorerOwners $owners -SessionId 2 -Fallback 'PC\Admin' | Should -Be 'PC\Пётр Иванович'
+    }
+    It 'empty name → owner of explorer.exe in this session (the person sitting at the computer)' {
+        Resolve-KladezTaskUser -UserId '' -ExplorerOwners $owners -SessionId 1 -Fallback 'PC\Admin' | Should -Be 'PC\Пётр Иванович'
+    }
+    It 'no explorer in this session → fallback name' {
+        Resolve-KladezTaskUser -UserId '  ' -ExplorerOwners $owners -SessionId 5 -Fallback 'PC\Admin' | Should -Be 'PC\Admin'
+    }
+    It 'nothing at all → empty (the step then stops with a clear message)' {
+        Resolve-KladezTaskUser -UserId '' -ExplorerOwners @() -SessionId 1 -Fallback '\' | Should -BeNullOrEmpty
     }
 }
