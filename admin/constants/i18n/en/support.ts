@@ -10,6 +10,7 @@ export const supportEn = {
   'support.thanks': 'Say thanks',
   'support.thanksText': 'If Kladez helped you and you want to say thanks, point your phone camera at the QR code. It is voluntary and changes nothing in the program.',
   'support.thanksQrSoon': 'The QR code will appear later',
+  'support.thanksLink': 'Open the fundraiser in the bank',
   'support.thanksQrAlt': 'QR code for saying thanks',
   'support.report': 'Report a problem or suggest an improvement',
   'support.reportText': 'If something does not work or is hard to understand, write to us. Describe what you did and what happened; the Debug Info button at the bottom of the page collects the technical details for you.',

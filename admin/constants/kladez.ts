@@ -15,6 +15,11 @@ export const KLADEZ_ISSUES_URL = `${KLADEZ_PROJECT_URL}/issues`
  * текст без ссылки. После публикации: поставить true (и при смене адреса — KLADEZ_REPO).
  */
 export const KLADEZ_REPO_PUBLIC = false
+/**
+ * Kladez: добровольный сбор автора (СБП, Озон Банк) для карточки «Поблагодарить».
+ * QR-код того же адреса — public/thanks/kladez-thanks-qr.svg (сделан из этой ссылки).
+ */
+export const KLADEZ_THANKS_URL = 'https://finance.ozon.ru/apps/sbp/ozonbankpay/867cf607-0ea3-46b2-b593-573aa6ebbd0c'
 /** Kladez: адрес, по которому люди скачивают Кладезъ (для «Поделиться»); пусто — пока не опубликован. */
 export const KLADEZ_DOWNLOAD_URL = KLADEZ_REPO_PUBLIC ? `${KLADEZ_PROJECT_URL}/releases/latest` : ''
 export const KLADEZ_RELEASES_API_URL = `https://api.github.com/repos/${KLADEZ_REPO}/releases`

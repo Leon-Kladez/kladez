@@ -7,6 +7,7 @@ import {
   KLADEZ_ISSUES_URL,
   KLADEZ_PROJECT_URL,
   KLADEZ_REPO_PUBLIC,
+  KLADEZ_THANKS_URL,
 } from '../../../constants/kladez'
 import { t } from '../../../constants/i18n'
 
@@ -173,6 +174,18 @@ export default function SupportPage({ thanksQr }: { thanksQr?: string | null }) 
                 <div className="mx-auto flex aspect-square w-full max-w-64 items-center justify-center rounded-md border-2 border-dashed border-border-subtle p-4 text-center text-text-muted">
                   {t('support.thanksQrSoon')}
                 </div>
+              )}
+              {/* С телефона QR-код на своём же экране не навести — даём ссылку. */}
+              {KLADEZ_THANKS_URL && (
+                <a
+                  href={KLADEZ_THANKS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 text-desert-green font-semibold hover:underline"
+                >
+                  {t('support.thanksLink')}
+                  <IconExternalLink size={16} aria-hidden="true" />
+                </a>
               )}
             </aside>
           </div>
