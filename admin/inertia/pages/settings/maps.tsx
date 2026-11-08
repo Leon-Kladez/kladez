@@ -23,11 +23,13 @@ import { hasDownloadedGlobalMap } from '~/lib/global_map_banner'
 import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
 import { mapSetItems, setProgress, type SetProgress } from '~/lib/set_progress'
+import StorageFolderNote from '~/components/StorageFolderNote'
 
 const CURATED_COLLECTIONS_KEY = 'curated-map-collections'
 const GLOBAL_MAP_INFO_KEY = 'global-map-info'
 
 export default function MapsManager(props: {
+  libraryPath?: string
   maps: { baseAssetsExist: boolean; worldBasemapExists: boolean; regionFiles: FileEntry[] }
 }) {
   const queryClient = useQueryClient()
@@ -337,6 +339,7 @@ export default function MapsManager(props: {
 
             </div>
           </div>
+          <StorageFolderNote libraryPath={props.libraryPath} folder="maps" />
           {!props.maps.baseAssetsExist && (
             <Alert
               title={t('mapsPage.noBaseAssets')}

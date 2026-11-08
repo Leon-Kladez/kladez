@@ -72,6 +72,7 @@ export default class SettingsController {
       this.mapService.checkWorldBasemapExists(),
     ])
     return inertia.render('settings/maps', {
+      libraryPath: toWindowsPath(env.get('NOMAD_STORAGE_PATH', '')),
       maps: {
         baseAssetsExist: baseAssetsCheck,
         worldBasemapExists,
@@ -150,7 +151,9 @@ export default class SettingsController {
   }
 
   async zim({ inertia }: HttpContext) {
-    return inertia.render('settings/zim/index')
+    return inertia.render('settings/zim/index', {
+      libraryPath: toWindowsPath(env.get('NOMAD_STORAGE_PATH', '')),
+    })
   }
 
   async zimRemote({ inertia }: HttpContext) {

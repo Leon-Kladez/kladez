@@ -17,4 +17,9 @@ export const zimManagerRu: Record<keyof typeof zimManagerEn, string> = {
   'zimManager.kiwixMissing': 'Программа Kiwix не установлена. Установите её, чтобы открывать скачанные файлы ZIM',
   'zimManager.summary': 'Описание',
   'zimManager.actions': 'Действия',
+  'storageNote.title': 'Где лежат эти файлы',
+  'storageNote.thisPc': 'Этот компьютер',
+  'storageNote.copy': 'Скопировать путь',
+  'storageNote.copied': 'Скопировано',
+  'storageNote.warning': 'Не переносите, не переименовывайте и не удаляйте эти файлы вручную в Проводнике — Кладезъ перестанет их видеть. Удаляйте кнопкой «Удалить» здесь.',
 }

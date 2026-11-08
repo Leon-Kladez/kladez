@@ -16,11 +16,12 @@ import { SERVICE_NAMES } from '../../../../constants/service_names'
 import { formatBytes } from '~/lib/util'
 import { IconArrowDown, IconArrowUp, IconArrowsSort } from '@tabler/icons-react'
 import { t } from '../../../../constants/i18n'
+import StorageFolderNote from '~/components/StorageFolderNote'
 
 type SortKey = 'name' | 'size'
 type SortDirection = 'asc' | 'desc'
 
-export default function ZimPage() {
+export default function ZimPage({ libraryPath }: { libraryPath?: string }) {
   const queryClient = useQueryClient()
   const { openModal, closeAllModals } = useModals()
   const { addNotification } = useNotifications()
@@ -163,6 +164,7 @@ export default function ZimPage() {
               )}
             </div>
           </div>
+          <StorageFolderNote libraryPath={libraryPath} folder="zim" />
           {showUploader && (
             <div className="mt-6">
               <p className="text-text-muted text-sm mb-3">

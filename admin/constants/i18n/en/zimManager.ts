@@ -15,4 +15,9 @@ export const zimManagerEn = {
   'zimManager.kiwixMissing': 'The Kiwix application is not installed. Please install it to view downloaded ZIM files',
   'zimManager.summary': 'Summary',
   'zimManager.actions': 'Actions',
+  'storageNote.title': 'Where the files are',
+  'storageNote.thisPc': 'This PC',
+  'storageNote.copy': 'Copy path',
+  'storageNote.copied': 'Copied',
+  'storageNote.warning': 'Do not move, rename or delete these files by hand in File Explorer — Kladez will stop seeing them. Delete with the «Delete» button here.',
 } as const

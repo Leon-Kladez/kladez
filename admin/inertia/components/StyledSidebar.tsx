@@ -64,9 +64,15 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
   const Sidebar = () => {
     return (
       <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-desert-sand px-6 ring-1 ring-white/5 pt-4 shadow-md">
-        <div className="flex h-16 shrink-0 items-center">
-          <KladezLogo compact height={32} />
-          <h1 className="ml-3 text-xl font-semibold text-text-primary">{title}</h1>
+        {/* «Кладезъ»: крупный логотип ведёт на главную; название раздела — отдельной
+            строкой под ним, чтобы не читалось как «Кладезъ Настройки». */}
+        <div className="shrink-0 pt-2">
+          <Link href="/home" aria-label={t('nav.backToHome')} title={t('nav.backToHome')} className="inline-block">
+            <KladezLogo compact height={52} />
+          </Link>
+          <h1 className="mt-3 border-t border-border-subtle pt-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
+            {title}
+          </h1>
         </div>
         <nav className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
