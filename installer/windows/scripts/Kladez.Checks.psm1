@@ -131,5 +131,5 @@ function Write-KladezLog {
     } catch { }
 }
 
-Export-ModuleMember -Function Write-KladezLog, Test-KladezWindowsBuild, Test-KladezMemory, Test-KladezVirtualization,
+Export-ModuleMember -Function Write-KladezLog, Get-KladezInstalledMemory, Test-KladezWindowsBuild, Test-KladezMemory, Test-KladezVirtualization,
     Get-KladezDriveChoices, Get-KladezPortPlan, ConvertTo-KladezWslPath, Get-KladezSystemFacts
