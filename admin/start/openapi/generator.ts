@@ -56,13 +56,14 @@ export function buildOpenApiDocument(force = false): JsonObject {
   cached = {
     openapi: '3.1.0',
     info: {
-      title: 'Nomad Admin API',
+      title: 'Кладезъ API',
       description:
-        'HTTP API for the Nomad admin appliance. Generated from the application ' +
-        'routes and VineJS validators — see `/reference` for the interactive UI.',
+        'Команды, которыми другие программы могут управлять Кладезем: книги, карты, ' +
+        'скачивания, настройки. Работает только внутри вашей домашней сети. ' +
+        'Описание собрано из маршрутов и проверок самой программы.',
       version: SystemService.getAppVersion(),
     },
-    servers: [{ url: '/', description: 'This appliance' }],
+    servers: [{ url: '/', description: 'Этот компьютер' }],
     tags: [...tagSet].sort().map((name) => ({ name })),
     paths,
   }

@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import { readFileSync } from 'node:fs'
 import type { HttpContext } from '@adonisjs/core/http'
 import { buildOpenApiDocument } from '#start/openapi/generator'
+import { getLocale } from '../../constants/i18n/index.js'
 
 const require = createRequire(import.meta.url)
 
@@ -26,12 +27,12 @@ function getScalarBundle(): string {
  * The reference page mounts Scalar against our locally served bundle and spec.
  * Scalar auto-detects the `#api-reference` element and reads `data-url`.
  */
-const REFERENCE_HTML = `<!doctype html>
-<html lang="en">
+const referenceHtml = (locale: string) => `<!doctype html>
+<html lang="${locale}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Nomad Admin API Reference</title>
+    <title>Кладезъ API</title>
   </head>
   <body>
     <div id="app"></div>
@@ -42,6 +43,12 @@ const REFERENCE_HTML = `<!doctype html>
         hideClientButton: true,
         telemetry: false,
         theme: 'saturn',
+        // «Кладезъ»: по-русски и без облачных кнопок Scalar (Ask AI, Generate MCP,
+        // Share/Deploy) — страница ничего не отправляет за пределы компьютера.
+        localization: { locale: '${locale}' },
+        agent: { disabled: true },
+        mcp: { disabled: true },
+        showDeveloperTools: 'never',
       })
     </script>
   </body>
@@ -59,7 +66,8 @@ export default class OpenApiController {
    * The interactive Scalar API reference page.
    */
   async reference({ response }: HttpContext) {
-    return response.header('content-type', 'text/html').send(REFERENCE_HTML)
+    // Язык интерфейса Scalar — тот же, что у панели (ru / en).
+    return response.header('content-type', 'text/html').send(referenceHtml(getLocale()))
   }
 
   /**
