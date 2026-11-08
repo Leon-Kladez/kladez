@@ -27,6 +27,11 @@ jobs:
       - name: Сборка образа
         run: docker build -t kladez-admin:preview --build-arg VERSION="${VERSION}" .
 
+      # Облегчённый образ (без сборочных пакетов) должен по-прежнему запускаться
+      # и открывать страницы: база и Redis — рядом, как в установщике.
+      - name: Проверка образа
+        run: bash .github/scripts/smoke-admin-image.sh kladez-admin:preview
+
       - name: Архив образа
         run: |
           mkdir -p dist

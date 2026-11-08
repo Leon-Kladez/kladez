@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import type { HttpContext } from '@adonisjs/core/http'
 import { buildOpenApiDocument } from '#start/openapi/generator'
 import { getLocale } from '../../constants/i18n/index.js'
@@ -13,7 +13,14 @@ const require = createRequire(import.meta.url)
  */
 let scalarBundle: string | null = null
 
+// Kladez: the image ships only the prebuilt bundle (see Dockerfile); the package
+// itself is a build-time dependency. In development it is read from node_modules.
+const SHIPPED_SCALAR_BUNDLE = new URL('../../resources/scalar/standalone.js', import.meta.url)
+
 function getScalarBundle(): string {
+  if (scalarBundle === null && existsSync(SHIPPED_SCALAR_BUNDLE)) {
+    scalarBundle = readFileSync(SHIPPED_SCALAR_BUNDLE, 'utf-8')
+  }
   if (scalarBundle === null) {
     const entry = require.resolve('@scalar/api-reference')
     const marker = '/node_modules/@scalar/api-reference/'

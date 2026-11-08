@@ -1,6 +1,20 @@
-FROM node:22-slim AS base
+# Kladez: two bases. «runtime» is what ships to people — only what the running
+# program needs: bash/curl for the entrypoint, graphicsmagick + ghostscript for
+# pdf2pic, pciutils for the GPU check. Compilers and -dev headers (~850 MB with
+# their recommends) live only in «base», used by the build stages below.
+FROM node:22-slim AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      bash \
+      ca-certificates \
+      curl \
+      openssl \
+      graphicsmagick \
+      ghostscript \
+      pciutils \
+      && rm -rf /var/lib/apt/lists/*
 
-# Install bash & curl for entrypoint script compatibility, graphicsmagick for pdf2pic, and vips-dev & build-base for sharp 
+# Build base: native modules (better-sqlite3, ssh2, libzim…) are compiled here.
+FROM node:22-slim AS base
 RUN apt-get update && apt-get install -y \
       bash \
       curl \
@@ -22,6 +36,13 @@ FROM base AS production-deps
 WORKDIR /app
 ADD admin/package.json admin/package-lock.json ./
 RUN npm ci --omit=dev
+# Kladez: npm also installs peers and stray «dependencies» that the running server
+# never loads — the build toolchain (vite/rollup/esbuild, pulled as peers of
+# @adonisjs/vite and @tailwindcss/vite) and TypeScript/ts-node/node-gyp (listed as
+# runtime deps by @openzim/libzim and peers of @adonisjs/core). The interface is
+# prebuilt by vite in the build stage, so none of this is needed at run time.
+COPY admin/scripts/prune-runtime-deps.sh /tmp/prune-runtime-deps.sh
+RUN sh /tmp/prune-runtime-deps.sh /app/node_modules
 
 # Build stage
 FROM base AS build
@@ -55,7 +76,7 @@ RUN set -e; mkdir -p /out; \
     test -s "/out/$STARTER_ZIM_FILE"
 
 # Production stage
-FROM base
+FROM runtime
 # Номер версии для подвала панели; сборки установщика и пробные передают его через
 # --build-arg VERSION=… (.github/workflows/installer.yml, preview-admin-image.yml).
 # «dev» — только для сборки вручную при разработке.
@@ -114,6 +135,9 @@ ENV CREATOR_PACKS_APP_KEY=$CREATOR_PACKS_APP_KEY
 WORKDIR /app
 COPY --from=production-deps /app/node_modules /app/node_modules
 COPY --from=build /app/build /app
+# The API reference page (Scalar) needs only its prebuilt browser bundle; the
+# package itself (~110 MB with Vue) is a build-time dependency now.
+COPY --from=deps /app/node_modules/@scalar/api-reference/dist/browser/standalone.js /app/resources/scalar/standalone.js
 # Generate version.json from the VERSION build-arg so the image tag is the
 # single source of truth (previously copied root package.json, which drifted
 # from the tag when semantic-release did not commit the bump back).
