@@ -128,6 +128,15 @@ export default function SupportPage({ thanksQr }: { thanksQr?: string | null }) 
 
           <div className="flex flex-col lg:flex-row gap-8 items-start">
             <div className="w-full max-w-4xl">
+              {KLADEZ_REPO_PUBLIC && (
+                <Way
+                  icon={<IconStar className="size-7 shrink-0" aria-hidden="true" />}
+                  title={t('support.star')}
+                  text={t('support.starText')}
+                  href={KLADEZ_PROJECT_URL}
+                  linkText={t('support.starLink')}
+                />
+              )}
               <Way
                 icon={<IconShare className="size-7 shrink-0" aria-hidden="true" />}
                 title={t('support.share')}
@@ -143,13 +152,6 @@ export default function SupportPage({ thanksQr }: { thanksQr?: string | null }) 
                     text={t('support.reportText')}
                     href={KLADEZ_ISSUES_URL}
                     linkText={t('support.reportLink')}
-                  />
-                  <Way
-                    icon={<IconStar className="size-7 shrink-0" aria-hidden="true" />}
-                    title={t('support.star')}
-                    text={t('support.starText')}
-                    href={KLADEZ_PROJECT_URL}
-                    linkText={t('support.starLink')}
                   />
                   <p className="text-sm text-text-muted mb-4">{t('support.offlineNote')}</p>
                 </>

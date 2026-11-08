@@ -1,6 +1,6 @@
 // Kladez: «How to help Kladez» — no money, ads or third-party links (replaces NOMAD's Support page).
 export const supportEn = {
-  'support.intro': 'Kladez is free and will stay free: no subscriptions, no ads, no paid extras. You can help without any money — here is how.',
+  'support.intro': 'Kladez is free and will stay free: no subscriptions, no ads, no paid extras. Supporting it is easy: star it on GitHub, share it with friends, and if you wish, thank the author to help the project grow.',
   'support.share': 'Tell people who would find it useful',
   'support.shareText': 'Show Kladez to relatives, neighbours, a school or a village library. It is most useful where the internet is unreliable or may disappear. Phones at home can open it too — see Settings → Phones.',
   'support.shareButton': 'Share',
@@ -8,7 +8,7 @@ export const supportEn = {
   'support.shareCopied': 'Text copied — paste it into a message or a post.',
   'support.shareManual': 'Copy this text and send it to people who would find it useful:',
   'support.thanks': 'Say thanks',
-  'support.thanksText': 'If Kladez helped you and you want to say thanks, point your phone camera at the QR code. It is voluntary and changes nothing in the program.',
+  'support.thanksText': 'If Kladez helped you and you want to thank the author to help the project grow, point your phone camera at the QR code. It is voluntary and changes nothing in the program.',
   'support.thanksQrSoon': 'The QR code will appear later',
   'support.thanksLink': 'Open the fundraiser in the bank',
   'support.thanksQrAlt': 'QR code for saying thanks',

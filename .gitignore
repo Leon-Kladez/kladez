@@ -83,3 +83,4 @@ __pycache__/
 # Кладезъ: образы Windows для проверочных виртуальных машин (большие, не в git)
 vm-images/
 backups/
+preview/
