@@ -136,13 +136,20 @@ function phaseOf(items: SetItem[]): SetPhase {
  * (скачанные файлы целиком + скачанная часть идущих). Пока хоть что-то качается,
  * не больше 99 %: «100 %» без «Скачано» сбивает с толку.
  */
-export function setProgress(items: SetItem[]): SetProgress {
+export function setProgress(
+  items: SetItem[],
+  options: { wholeSet?: boolean } = {}
+): SetProgress {
   if (items.length === 0) return { state: 'unavailable' }
 
   const total = items.length
   const installed = items.filter((i) => i.state === 'installed').length
   const failed = items.filter((i) => i.state === 'failed').length
-  const downloading = items.some((i) => i.state === 'downloading')
+  // wholeSet: наборы делят книги («Аптечка» входит в «Библиотеку»). Набор «скачивается»,
+  // только когда запущен он сам — ни одного его файла не осталось нетронутым.
+  const untouched = items.some((i) => i.state === 'available')
+  const downloading =
+    items.some((i) => i.state === 'downloading') && !(options.wholeSet && untouched)
 
   if (downloading) {
     const totalBytes = items.reduce((acc, i) => acc + Math.max(0, i.sizeBytes), 0)

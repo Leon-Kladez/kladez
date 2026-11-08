@@ -156,3 +156,15 @@ test('книжный набор: скачанное по имени файла, 
     assert.equal(p.reason, 'Нет связи')
   }
 })
+
+test('общие книги: соседний набор не «скачивается», пока его самого не запустили', () => {
+  const a = res('a', 100)
+  const b = res('b', 100)
+  const items = zimSetItems([a, b], [], [job(a.url, 40)])
+  assert.equal(setProgress(items).state, 'downloading')
+  const own = setProgress(items, { wholeSet: true })
+  assert.equal(own.state, 'idle')
+  assert.equal(canStartSet(own), true)
+  const all = zimSetItems([a, b], [], [job(a.url, 40), job(b.url, 0)])
+  assert.equal(setProgress(all, { wholeSet: true }).state, 'downloading')
+})

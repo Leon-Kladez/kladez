@@ -173,7 +173,8 @@ export default function Library() {
         rows.map((row) => ({
           sizeBytes: row.sizeBytes,
           ...rowState(row, installedFiles, activeJobs, wikipediaState.currentSelection ?? null),
-        }))
+        })),
+        { wholeSet: true }
       )
     }
     return out
