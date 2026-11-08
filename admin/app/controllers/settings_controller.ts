@@ -60,7 +60,7 @@ export default class SettingsController {
   }
 
   async support({ inertia }: HttpContext) {
-    // QR для «Поблагодарить» кладёт автор в public/thanks/; нет файла — нет и карточки.
+    // QR для «Поблагодарить» кладёт автор в public/thanks/; нет файла — на его месте заглушка.
     const qr = THANKS_QR_FILES.find((f) => existsSync(app.publicPath(`thanks/${f}`)))
     return inertia.render('settings/support', { thanksQr: qr ? `/thanks/${qr}` : null })
   }

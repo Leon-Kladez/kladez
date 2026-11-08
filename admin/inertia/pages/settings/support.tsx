@@ -156,20 +156,25 @@ export default function SupportPage({ thanksQr }: { thanksQr?: string | null }) 
               <p className="text-sm text-text-muted">{t('support.basedOn')}</p>
             </div>
 
-            {thanksQr && (
-              <aside className="w-full lg:w-80 shrink-0 bg-surface-primary rounded-lg border-2 border-border-subtle p-6 lg:sticky lg:top-6">
-                <h2 className="flex items-center gap-2 text-2xl font-semibold mb-3">
-                  <IconHeart className="size-7 shrink-0 text-desert-orange" aria-hidden="true" />
-                  {t('support.thanks')}
-                </h2>
-                <p className="text-text-secondary mb-4">{t('support.thanksText')}</p>
+            <aside className="w-full lg:w-80 shrink-0 bg-surface-primary rounded-lg border-2 border-border-subtle p-6 lg:sticky lg:top-6">
+              <h2 className="flex items-center gap-2 text-2xl font-semibold mb-3">
+                <IconHeart className="size-7 shrink-0 text-desert-orange" aria-hidden="true" />
+                {t('support.thanks')}
+              </h2>
+              <p className="text-text-secondary mb-4">{t('support.thanksText')}</p>
+              {thanksQr ? (
                 <img
                   src={thanksQr}
                   alt={t('support.thanksQrAlt')}
                   className="mx-auto w-full max-w-64 rounded-md bg-white p-2"
                 />
-              </aside>
-            )}
+              ) : (
+                // Пока автор не положил QR в public/thanks/ — заглушка на месте кода.
+                <div className="mx-auto flex aspect-square w-full max-w-64 items-center justify-center rounded-md border-2 border-dashed border-border-subtle p-4 text-center text-text-muted">
+                  {t('support.thanksQrSoon')}
+                </div>
+              )}
+            </aside>
           </div>
         </main>
       </div>
