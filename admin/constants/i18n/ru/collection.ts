@@ -4,6 +4,7 @@ export const collectionRu: Record<keyof typeof collectionEn, string> = {
   'collection.allDownloaded': 'Всё скачано',
   'collection.itemsAndSize': 'Материалов: {n} · Размер: {size}',
   'collection.state.downloading': 'Скачивается: {percent}%',
+  'collection.state.starting': 'Запускаем скачивание…',
   'collection.state.waiting': 'Ждёт своей очереди: {percent}%',
   'collection.state.retrying': 'Не получилось, пробуем ещё раз: {percent}%',
   'collection.state.installed': 'Скачано',

@@ -15,6 +15,8 @@ export interface WikipediaSelectorProps {
   showSubmitButton?: boolean // true for Content Explorer, false for wizard
   onSubmit?: () => void
   isSubmitting?: boolean
+  /** «Кладезъ»: сколько процентов выбранной Википедии уже скачано (null — неизвестно). */
+  downloadPercent?: number | null
 }
 
 const WikipediaSelector: React.FC<WikipediaSelectorProps> = ({
@@ -26,6 +28,7 @@ const WikipediaSelector: React.FC<WikipediaSelectorProps> = ({
   showSubmitButton = false,
   onSubmit,
   isSubmitting = false,
+  downloadPercent = null,
 }) => {
   // Determine which option to highlight
   const highlightedOptionId = selectedOptionId ?? currentSelection?.optionId ?? null
@@ -52,7 +55,9 @@ const WikipediaSelector: React.FC<WikipediaSelectorProps> = ({
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
           <LoadingSpinner fullscreen={false} iconOnly className="size-4" />
           <span className="text-sm text-blue-700">
-            {t('wikipedia.downloading')}
+            {downloadPercent !== null
+              ? t('wikipedia.downloadingPercent', { percent: downloadPercent })
+              : t('wikipedia.downloading')}
           </span>
         </div>
       )}
@@ -113,7 +118,7 @@ const WikipediaSelector: React.FC<WikipediaSelectorProps> = ({
                 {isCurrentDownloading && (
                   <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
                     <IconDownload size={12} />
-                    {t('common.downloading')}
+                    {downloadPercent !== null ? `${downloadPercent}%` : t('common.downloading')}
                   </span>
                 )}
                 {isCurrentFailed && (

@@ -387,6 +387,17 @@ export default function MapComponent({
           cursor={isDraggingMap ? 'grabbing' : 'crosshair'}
           mapStyle={`${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/maps/styles`}
           mapLib={maplibregl}
+          // «Кладезъ»: подсказки кнопок карты на языке панели, а не «Zoom in».
+          locale={{
+            'NavigationControl.ZoomIn': t('mapsUi.zoomIn'),
+            'NavigationControl.ZoomOut': t('mapsUi.zoomOut'),
+            'NavigationControl.ResetBearing': t('mapsUi.resetBearing'),
+            'FullscreenControl.Enter': t('mapsUi.fullscreenEnter'),
+            'FullscreenControl.Exit': t('mapsUi.fullscreenExit'),
+            'GeolocateControl.FindMyLocation': t('mapsUi.findMe'),
+            'ScaleControl.Meters': t('mapsUi.m'),
+            'ScaleControl.Kilometers': t('mapsUi.km'),
+          }}
           initialViewState={initialViewState}
           onMoveEnd={(e) => {
             // Persist the view so a refresh restores where the user was, not the default.

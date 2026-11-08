@@ -44,6 +44,7 @@ import { ZimFileWithMetadata } from '../../../../types/zim'
 import { tx } from '~/lib/tx'
 import { t, formatDate, formatNumber, languageName } from '../../../../constants/i18n'
 import { errorText } from '~/lib/error_text'
+import { clampPercent, jobForUrl, setProgress, tierResources, zimSetItems } from '~/lib/set_progress'
 
 const CURATED_CATEGORIES_KEY = 'curated-categories'
 const WIKIPEDIA_STATE_KEY = 'wikipedia-state'
@@ -553,6 +554,10 @@ export default function ZimRemoteExplorer() {
                 showSubmitButton
                 onSubmit={handleWikipediaSubmit}
                 isSubmitting={isSubmittingWikipedia}
+                downloadPercent={(() => {
+                  const job = jobForUrl(downloads ?? [], wikipediaState.currentSelection?.url)
+                  return job ? Math.floor(clampPercent(job.progress)) : null
+                })()}
               />
             </div>
           ) : null}
@@ -579,6 +584,17 @@ export default function ZimRemoteExplorer() {
                     category={category}
                     selectedTier={null}
                     onClick={handleCategoryClick}
+                    progress={
+                      category.downloadingTierSlug
+                        ? setProgress(
+                            zimSetItems(
+                              tierResources(category.tiers, category.downloadingTierSlug),
+                              (localFiles ?? []).map((f) => f.name),
+                              downloads ?? []
+                            )
+                          )
+                        : undefined
+                    }
                   />
                 ))}
               </div>

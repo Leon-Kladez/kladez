@@ -6,7 +6,6 @@ import {
   IconChartBar,
   IconDeviceMobile,
   IconCode,
-  IconDashboard,
   IconFolder,
   IconGavel,
   IconHeart,
@@ -18,7 +17,6 @@ import {
 } from '@tabler/icons-react'
 import { usePage } from '@inertiajs/react'
 import StyledSidebar from '~/components/StyledSidebar'
-import { getServiceLink } from '~/lib/navigation'
 import useServiceInstalledStatus from '~/hooks/useServiceInstalledStatus'
 import useCreatorPacks from '~/hooks/useCreatorPacks'
 import { SERVICE_NAMES } from '../../constants/service_names'
@@ -40,13 +38,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { name: t('nav.settings.contentManager'), href: '/settings/zim', icon: IconFolder, current: false },
     ...(creatorPacksConfigured ? [{ name: t('nav.settings.creatorPacks'), href: '/settings/creator-packs', icon: IconMovie, current: false }] : []),
     { name: t('nav.settings.mapsManager'), href: '/settings/maps', icon: IconMapRoute, current: false },
-    {
-      name: t('nav.settings.serviceLogs'),
-      href: getServiceLink('9999'),
-      icon: IconDashboard,
-      current: false,
-      target: '_blank',
-    },
+    // «Кладезъ»: «Журналы и показатели» (Dozzle, порт 9999) убраны — порт не открыт,
+    // ссылка вела в никуда. Журналы для помощи — «Сведения для поддержки» внизу меню.
     {
       name: t('nav.settings.checkUpdates'),
       href: '/settings/update',

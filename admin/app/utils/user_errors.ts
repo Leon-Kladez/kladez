@@ -7,8 +7,10 @@ import { formatBytes, t } from '../../constants/i18n/index.js'
  */
 const RULES: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/ENOSPC|no space left on device/i, () => t('serverError.noSpace')],
+  // Имя сервера не находится (DNS): часто сломан VPN, хотя сама сеть есть.
+  [/ENOTFOUND|EAI_AGAIN/i, () => t('serverError.dns')],
   [
-    /ENOTFOUND|EAI_AGAIN|ENETUNREACH|EHOSTUNREACH|ECONNREFUSED|ECONNRESET|ETIMEDOUT|socket hang up|timeout of \d+ms exceeded|Network Error/i,
+    /ENETUNREACH|EHOSTUNREACH|ECONNREFUSED|ECONNRESET|ETIMEDOUT|socket hang up|timeout of \d+ms exceeded|Network Error/i,
     () => t('serverError.noInternet'),
   ],
   [/(?:Failed to download: )?\bHTTP (\d{3})\b/i, (m) => t('serverError.http', { status: m[1] })],

@@ -181,7 +181,8 @@ export default function Library() {
   const [openTopic, setOpenTopic] = useState<string | null>(null)
   const [starting, setStarting] = useState<string | null>(null)
   const [pendingBundle, setPendingBundle] = useState<BundleWithStatus | null>(null)
-  const [installingBundle, setInstallingBundle] = useState(false)
+  // Набор, который сервер сейчас ставит в очередь: окно уже закрыто, на карточке «Запускаем…».
+  const [startingBundle, setStartingBundle] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [submitted, setSubmitted] = useState('')
   const { data: found, isFetching: searching } = useQuery({
@@ -226,10 +227,10 @@ export default function Library() {
   }
 
   async function installBundle(bundle: BundleWithStatus) {
-    setInstallingBundle(true)
-    const result = await api.installBundle(bundle.id)
-    setInstallingBundle(false)
+    // Сервер проверяет каждый файл в каталоге — без связи это долго. Окно не держим.
     setPendingBundle(null)
+    setStartingBundle(bundle.id)
+    const result = await api.installBundle(bundle.id).finally(() => setStartingBundle(null))
     if (result?.success) {
       addNotification({ type: 'success', message: t('libraryPage.started', { name: bundle.name }) })
       refreshDownloads()
@@ -380,7 +381,14 @@ export default function Library() {
                   onSelect={(bundle) => setPendingBundle(bundle)}
                   freeBytes={freeBytes}
                   disabled={disabled}
-                  progressById={bundleProgress}
+                  progressById={
+                    startingBundle
+                      ? {
+                          ...bundleProgress,
+                          [startingBundle]: { state: 'downloading', percent: 0, phase: 'starting' },
+                        }
+                      : bundleProgress
+                  }
                 />
               </div>
             )}
@@ -464,11 +472,10 @@ export default function Library() {
         <StyledModal
           title={t('libraryPage.confirmTitle', { name: pendingBundle.name })}
           open
-          onCancel={() => !installingBundle && setPendingBundle(null)}
+          onCancel={() => setPendingBundle(null)}
           onConfirm={() => installBundle(pendingBundle)}
           confirmText={t('libraryPage.download')}
           confirmIcon="IconCloudDownload"
-          confirmLoading={installingBundle}
         >
           <p className="text-text-secondary">
             {t('libraryPage.confirmBody', { size: formatBytes(pendingBundle.size_mb * 1024 * 1024) })}

@@ -8,7 +8,9 @@ import { t } from '../../constants/i18n'
 export default function SetDownloadStatus({ progress }: { progress: SetProgress }) {
   if (progress.state === 'downloading') {
     const label =
-      progress.phase === 'waiting'
+      progress.phase === 'starting'
+        ? t('collection.state.starting')
+        : progress.phase === 'waiting'
         ? t('collection.state.waiting', { percent: progress.percent })
         : progress.phase === 'retrying'
           ? t('collection.state.retrying', { percent: progress.percent })
@@ -23,6 +25,9 @@ export default function SetDownloadStatus({ progress }: { progress: SetProgress 
           />
           {label}
         </p>
+        {progress.phase === 'retrying' && progress.reason && (
+          <p className="mt-1 text-xs text-amber-200">{progress.reason}</p>
+        )}
         <div
           className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20"
           role="progressbar"

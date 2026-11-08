@@ -11,4 +11,12 @@ export const mapsPageRu: Record<keyof typeof mapsPageEn, string> = {
   'mapsPage.noWorldBasemap': 'Общая карта мира ещё не скачана, поэтому за пределами скачанных стран карта может быть пустой. Подключите компьютер к интернету и скачайте её (~15 МБ) в настройках карт.',
   'mapsPage.noRegions': 'Карты стран ещё не скачаны. Скачайте хотя бы одну страну, чтобы пользоваться картами.',
   'mapsPage.goToSettings': 'Перейти в настройки карт',
+  'mapsUi.zoomIn': 'Приблизить',
+  'mapsUi.zoomOut': 'Отдалить',
+  'mapsUi.resetBearing': 'Повернуть на север',
+  'mapsUi.fullscreenEnter': 'Во весь экран',
+  'mapsUi.fullscreenExit': 'Выйти из полноэкранного режима',
+  'mapsUi.findMe': 'Где я',
+  'mapsUi.m': 'м',
+  'mapsUi.km': 'км',
 }

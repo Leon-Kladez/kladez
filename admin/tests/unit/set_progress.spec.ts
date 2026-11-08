@@ -6,6 +6,8 @@ import {
   jobForUrl,
   mapSetItems,
   setProgress,
+  tierResources,
+  zimSetItems,
   type SetItem,
 } from '../../inertia/lib/set_progress.js'
 import type { DownloadJobWithProgress } from '../../types/downloads.js'
@@ -126,4 +128,31 @@ test('размеры неизвестны — файлы считаются по
   ]
   const p = setProgress(items)
   assert.equal(p.state === 'downloading' && p.percent, 75)
+})
+
+test('уровень темы: свои файлы плюс включённые уровни, без зацикливания', () => {
+  const tiers = [
+    { name: 'A', slug: 'a', description: '', resources: [res('x', 1)] },
+    { name: 'B', slug: 'b', description: '', includesTier: 'a', resources: [res('y', 2)] },
+    { name: 'C', slug: 'c', description: '', includesTier: 'c', resources: [res('z', 3)] },
+  ]
+  assert.deepEqual(tierResources(tiers, 'b').map((r) => r.id), ['y', 'x'])
+  assert.deepEqual(tierResources(tiers, 'c').map((r) => r.id), ['z'])
+  assert.deepEqual(tierResources(tiers, 'nope'), [])
+})
+
+test('книжный набор: скачанное по имени файла, идущее — по загрузкам, причина повтора', () => {
+  const a = res('a', 100)
+  const b = res('b', 100)
+  const items = zimSetItems([a, b], ['a_2026-11.pmtiles'], [
+    job(b.url, 50, { status: 'delayed', failedReason: 'Нет связи' }),
+  ])
+  assert.deepEqual(items.map((i) => i.state), ['installed', 'downloading'])
+  const p = setProgress(items)
+  assert.equal(p.state, 'downloading')
+  if (p.state === 'downloading') {
+    assert.equal(p.percent, 75)
+    assert.equal(p.phase, 'retrying')
+    assert.equal(p.reason, 'Нет связи')
+  }
 })

@@ -3,6 +3,7 @@ import type { wikipediaEn } from '../en/wikipedia.js'
 export const wikipediaRu: Record<keyof typeof wikipediaEn, string> = {
   'wikipedia.title': 'Википедия',
   'wikipedia.selectPackage': 'Выберите вариант Википедии',
+  'wikipedia.downloadingPercent': 'Википедия скачивается: {percent}%. Большие варианты могут скачиваться долго.',
   'wikipedia.downloading': 'Википедия скачивается… Большие варианты могут скачиваться долго.',
   'wikipedia.failed': 'Не удалось скачать Википедию. Выберите вариант и попробуйте ещё раз.',
   'wikipedia.noDownload': 'Ничего не скачивать',

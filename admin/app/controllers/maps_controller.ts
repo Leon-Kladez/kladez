@@ -14,6 +14,7 @@ import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import vine from '@vinejs/vine'
 import { t } from '../../constants/i18n/index.js'
+import logger from '@adonisjs/core/services/logger'
 
 @inject()
 export default class MapsController {
@@ -109,7 +110,14 @@ export default class MapsController {
   }
 
   async globalMapInfo({}: HttpContext) {
-    return await this.mapService.getGlobalMapInfo()
+    // «Кладезъ»: это лишь предложение «скачать карту мира». Нет связи с protomaps —
+    // просто не показываем его, а не всплывающую «ошибку 500».
+    try {
+      return await this.mapService.getGlobalMapInfo()
+    } catch (error) {
+      logger.warn(`[MapsController] global map info unavailable: ${error instanceof Error ? error.message : error}`)
+      return null
+    }
   }
 
   async downloadGlobalMap({}: HttpContext) {

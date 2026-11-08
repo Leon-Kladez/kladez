@@ -154,6 +154,13 @@ export default function SystemUpdatePage(props: { system: Props }) {
     mutationKey: ['checkLatestVersion'],
     mutationFn: () => api.checkLatestVersion(true),
     onSuccess: (data) => {
+      // Сервер не смог проверить (нет связи, GitHub закрыт) — это не «у вас новейшая версия».
+      if (data && data.success === false) {
+        const message = data.message || t('update.checkFailed')
+        setError(message)
+        addNotification({ type: 'error', message })
+        return
+      }
       if (data) {
         setVersionInfo({
           updateAvailable: data.updateAvailable,

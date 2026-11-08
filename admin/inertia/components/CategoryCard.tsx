@@ -4,14 +4,18 @@ import type { CategoryWithStatus, SpecTier } from '../../types/collections'
 import classNames from 'classnames'
 import { IconChevronRight, IconCircleCheck, IconLoader2 } from '@tabler/icons-react'
 import { t } from '../../constants/i18n'
+import type { SetProgress } from '~/lib/set_progress'
+import SetDownloadStatus from './SetDownloadStatus'
 
 export interface CategoryCardProps {
   category: CategoryWithStatus
   selectedTier?: SpecTier | null
   onClick?: (category: CategoryWithStatus) => void
+  /** «Кладезъ»: ход скачивания выбранного уровня — «Скачивается: 42%» на карточке. */
+  progress?: SetProgress
 }
 
-const CategoryCard: React.FC<CategoryCardProps> = ({ category, selectedTier, onClick }) => {
+const CategoryCard: React.FC<CategoryCardProps> = ({ category, selectedTier, onClick, progress }) => {
   // Calculate total size range across all tiers
   const getTierTotalSize = (tier: SpecTier, allTiers: SpecTier[]): number => {
     let total = tier.resources.reduce((acc, r) => acc + r.size_mb * 1024 * 1024, 0)
@@ -56,7 +60,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, selectedTier, onC
   return (
     <div
       className={classNames(
-        'flex flex-col bg-desert-green rounded-lg p-6 text-white border shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-80',
+        'flex flex-col bg-desert-green rounded-lg p-6 text-white border shadow-sm hover:shadow-lg transition-shadow cursor-pointer min-h-80',
         badgeTier ? 'border-lime-400 border-2' : 'border-desert-green'
       )}
       onClick={() => onClick?.(category)}
@@ -87,6 +91,9 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, selectedTier, onC
       </div>
 
       <p className="text-gray-200 grow">{category.description}</p>
+      {badgeStatus === 'downloading' && !category.downloadingTierIndexing && progress?.state === 'downloading' && (
+        <SetDownloadStatus progress={progress} />
+      )}
 
       <div className="mt-4 pt-4 border-t border-white/20">
         <p className="text-sm text-gray-300 mb-2">

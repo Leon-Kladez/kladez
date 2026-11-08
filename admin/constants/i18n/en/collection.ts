@@ -2,6 +2,7 @@ export const collectionEn = {
   'collection.allDownloaded': 'All items downloaded',
   'collection.itemsAndSize': 'Items: {n} | Size: {size}',
   'collection.state.downloading': 'Downloading: {percent}%',
+  'collection.state.starting': 'Starting the download…',
   'collection.state.waiting': 'Waiting its turn: {percent}%',
   'collection.state.retrying': 'Did not work, trying again: {percent}%',
   'collection.state.installed': 'Downloaded',

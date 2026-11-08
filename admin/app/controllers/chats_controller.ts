@@ -15,9 +15,10 @@ export default class ChatsController {
   async inertia({ inertia, response }: HttpContext) {
     const aiAssistantInstalled = await this.systemService.checkServiceInstalled(SERVICE_NAMES.OLLAMA)
     if (!aiAssistantInstalled) {
-      return response.status(404).json({ error: t('server.chatsController.aiAssistantServiceNotInstalled') })
+      // «Кладезъ»: вместо голого JSON {"error":…} — справка, как поставить ИИ-помощника.
+      return response.redirect().toPath('/docs/ai')
     }
-    
+
     const chatSuggestionsEnabled = await KVStore.getValue('chat.suggestionsEnabled')
     return inertia.render('chat', {
       settings: {

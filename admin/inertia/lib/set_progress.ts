@@ -4,7 +4,7 @@
  * списка загрузок, что показывает «Идущие загрузки» (/api/downloads/jobs), и из
  * того, что уже лежит на диске. Без React — чтобы проверять тестами.
  */
-import type { SpecResource } from '../../types/collections.js'
+import type { SpecResource, SpecTier } from '../../types/collections.js'
 import type { DownloadJobWithProgress } from '../../types/downloads.js'
 
 /** Один файл набора: сколько весит и что с ним сейчас. */
@@ -17,15 +17,17 @@ export type SetItem = { sizeBytes: number } & (
 
 /**
  * running — данные идут; waiting — загрузка ждёт своей очереди;
- * retrying — прошлая попытка сорвалась, программа сама пробует ещё раз.
+ * retrying — прошлая попытка сорвалась, программа сама пробует ещё раз;
+ * starting — человек только что нажал «Скачать», сервер ставит файлы в очередь.
  */
-export type SetPhase = 'running' | 'waiting' | 'retrying'
+export type SetPhase = 'running' | 'waiting' | 'retrying' | 'starting'
 
 export type SetProgress =
   /** В наборе нет ни одного файла, который можно скачать сейчас (ещё не выложены). */
   | { state: 'unavailable' }
   | { state: 'installed' }
-  | { state: 'downloading'; percent: number; phase: SetPhase }
+  /** reason — почему прошлая попытка сорвалась (уже по-русски), когда phase = retrying. */
+  | { state: 'downloading'; percent: number; phase: SetPhase; reason?: string }
   | { state: 'failed'; failed: number; total: number }
   | { state: 'idle'; installed: number; total: number }
 
@@ -81,6 +83,40 @@ export function mapSetItems(
     })
 }
 
+/** Все файлы уровня темы вместе с уровнями, которые он включает (includesTier). */
+export function tierResources(tiers: SpecTier[], slug: string | null | undefined): SpecResource[] {
+  const out: SpecResource[] = []
+  const seen = new Set<string>()
+  let tier = tiers.find((t) => t.slug === slug)
+  while (tier && !seen.has(tier.slug)) {
+    seen.add(tier.slug)
+    out.push(...tier.resources)
+    tier = tier.includesTier ? tiers.find((t) => t.slug === tier!.includesTier) : undefined
+  }
+  return out
+}
+
+/**
+ * Файлы книжного набора (уровень темы в «Каталоге материалов»): что скачано —
+ * по имени файла на диске, что качается — по списку загрузок.
+ */
+export function zimSetItems(
+  resources: SpecResource[],
+  installedFileNames: Iterable<string>,
+  jobs: DownloadJobWithProgress[]
+): SetItem[] {
+  const installed = new Set(installedFileNames)
+  return resources.map((r): SetItem => {
+    const sizeBytes = Math.round((r.size_mb ?? 0) * MB)
+    const job = jobForUrl(jobs, r.url)
+    if (job?.status === 'failed') return { sizeBytes, state: 'failed' }
+    if (job) return { sizeBytes, state: 'downloading', percent: clampPercent(job.progress), job }
+    const name = fileNameOf(r.url)
+    if (name && installed.has(name)) return { sizeBytes, state: 'installed' }
+    return { sizeBytes, state: 'available' }
+  })
+}
+
 function phaseOf(items: SetItem[]): SetPhase {
   const jobs = items.flatMap((i) => (i.state === 'downloading' && i.job ? [i.job] : []))
   if (jobs.some((j) => j.status === 'active' || j.status === undefined)) return 'running'
@@ -133,10 +169,17 @@ export function setProgress(items: SetItem[]): SetProgress {
       )
       percent = (done / total) * 100
     }
+    const phase = phaseOf(items)
+    const reason =
+      phase === 'retrying'
+        ? items
+            .flatMap((i) => (i.state === 'downloading' && i.job?.failedReason ? [i.job.failedReason] : []))[0]
+        : undefined
     return {
       state: 'downloading',
       percent: Math.min(99, Math.floor(percent)),
-      phase: phaseOf(items),
+      phase,
+      ...(reason ? { reason } : {}),
     }
   }
 

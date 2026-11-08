@@ -1,6 +1,7 @@
 import { applyPhonesMayChange } from '../utils/phone_access_store.js'
 import Service from '#models/service'
-import { KLADEZ_RELEASES_API_URL } from '../../constants/kladez.js'
+import { KLADEZ_RELEASES_API_URL, KLADEZ_REPO_PUBLIC } from '../../constants/kladez.js'
+import { humanizeError } from '../utils/user_errors.js'
 import InstalledResource from '#models/installed_resource'
 import { inject } from '@adonisjs/core'
 import { DockerService } from '#services/docker_service'
@@ -59,8 +60,11 @@ export class SystemService {
     // (GitHub API for update checks, the Project NOMAD API for release-note
     // subscriptions), so no new third-party services are introduced. They exist
     // to avoid false "offline" reports on networks that block 1.1.1.1.
+    // Kladez: by name, not by bare IP — when DNS is broken (a VPN with a dead
+    // resolver) 1.1.1.1 still answers, the panel said "online" and every
+    // download sat at 0 %. Same Cloudflare endpoint, reached through DNS.
     const DEFAULT_TEST_URLS = [
-      'https://1.1.1.1/cdn-cgi/trace',
+      'https://one.one.one.one/cdn-cgi/trace',
       'https://api.github.com',
       // Kladez: Kiwix's catalog instead of NOMAD's API (we already use it).
       'https://opds.library.kiwix.org/catalog/v2/languages',
@@ -690,6 +694,17 @@ export class SystemService {
         }
       }
 
+      // Kladez: пока репозиторий закрыт, GitHub отвечает 404 — честно говорим, что проверки ещё нет.
+      if (!KLADEZ_REPO_PUBLIC) {
+        return {
+          success: false,
+          updateAvailable: false,
+          currentVersion,
+          latestVersion: '',
+          message: t('server.systemService.updatesNotPublished'),
+        }
+      }
+
       const earlyAccess = (await KVStore.getValue('system.earlyAccess')) ?? false
 
       let latestVersion: string
@@ -731,9 +746,9 @@ export class SystemService {
       return {
         success: false,
         updateAvailable: false,
-        currentVersion: '',
+        currentVersion: SystemService.getAppVersion(),
         latestVersion: '',
-        message: t('server.systemService.failedToCheckLatestVersion', { error: error instanceof Error ? error.message : error }),
+        message: t('server.systemService.failedToCheckLatestVersion', { error: humanizeError(error) }),
       }
     }
   }

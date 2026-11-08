@@ -722,7 +722,7 @@ class API {
         date: string
         size: number
         key: string
-      }>('/maps/global-map-info')
+      } | null>('/maps/global-map-info')
       return response.data
     })()
   }
