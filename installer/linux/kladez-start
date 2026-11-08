@@ -66,6 +66,7 @@ case "$mode" in
         start_stack
         kz_load_images "$bundle"
         render_and_up "$before"
+        kz_prune_old_images
         kz_log "upgrade complete"
         ;;
     keepalive)

@@ -82,6 +82,29 @@ kz_load_images() {
         || kz_die "Не удалось распаковать программы из установщика."
 }
 
+# After an upgrade: remove the previous versions of the images listed in images.lock
+# (every old admin image is ~3 GB and ext4.vhdx never gives the space back on its own).
+# An image still used by a container is kept — docker refuses to remove it without -f.
+kz_prune_old_images() {
+    local key keep repo ref
+    for key in $(awk '{ print $1 }' "$KZ_HOME/images.lock"); do
+        keep=$(kz_image "$key")
+        repo=${keep%:*}
+        for ref in $(docker images --format '{{.Repository}}:{{.Tag}}' "$repo" 2>/dev/null); do
+            [ "$ref" = "$keep" ] && continue
+            case "$ref" in *'<none>') continue ;; esac
+            if docker image rm "$ref" >> "$KZ_LOG_DIR/kladez-start.log" 2>&1; then
+                kz_log "removed old image $ref"
+            else
+                kz_log "old image $ref is still in use, kept"
+            fi
+        done
+    done
+    docker image prune -f >> "$KZ_LOG_DIR/kladez-start.log" 2>&1 || true
+    # Tell the virtual disk which blocks are free, so new versions reuse them instead of growing it.
+    if command -v fstrim >/dev/null 2>&1; then fstrim -a >> "$KZ_LOG_DIR/kladez-start.log" 2>&1 || true; fi
+}
+
 kz_random() { tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32; }
 
 # Passwords are created once: MySQL keeps the first ones it was initialised with.

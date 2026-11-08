@@ -5,6 +5,7 @@ case "$1" in
   info) [ -f "$STUB_STATE/dockerd-running" ] ;;
   pull) echo "stub: pull is forbidden" >&2; exit 1 ;;
   load) cat > "$STUB_STATE/loaded-images"; echo "Loaded image: stub" ;;
+  images) [ -f "$STUB_STATE/images" ] && grep -F "${@: -1}:" "$STUB_STATE/images" || true ;;
   inspect) [ -f "$STUB_STATE/admin-running" ] && echo true || { echo false; exit 0; } ;;
   compose)
     for a in "$@"; do [ "$a" = pull ] && { echo "stub: compose pull is forbidden" >&2; exit 1; }; done

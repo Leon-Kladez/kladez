@@ -98,6 +98,23 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   grep -q 'image: ghcr.io/leon-kladez/kladez:0.1.6$' "$KZ_ROOT/opt/project-nomad/compose.yml"
 }
 
+@test "upgrade removes previous image versions but keeps the current ones" {
+  first_run; : > "$STUB_LOG"
+  sed -i -e 's|kladez:0.1.0@|kladez:0.1.6@|' -e 's|updater:0.1.0@|updater:0.1.6@|' "$LOCK"
+  printf '%s\n' ghcr.io/leon-kladez/kladez:0.1.5 ghcr.io/leon-kladez/kladez:0.1.6 \
+    ghcr.io/leon-kladez/kladez-sidecar-updater:0.1.5 ghcr.io/leon-kladez/kladez-sidecar-updater:0.1.6 \
+    redis:7-alpine > "$STUB_STATE/images"
+  run "$START" --upgrade --bundle "$BUNDLE"
+  [ "$status" -eq 0 ]
+  grep -q 'docker image rm ghcr.io/leon-kladez/kladez:0.1.5$' "$STUB_LOG"
+  grep -q 'docker image rm ghcr.io/leon-kladez/kladez-sidecar-updater:0.1.5$' "$STUB_LOG"
+  run grep -E 'image rm .*(:0\.1\.6|redis:7-alpine)$' "$STUB_LOG"
+  [ "$status" -eq 1 ]
+  l_up=$(line_of 'docker compose .* up -d')
+  l_rm=$(line_of 'docker image rm')
+  [ "$l_up" -lt "$l_rm" ]
+}
+
 @test "upgrade with the same versions does not remove containers" {
   first_run; : > "$STUB_LOG"
   run "$START" --upgrade --bundle "$BUNDLE"
