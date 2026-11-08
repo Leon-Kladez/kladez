@@ -9,6 +9,7 @@ import {
   IconCloudDownload,
   IconExternalLink,
   IconSearch,
+  IconTrash,
 } from '@tabler/icons-react'
 import AppLayout from '~/layouts/AppLayout'
 import Alert from '~/components/Alert'
@@ -184,6 +185,9 @@ export default function Library() {
   const [pendingBundle, setPendingBundle] = useState<BundleWithStatus | null>(null)
   // Набор, который сервер сейчас ставит в очередь: окно уже закрыто, на карточке «Запускаем…».
   const [startingBundle, setStartingBundle] = useState<string | null>(null)
+  // «Удалить» в «Моих книгах»: какая книга ждёт подтверждения и идёт ли удаление.
+  const [pendingDelete, setPendingDelete] = useState<{ file: string; title: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [query, setQuery] = useState('')
   const [submitted, setSubmitted] = useState('')
   const { data: found, isFetching: searching } = useQuery({
@@ -225,6 +229,21 @@ export default function Library() {
     } finally {
       setStarting(null)
     }
+  }
+
+  async function deleteBook(book: { file: string; title: string }) {
+    setDeleting(true)
+    const name = (book.file.split(/[\/]/).pop() ?? book.file).replace(/\.zim$/i, '')
+    const result = await api.deleteZimFile(name)
+    setDeleting(false)
+    setPendingDelete(null)
+    // Ошибку уже показал catchInternal.
+    if (!result) return
+    addNotification({ type: 'success', message: t('libraryPage.deleted', { name: book.title }) })
+    queryClient.invalidateQueries({ queryKey: [BOOKS_KEY] })
+    queryClient.invalidateQueries({ queryKey: [WIKIPEDIA_STATE_KEY] })
+    queryClient.invalidateQueries({ queryKey: [BUNDLES_KEY] })
+    queryClient.invalidateQueries({ queryKey: ['zim-files'] })
   }
 
   async function installBundle(bundle: BundleWithStatus) {
@@ -355,6 +374,17 @@ export default function Library() {
                     <IconExternalLink size={16} aria-hidden="true" />
                   </a>
                 )}
+                {/* Удалять — только с самого компьютера; встроенную книгу не трогаем. */}
+                {canChange && !book.starter && (
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete({ file: book.file, title: book.title })}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-border-subtle px-4 py-2 font-semibold text-text-secondary hover:border-desert-red hover:text-desert-red"
+                  >
+                    <IconTrash size={16} aria-hidden="true" />
+                    {t('libraryPage.delete')}
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -468,6 +498,21 @@ export default function Library() {
           </section>
         )}
       </main>
+
+      {pendingDelete && (
+        <StyledModal
+          title={t('libraryPage.deleteTitle', { name: pendingDelete.title })}
+          open
+          onCancel={() => !deleting && setPendingDelete(null)}
+          onConfirm={() => deleteBook(pendingDelete)}
+          confirmText={t('libraryPage.delete')}
+          confirmIcon="IconTrash"
+          confirmVariant="danger"
+          confirmLoading={deleting}
+        >
+          <p className="text-text-secondary">{t('libraryPage.deleteBody')}</p>
+        </StyledModal>
+      )}
 
       {pendingBundle && (
         <StyledModal
