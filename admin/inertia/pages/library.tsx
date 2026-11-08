@@ -233,7 +233,7 @@ export default function Library() {
 
   async function deleteBook(book: { file: string; title: string }) {
     setDeleting(true)
-    const name = (book.file.split(/[\/]/).pop() ?? book.file).replace(/\.zim$/i, '')
+    const name = (book.file.split(/[\\/]/).pop() ?? book.file).replace(/\.zim$/i, '')
     const result = await api.deleteZimFile(name)
     setDeleting(false)
     setPendingDelete(null)
