@@ -35,3 +35,10 @@ test('maps catalog URL can be set separately from the catalog base', () => {
   assert.equal(mapsCatalogUrl(undefined, 'https://example.org/cat'), 'https://example.org/cat/maps.json')
   assert.equal(mapsCatalogUrl('garbage', 'https://example.org/cat'), 'https://example.org/cat/maps.json')
 })
+
+test('maps catalog defaults to the latest release of the maps repository', () => {
+  const url = 'https://github.com/Leon-Kladez/kladez-maps/releases/latest/download/maps.json'
+  assert.equal(mapsCatalogUrl(), url)
+  assert.equal(mapsCatalogUrl('garbage'), url)
+  assert.equal(mapsCatalogUrl(undefined, 'not a url'), url)
+})

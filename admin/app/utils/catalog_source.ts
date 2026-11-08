@@ -7,6 +7,8 @@
  * here is pure (the env value is passed in) so it is unit-testable.
  */
 
+import { DEFAULT_MAPS_CATALOG_URL } from '../../constants/map_regions.js'
+
 export const DEFAULT_CATALOG_BASE_URL =
   'https://raw.githubusercontent.com/Leon-Kladez/kladez/main/collections-ru/'
 
@@ -48,5 +50,8 @@ export function catalogUrl(type: CatalogFileType, envValue?: string): string {
  */
 export function mapsCatalogUrl(mapsEnvValue?: string, baseEnvValue?: string): string {
   const value = mapsEnvValue?.trim()
-  return isHttpUrl(value) ? value : catalogUrl('maps', baseEnvValue)
+  if (isHttpUrl(value)) return value
+  // Свой адрес всего каталога (зеркало) — карты берём оттуда же; иначе — из репозитория карт.
+  if (isHttpUrl(baseEnvValue?.trim())) return catalogUrl('maps', baseEnvValue)
+  return DEFAULT_MAPS_CATALOG_URL
 }

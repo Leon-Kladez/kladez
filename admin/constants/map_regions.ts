@@ -37,11 +37,11 @@ export function buildPmtilesExtractArgs(opts: PmtilesExtractArgOptions): string[
 export const BUNDLED_BASE_ASSETS_PATH = 'resources/maps/base-assets.tar.gz'
 
 /**
- * Открытый репозиторий с готовыми картами (GitHub Releases). Владелец ещё не выбран:
- * автор заведёт новый аккаунт перед выпуском (план части 3, задача 13). До этого адрес
- * не отвечает, и программа берёт встроенную копию collections-ru/maps.json.
+ * Открытый репозиторий с готовыми картами (GitHub Releases): там же собирается и
+ * выкладывается maps.json. Пока выпуска нет, адрес не отвечает, и программа берёт
+ * встроенную копию collections-ru/maps.json.
  */
-export const KLADEZ_MAPS_REPO = 'kladez-maps-owner/kladez-maps'
+export const KLADEZ_MAPS_REPO = 'Leon-Kladez/kladez-maps'
 
 /** Адрес списка карт по умолчанию; часть 2 подставляет его в SPEC_URLS.maps через mapsCatalogUrl(). */
 export const DEFAULT_MAPS_CATALOG_URL = `https://github.com/${KLADEZ_MAPS_REPO}/releases/latest/download/maps.json`
