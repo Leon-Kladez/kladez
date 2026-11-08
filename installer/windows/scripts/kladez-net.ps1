@@ -30,8 +30,16 @@ try {
     # Адреса компьютера в домашней сети — панели для QR-кода «Открыть на телефоне». Не вышло — телефоны
     # всё равно работают, просто без QR-кода, поэтому только пишем в журнал.
     try {
-        $lan = @(Get-KladezLanAddress -Adapters @(Get-NetAdapter -Physical -ErrorAction Stop) `
-            -Addresses @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop))
+        # Сразу после включения компьютера задача стартует раньше, чем подключится Wi-Fi:
+        # адреса ещё нет, и QR-код пропал бы до следующего запуска. Ждём сеть до 3 минут.
+        $lan = @()
+        for ($try = 0; $try -lt 19; $try++) {
+            $lan = @(Get-KladezLanAddress -Adapters @(Get-NetAdapter -Physical -ErrorAction Stop) `
+                -Addresses @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop))
+            if ($lan.Count) { break }
+            if ($try -eq 0) { Write-NetLog 'lan: no address yet, waiting for the network' }
+            Start-Sleep -Seconds 10
+        }
         $mem = 0L; $disks = @()
         try { $mem = Get-KladezInstalledMemory -VisibleBytes 0 } catch { }
         try { $disks = @(Get-KladezHostDisk -LogicalDisks @(Get-CimInstance Win32_LogicalDisk -ErrorAction Stop)) } catch { }

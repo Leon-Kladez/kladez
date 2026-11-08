@@ -27,7 +27,7 @@ export default function AppLayout({
   compact?: boolean
 }) {
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const aiAssistantInstalled = useServiceInstalledStatus(SERVICE_NAMES.OLLAMA)
+  const { isInstalled: aiAssistantInstalled } = useServiceInstalledStatus(SERVICE_NAMES.OLLAMA)
   // На узком экране кнопка «Бриф» встала бы на «Продвинутый» — опускаем шапку под неё.
   const briefShown = hasBrief(usePage<{ brief?: BriefSources }>().props.brief)
 

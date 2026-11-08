@@ -11,7 +11,9 @@ const RULES: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
     /ENOTFOUND|EAI_AGAIN|ENETUNREACH|EHOSTUNREACH|ECONNREFUSED|ECONNRESET|ETIMEDOUT|socket hang up|timeout of \d+ms exceeded|Network Error/i,
     () => t('serverError.noInternet'),
   ],
-  [/(?:Failed to download: )?HTTP (\d{3})\b|status code (\d{3})/i, (m) => t('serverError.http', { status: m[1] ?? m[2] })],
+  [/(?:Failed to download: )?\bHTTP (\d{3})\b/i, (m) => t('serverError.http', { status: m[1] })],
+  // Ответ самой панели (axios: «Request failed with status code 500») — это не скачивание.
+  [/status code (\d{3})/i, (m) => t('serverError.request', { status: m[1] })],
   [/Download stalled/i, () => t('serverError.stalled')],
   [/Download aborted/i, () => t('serverError.aborted')],
   [/MIME type (.*) is not allowed/i, (m) => t('serverError.mime', { type: m[1].trim() || '?' })],

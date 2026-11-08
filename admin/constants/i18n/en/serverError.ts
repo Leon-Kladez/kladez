@@ -2,6 +2,7 @@ export const serverErrorEn = {
   'serverError.noSpace': 'No space left on device',
   'serverError.noInternet': 'No internet connection',
   'serverError.http': 'Failed to download: HTTP {status}',
+  'serverError.request': 'Kladez could not complete the action (error {status}). Try again; if it keeps failing, restart the program.',
   'serverError.stalled': 'Download stalled - no data received for 5 minutes',
   'serverError.aborted': 'Download aborted',
   'serverError.mime': 'MIME type {type} is not allowed',

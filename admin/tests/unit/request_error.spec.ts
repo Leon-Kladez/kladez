@@ -27,3 +27,9 @@ test('непонятный английский текст заменяется 
 test('код ответа сервера без русского текста — переводится', () => {
   assert.match(errorText({ message: 'Request failed with status code 500' }, 'Запасной'), /500/)
 })
+
+test('ошибка самой панели не выдаётся за неудачное скачивание', () => {
+  const text = errorText({ message: 'Request failed with status code 500' }, 'Запасной')
+  assert.doesNotMatch(text, /скачать/)
+  assert.match(text, /не смог выполнить действие/)
+})
