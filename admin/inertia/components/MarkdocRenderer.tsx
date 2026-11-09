@@ -77,6 +77,40 @@ const HorizontalRule = () => {
   )
 }
 
+// Kladez: «Что нового» — день обновлений. Сверху цветная полоса с датой и версиями,
+// под ней — что появилось в этот день.
+const Release = ({
+  date,
+  versions,
+  children,
+}: {
+  date: string
+  versions?: string
+  children: React.ReactNode
+}) => {
+  const list = (versions ?? '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+  return (
+    <section className="mb-10">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-desert-green px-5 py-3 text-white shadow-sm">
+        <span className="text-lg font-semibold">{date}</span>
+        {list.length > 0 && (
+          <span className="flex flex-wrap gap-2">
+            {list.map((v) => (
+              <span key={v} className="rounded-full bg-white/15 px-2.5 py-0.5 text-sm font-semibold">
+                {v}
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+      <div className="mt-4 border-l-4 border-desert-tan-lighter pl-5">{children}</div>
+    </section>
+  )
+}
+
 // Callout component
 const Callout = ({
   type = 'info',
@@ -111,6 +145,7 @@ const components = {
   CodeBlock,
   HorizontalRule,
   Callout,
+  Release,
   Heading,
   List,
   ListItem,

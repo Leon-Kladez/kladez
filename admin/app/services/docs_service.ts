@@ -77,6 +77,14 @@ export class DocsService {
   private getConfig() {
     return {
       tags: {
+        // Kladez: «Что нового» — день с версиями: {% release date="9 ноября 2026" versions="0.1.10, 0.1.11" %}
+        release: {
+          render: 'Release',
+          attributes: {
+            date: { type: String, required: true },
+            versions: { type: String },
+          },
+        },
         callout: {
           render: 'Callout',
           attributes: {

@@ -41,6 +41,15 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "VERSION=$v" >> "$GITHUB_ENV"
 
+      # Каждая версия должна быть записана в «Что нового» (справка, ru и en): полоса с датой
+      # и номером — {% release date="…" versions="…, 0.1.N" %}. Без записи сборка не идёт.
+      - name: Версия есть в «Что нового»
+        run: |
+          for f in admin/docs/ru/release-notes.md admin/docs/en/release-notes.md; do
+            grep -qE "versions=\"[^\"]*\\b${VERSION//./\\.}\\b" "$f" || {
+              echo "::error file=$f::Версии ${VERSION} нет в «Что нового» — добавьте запись {% release %} сверху"; exit 1; }
+          done
+
       - name: Тесты bash (bats)
         run: |
           sudo apt-get update && sudo apt-get install -y bats zstd
