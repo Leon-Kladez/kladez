@@ -15,6 +15,8 @@ export const legalRu: Record<keyof typeof legalEn, string> = {
   'legal.thirdParty.cyberchef': 'набор инструментов для разбора и кодирования данных от GCHQ (лицензия Apache 2.0)',
   'legal.thirdParty.flatnotes': 'заметки на своём компьютере (лицензия MIT)',
   'legal.thirdParty.qdrant': 'поисковая база для знаний ИИ-помощника (лицензия Apache 2.0)',
+  'legal.media.title': 'Музыка и ролик',
+  'legal.media.text': 'Мелодия установщика и музыка в ролике «Бриф» созданы автором Кладезя в сервисе Eleven Music (ElevenLabs) на платном тарифе. Они не входят в лицензию Apache 2.0: использовать их отдельно от Кладезя можно только с разрешения автора.',
   'legal.privacy.title': 'Конфиденциальность',
   'legal.privacy.intro': 'Кладезъ бережёт вашу частную жизнь:',
   'legal.privacy.telemetryTitle': 'Никакой слежки:',

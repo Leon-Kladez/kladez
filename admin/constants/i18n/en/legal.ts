@@ -13,6 +13,8 @@ export const legalEn = {
   'legal.thirdParty.cyberchef': 'Data analysis and encoding toolkit by GCHQ (Apache 2.0 License)',
   'legal.thirdParty.flatnotes': 'Self-hosted note-taking application (MIT License)',
   'legal.thirdParty.qdrant': 'Vector search engine for AI knowledge base (Apache 2.0 License)',
+  'legal.media.title': 'Music and video',
+  'legal.media.text': 'The installer melody and the music in the «Brief» video were made by the author of Kladez with Eleven Music (ElevenLabs) on a paid plan. They are not covered by the Apache License 2.0: using them apart from Kladez requires permission from the author.',
   'legal.privacy.title': 'Privacy Statement',
   'legal.privacy.intro': 'Kladez is designed with privacy as a core principle:',
   'legal.privacy.telemetryTitle': 'Zero Telemetry:',

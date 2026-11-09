@@ -16,3 +16,8 @@ Copyright Crosstalk Solutions, LLC, распространяемого по ли
 при сборке образа скачивается без изменений с
 https://download.kiwix.org/zim/wikipedia/wikipedia_ru_medicine_nopic_2026-10.zim
 (SHA-256 8e6d2f8fcd01544dac3db5b833681ba408feaff10717d6c8966a959ee14dddb8) и встраивается в образ панели.
+
+Мелодия установщика (installer/windows/assets/kladez-melody.mp3) и музыка в ролике «Бриф»
+(admin/public/brief/*.mp4) созданы автором Кладезя в сервисе Eleven Music (ElevenLabs,
+https://elevenlabs.io) на платном тарифе. Эти файлы не распространяются по лицензии
+Apache License 2.0: их использование отдельно от Кладезя — только с разрешения автора.

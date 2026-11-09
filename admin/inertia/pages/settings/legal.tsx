@@ -61,6 +61,12 @@ export default function LegalPage({ libraryPath }: { libraryPath?: string }) {
             </ul>
           </section>
 
+          {/* Kladez: music of the installer and of the «Brief» video */}
+          <section className="mb-10">
+            <h2 className="text-2xl font-semibold mb-4">{t('legal.media.title')}</h2>
+            <p className="text-text-primary">{t('legal.media.text')}</p>
+          </section>
+
           {/* Privacy Statement */}
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">{t('legal.privacy.title')}</h2>
