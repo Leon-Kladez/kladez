@@ -37,7 +37,11 @@ jobs:
           ls -la dist
           exe=$(ls -S dist/*.exe | head -1)
           [ -n "$exe" ] && [ "$(stat -c %s "$exe")" -gt 104857600 ] || { echo "установщик не найден"; exit 1; }
-          gh release upload "installer-v$VERSION" "$exe" dist/SHA256SUMS.txt --repo "$REPO" --clobber
-          # Запускальщик Kladez.exe по ошибке попадал в выпуск 0.1.15 — убираем, если есть.
-          gh release delete-asset "installer-v$VERSION" Kladez.exe --repo "$REPO" --yes 2>/dev/null || true
+          # GitHub выбрасывает из имён файлов выпуска русские буквы — выкладываем латиницей.
+          name="Kladez-Setup-$VERSION.exe"
+          mkdir -p out && cp "$exe" "out/$name" && (cd out && sha256sum "$name" > SHA256SUMS.txt)
+          gh release upload "installer-v$VERSION" "out/$name" out/SHA256SUMS.txt --repo "$REPO" --clobber
+          # Лишние .exe в выпуске (запускальщик, имя с выброшенными буквами) — убираем.
+          gh release view "installer-v$VERSION" --repo "$REPO" --json assets -q '.assets[].name' | grep -i '\.exe$' |
+            grep -vx "$name" | while read -r old; do gh release delete-asset "installer-v$VERSION" "$old" --repo "$REPO" --yes; done
           gh release view "installer-v$VERSION" --repo "$REPO" --json assets -q '.assets[] | "\(.name) \(.size)"'

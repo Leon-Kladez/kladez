@@ -178,7 +178,7 @@ jobs:
           $notes = @"
           Кладезъ $env:VERSION — пробная версия для Windows 10 и 11.
 
-          Скачайте «Кладезъ-установка-$env:VERSION.exe» и запустите. Если уже стоит прежняя версия — установщик обновит её, библиотека и карты сохранятся.
+          Скачайте «Kladez-Setup-$env:VERSION.exe» (установщик Кладезя) и запустите. Если уже стоит прежняя версия — установщик обновит её, библиотека и карты сохранятся.
 
           Что нового — в программе: Справка → «Что нового». Контрольные суммы — в SHA256SUMS.txt.
           "@
@@ -191,7 +191,13 @@ jobs:
             gh release create $env:TAG --title "Кладезъ $env:VERSION" --notes $notes --latest
             if ($LASTEXITCODE -ne 0) { throw 'gh release create failed' }
           }
-          gh release upload $env:TAG $exe.FullName dist/SHA256SUMS.txt --clobber
+          # GitHub выбрасывает из имён файлов выпуска русские буквы — выкладываем латиницей.
+          $name = "Kladez-Setup-$env:VERSION.exe"
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item $exe.FullName "out/$name"
+          $hash = (Get-FileHash "out/$name" -Algorithm SHA256).Hash.ToLower()
+          [IO.File]::WriteAllText("$PWD/out/SHA256SUMS.txt", "$hash  $name`n")
+          gh release upload $env:TAG "out/$name" out/SHA256SUMS.txt --clobber
           if ($LASTEXITCODE -ne 0) { throw 'gh release upload failed' }
 
       - name: Файл обновления без интернета

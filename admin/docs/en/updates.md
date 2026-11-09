@@ -8,7 +8,7 @@ When a new version is out, the home page says **“An update is available for Kl
 
 1. Open Settings → **[Check for updates](/settings/update)**.
 2. Press **“Download the new version”** — the release page on GitHub opens.
-3. Download **“Кладезъ-установка-…exe”** and run it, just like the first installation.
+3. Download **“Kladez-Setup-….exe”** and run it, just like the first installation.
 4. The installer finds the previous version and updates it. Kladez starts by itself a few minutes later.
 
 Your library, maps and settings are kept. The previous version is removed automatically, so no extra disk space is used.

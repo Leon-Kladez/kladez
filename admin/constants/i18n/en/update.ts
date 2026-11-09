@@ -24,7 +24,7 @@ export const updateEn = {
   'update.checkAgain': 'Check Again',
   'update.whatHappens': 'What happens during an update?',
   'update.step1': 'Download the new installer',
-  'update.step1Text': '“Download the new version” opens the release page with the “Кладезъ-установка-…exe” file (about 1.2 GB)',
+  'update.step1Text': '“Download the new version” opens the release page with the “Kladez-Setup-….exe” file (about 1.2 GB)',
   'update.step2': 'Run it',
   'update.step2Text': 'The installer finds the previous version and updates it. Your library, maps and settings are kept',
   'update.step3': 'Kladez starts by itself',
