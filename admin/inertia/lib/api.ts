@@ -248,9 +248,11 @@ class API {
     })()
   }
 
-  async refreshManifests(): Promise<{ success: boolean; changed: Record<string, boolean> } | undefined> {
+  async refreshManifests(): Promise<
+    { success: boolean; changed: Record<string, boolean>; failed?: string[] } | undefined
+  > {
     return catchInternal(async () => {
-      const response = await this.client.post<{ success: boolean; changed: Record<string, boolean> }>(
+      const response = await this.client.post<{ success: boolean; changed: Record<string, boolean>; failed?: string[] }>(
         '/manifests/refresh'
       )
       return response.data

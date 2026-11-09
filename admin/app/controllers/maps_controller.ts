@@ -15,6 +15,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import vine from '@vinejs/vine'
 import { t } from '../../constants/i18n/index.js'
 import logger from '@adonisjs/core/services/logger'
+import { humanizeError } from '../utils/user_errors.js'
 
 @inject()
 export default class MapsController {
@@ -145,17 +146,29 @@ export default class MapsController {
     return { groups: await this.mapService.listCountryGroups() }
   }
 
-  async extractPreflight({ request }: HttpContext) {
+  // Kladez: вырезка идёт из мировой карты в интернете. Нет связи — понятный текст,
+  // а не голая «ошибка 500».
+  async extractPreflight({ request, response }: HttpContext) {
     const payload = await request.validateUsing(mapExtractPreflightValidator)
-    return await this.mapService.extractPreflight(payload)
+    try {
+      return await this.mapService.extractPreflight(payload)
+    } catch (error) {
+      logger.warn(`[MapsController] extract preflight failed: ${error instanceof Error ? error.message : error}`)
+      return response.status(502).send({ success: false, message: humanizeError(error) })
+    }
   }
 
-  async extractRegion({ request }: HttpContext) {
+  async extractRegion({ request, response }: HttpContext) {
     const payload = await request.validateUsing(mapExtractValidator)
-    const result = await this.mapService.extractRegion(payload)
-    return {
-      message: t('server.mapsController.extractStartedSuccessfully'),
-      ...result,
+    try {
+      const result = await this.mapService.extractRegion(payload)
+      return {
+        message: t('server.mapsController.extractStartedSuccessfully'),
+        ...result,
+      }
+    } catch (error) {
+      logger.warn(`[MapsController] extract failed: ${error instanceof Error ? error.message : error}`)
+      return response.status(502).send({ success: false, message: humanizeError(error) })
     }
   }
 

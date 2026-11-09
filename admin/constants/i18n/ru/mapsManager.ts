@@ -20,6 +20,8 @@ export const mapsManagerRu: Record<keyof typeof mapsManagerEn, string> = {
   'mapsManager.queuedWatch': 'Скачивание в очереди. Ход виден ниже.',
   'mapsManager.downloadFileTitle': 'Скачать файл карты',
   'mapsManager.urlExample': 'например, https://github.com/Leon-Kladez/kladez-maps/releases/download/maps-2026-11/by_2026-11.pmtiles',
+  'mapsManager.refreshFailed': 'Не удалось скачать список карт: нет связи с сервером карт. Проверьте интернет; если включён VPN — выключите его или смените сервер.',
+  'mapsManager.refreshedSame': 'Список наборов карт проверен — новых карт нет.',
   'mapsManager.refreshed': 'Список наборов карт обновлён.',
   'mapsManager.subtitle': 'Скачанные карты и новые страны.',
   'mapsManager.downloadAssets': 'Скачать основу',

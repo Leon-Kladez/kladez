@@ -316,9 +316,15 @@ export default function MapsManager(props: {
 
   const refreshManifests = useMutation({
     mutationFn: () => api.refreshManifests(),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // Ошибку запроса уже показал catchInternal.
+      if (!result) return
+      if (result.failed?.includes('maps')) {
+        addNotification({ message: t('mapsManager.refreshFailed'), type: 'error' })
+        return
+      }
       addNotification({
-        message: t('mapsManager.refreshed'),
+        message: result.changed?.maps ? t('mapsManager.refreshed') : t('mapsManager.refreshedSame'),
         type: 'success',
       })
       queryClient.invalidateQueries({ queryKey: [CURATED_COLLECTIONS_KEY] })

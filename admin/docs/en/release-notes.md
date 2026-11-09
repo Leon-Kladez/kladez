@@ -4,6 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="9 November 2026" versions="0.1.13, 0.1.12, 0.1.11, 0.1.10" %}
 
+- **Honest map messages:** “Refresh sets” says so when the list could not be downloaded (no connection or a VPN in the way), and “Estimate size” shows a clear reason instead of “error 500”.
 - **“What's new” by day** — this page: a band with the date and versions, and what appeared below it.
 - **Maps can be downloaded.** Ready maps are published: Russia by federal district, CIS, Europe, the Middle East, North America. Open Map Management and press “Refresh sets”. The map list now updates by itself; maps are rebuilt fresh every quarter.
 - **A lighter program.** The main part takes 0.4 GB instead of 3.2 GB; the installer is 1.2 GB instead of 1.5 GB.

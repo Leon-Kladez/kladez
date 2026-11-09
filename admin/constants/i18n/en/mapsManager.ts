@@ -18,6 +18,8 @@ export const mapsManagerEn = {
   'mapsManager.queuedWatch': 'Download queued. Watch progress below.',
   'mapsManager.downloadFileTitle': 'Download Map File',
   'mapsManager.urlExample': 'e.g. https://github.com/Leon-Kladez/kladez-maps/releases/download/maps-2026-11/by_2026-11.pmtiles',
+  'mapsManager.refreshFailed': 'Could not download the map list: the map server is unreachable. Check the internet connection; if a VPN is on, turn it off or switch servers.',
+  'mapsManager.refreshedSame': 'The map list is up to date — no new maps.',
   'mapsManager.refreshed': 'Successfully refreshed map collections.',
   'mapsManager.subtitle': 'Manage your stored map files and explore new regions!',
   'mapsManager.downloadAssets': 'Download Base Assets',

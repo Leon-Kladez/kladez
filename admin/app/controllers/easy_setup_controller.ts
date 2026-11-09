@@ -54,23 +54,12 @@ export default class EasySetupController {
 
   async refreshManifests({}: HttpContext) {
     const manifestService = new CollectionManifestService()
-    const [zimChanged, mapsChanged, wikiChanged, bundlesChanged, mirrorsChanged] = await Promise.all([
-      manifestService.fetchAndCacheSpec('zim_categories'),
-      manifestService.fetchAndCacheSpec('maps'),
-      manifestService.fetchAndCacheSpec('wikipedia'),
-      manifestService.fetchAndCacheSpec('bundles'),
-      manifestService.fetchAndCacheSpec('mirrors'),
-    ])
+    const types = ['zim_categories', 'maps', 'wikipedia', 'bundles', 'mirrors'] as const
+    const statuses = await Promise.all(types.map((type) => manifestService.fetchSpecStatus(type)))
+    const changed = Object.fromEntries(types.map((type, i) => [type, statuses[i] === 'changed']))
+    // Kladez: какие списки скачать не удалось (нет связи) — интерфейс скажет об этом честно.
+    const failed = types.filter((_, i) => statuses[i] === 'failed')
 
-    return {
-      success: true,
-      changed: {
-        zim_categories: zimChanged,
-        maps: mapsChanged,
-        wikipedia: wikiChanged,
-        bundles: bundlesChanged,
-        mirrors: mirrorsChanged,
-      },
-    }
+    return { success: failed.length === 0, changed, failed }
   }
 }

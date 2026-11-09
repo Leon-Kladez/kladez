@@ -74,6 +74,14 @@ export class CollectionManifestService {
   // ---- Spec management ----
 
   async fetchAndCacheSpec(type: ManifestType): Promise<boolean> {
+    return (await this.fetchSpecStatus(type)) === 'changed'
+  }
+
+  /**
+   * Kladez: как fetchAndCacheSpec, но отличает «не изменился» от «не удалось скачать» —
+   * чтобы кнопка «Обновить список» не писала «обновлён», когда связи нет.
+   */
+  async fetchSpecStatus(type: ManifestType): Promise<'changed' | 'same' | 'failed'> {
     try {
       // Kladez: короткий таймаут и «сторож сети» — без интернета не ждём 15 с
       // на каждый вид каталога и не повторяем попытку чаще раза в 12 минут.
@@ -93,7 +101,7 @@ export class CollectionManifestService {
         existing.spec_data = validated
         existing.fetched_at = DateTime.now()
         await existing.save()
-        return changed
+        return changed ? 'changed' : 'same'
       }
 
       await CollectionManifest.create({
@@ -103,14 +111,14 @@ export class CollectionManifestService {
         fetched_at: DateTime.now(),
       })
 
-      return true
+      return 'changed'
     } catch (error) {
       if (isOfflineError(error)) {
         logger.debug(`[CollectionManifestService] Skipping ${type} refresh: no network recently`)
       } else {
         logger.warn(`[CollectionManifestService] Failed to fetch spec for ${type}: ${error?.message || error}`)
       }
-      return false
+      return 'failed'
     }
   }
 
