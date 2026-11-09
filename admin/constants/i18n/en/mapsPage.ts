@@ -20,7 +20,7 @@ export const mapsPageEn = {
   'mapsUi.nearStreet': 'Nearby street',
   'mapsUi.addMarkerHere': 'Add a marker',
   'mapsUi.searchIndexTitle': 'Map search: {title}',
-  'mapsUi.searchPlaceholder': 'City, street, address, place… or coordinates',
+  'mapsUi.searchPlaceholder': 'Town, street, address, place…',
   'mapsUi.searchNothing': 'Nothing found. Try something shorter: a street and number, “pharmacy”, a town.',
   'mapsUi.searchFailed': 'Search failed.',
   'mapsUi.searchNoIndex': 'Search by name works once the search index for a map is downloaded. Coordinates (“55.75, 37.62”) work without it.',

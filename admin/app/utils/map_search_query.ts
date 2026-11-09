@@ -97,15 +97,20 @@ export function scoreResult(opts: {
   name: string
   words: string[]
   distanceKm: number | null
+  /** Для мест (аптека, школа) совпадение названия весит меньше: «аптека» — это ближайшая аптека. */
+  cls?: string
 }): number {
   const name = normalizeText(opts.name)
   const q = opts.words.join(' ')
-  let score = opts.rank
-  if (q && name === q) score += 50
-  else if (q && name.startsWith(q)) score += 30
-  else if (opts.words.length > 0 && name.split(/[\s-]+/).some((w) => w === opts.words[0])) score += 15
+  // Совпадение названия важнее всего у городов; у улиц меньше, у мест (аптека, школа) — почти не важно.
+  const k = opts.cls === 'poi' ? 0.2 : opts.cls === 'place' ? 1 : 0.6
+  // Места между собой различаются мало (безымянная аптека за углом нужнее известной в 5 км).
+  let score = opts.cls === 'poi' ? 40 + (opts.rank - 40) * 0.25 : opts.rank
+  if (q && name === q) score += 50 * k
+  else if (q && name.startsWith(q)) score += 30 * k
+  else if (opts.words.length > 0 && name.split(/[\s-]+/).some((w) => w === opts.words[0])) score += 15 * k
   // Близость важна: «аптека» — ближайшая, а не самая известная в области.
-  if (opts.distanceKm !== null) score -= 25 * Math.log10(1 + opts.distanceKm)
+  if (opts.distanceKm !== null) score -= 30 * Math.log10(1 + opts.distanceKm)
   return score
 }
 

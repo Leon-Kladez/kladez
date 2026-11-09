@@ -90,6 +90,9 @@ function makeIndex(dir: string) {
   const fts = db.prepare('INSERT INTO items_fts(rowid, name, name_en, words, city) VALUES (?,?,?,?,?)')
   const rows: [number, string, string, string, string | null, string | null, string | null, string | null, number, number, number, string][] = [
     [1, 'place', 'city', 'Москва', 'Moscow', null, null, null, 55.7558, 37.6173, 100, 'город'],
+    // Тот же город границей — середина в 5 км от центра: в выдаче один раз.
+    [7, 'place', 'city', 'Москва', null, null, null, null, 55.71, 37.62, 100, 'город'],
+    [8, 'poi', 'pharmacy', 'Аптека', null, 'Ивановка', null, null, 55.34, 37.0, 45, 'аптека pharmacy'],
     [2, 'street', 'street', 'Пятницкая улица', 'Pyatnitskaya Street', 'Москва', null, null, 55.742, 37.628, 40, ''],
     [3, 'street', 'street', 'Пятницкая улица', null, 'Ивановка', null, null, 55.30, 37.00, 40, ''],
     [4, 'poi', 'pharmacy', 'Ригла', null, 'Москва', 'Пятницкая улица', '7', 55.7441, 37.6276, 45, 'аптека pharmacy'],
@@ -99,6 +102,11 @@ function makeIndex(dir: string) {
   for (const r of rows) {
     item.run(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10])
     fts.run(r[0], r[3], r[4] ?? '', r[11], r[5] ?? '')
+  }
+  // Сотни мест «в Москве» (совпадают по полю город) — сам город не должен из-за них пропасть.
+  for (let k = 0; k < 400; k++) {
+    item.run(100 + k, 'poi', 'cafe', `Кафе ${k}`, null, 'Москва', null, null, 55.75, 37.6, 30)
+    fts.run(100 + k, `Кафе ${k}`, '', 'кафе cafe', 'Москва')
   }
   const house = db.prepare('INSERT INTO houses VALUES (?,?,?,?)')
   house.run(2, '7', 55.7441, 37.6277)
@@ -132,16 +140,23 @@ test('поиск по указателю: улица с домом, места, 
     const v = await MapSearchService.search('пятницкая', { lat: 55.3, lon: 37.0 })
     assert.equal(v[0].city, 'Ивановка')
 
-    // По виду места: обе аптеки, ближайшая первой; у безымянной имя пустое.
+    // По виду места: ближайшая аптека первой — даже если у дальней название ровно «Аптека».
     const a = await MapSearchService.search('аптека', { lat: 55.3, lon: 37.0 })
-    assert.equal(a.length, 2)
+    assert.equal(a.length, 3)
     assert.equal(a[0].name, '')
-    assert.equal(a[1].name, 'Ригла')
-    assert.equal(a[1].address, 'Пятницкая улица, 7')
+    assert.equal(a[1].name, 'Аптека')
+    assert.equal(a[2].name, 'Ригла')
+    assert.equal(a[2].address, 'Пятницкая улица, 7')
 
     // «школа 5» — и как «Школа № 5».
     const s = await MapSearchService.search('школа 5')
     assert.ok(s.some((x) => x.name === 'Школа № 5'))
+
+    // Город первым, хотя сотни мест «в Москве» тоже подходят.
+    const m = await MapSearchService.search('Москва', { lat: 43.0, lon: 45.0 })
+    assert.equal(m[0].cls, 'place')
+    assert.equal(m[0].name, 'Москва')
+    assert.equal(m.filter((x) => x.cls === 'place' && x.name === 'Москва').length, 1)
 
     // Английский интерфейс — английское название, где есть.
     const e = await MapSearchService.search('moscow', { english: true })
