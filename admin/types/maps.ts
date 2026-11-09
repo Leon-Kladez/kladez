@@ -86,3 +86,19 @@ export type MapMarkerResponse = {
   created_at: string
   updated_at?: string
 }
+
+/** Кладезъ: результат поиска по карте (указатели search-*.sqlite). */
+export type MapSearchResult = {
+  /** Уникально в выдаче: регион и запись. */
+  id: string
+  cls: 'place' | 'street' | 'poi' | 'house'
+  kind: string | null
+  name: string
+  /** Город/посёлок. */
+  city: string | null
+  /** Адрес места (улица, дом), если известен. */
+  address: string | null
+  lat: number
+  lon: number
+  distanceKm: number | null
+}

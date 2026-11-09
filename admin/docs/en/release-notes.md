@@ -8,6 +8,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Useful places with their own icons:** pharmacies, hospitals, clinics, dentists, police, fire stations, rescue stations, shelters, metro entrances, tram stops, fuel stations, banks and ATMs, places of worship, hotels, kindergartens, markets and malls, parking. Zoomed out, only the most important ones show: hospitals, police, fire stations, metro and fuel.
 - **“What's here?” on tap:** tap an icon or a building to see its name, the kind of place (“Pharmacy”), the house number and the nearby street; you can add a marker from there. On a computer the same shows on mouse hover.
 - **Map labels in the program's language:** in English, names are shown in English where available.
+- **Offline map search:** towns and villages, streets and house numbers, kinds of places (“pharmacy”, “hospital”, “fuel”) and their names; the nearest first. The search index downloads together with the map; for maps you already have, use “Download search” in the search box. “What's here?” now shows the exact house address.
 
 {% /release %}
 

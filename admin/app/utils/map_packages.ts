@@ -70,6 +70,33 @@ export function buildPackageDownloadParams(
 
 export const PMTILES_MIME_TYPES = ['application/vnd.pmtiles', 'application/octet-stream']
 
+/** Имя файла указателя поиска по его адресу; null — адрес не похож на указатель. */
+export function searchFilename(url: string): string | null {
+  const name = new URL(url).pathname.split('/').pop() ?? ''
+  return /^search-[a-z0-9-]+_\d{4}-\d{2}\.sqlite$/.test(name) ? name : null
+}
+
+/**
+ * Загрузка указателя поиска региона: тот же механизм, что у карт (докачка, сумма),
+ * но без записи «установлено» — указатель живёт рядом с картой и удаляется вместе с ней.
+ */
+export function buildSearchDownloadParams(resource: SpecResource, searchDir: string, title: string): RunDownloadJobParams | null {
+  const s = resource.search
+  if (!s) return null
+  const filename = searchFilename(s.url)
+  if (!filename) return null
+  return {
+    url: s.url,
+    expectedSha256: s.sha256,
+    filepath: join(searchDir, filename),
+    timeout: 30000,
+    allowedMimeTypes: ['application/vnd.sqlite3', 'application/x-sqlite3', 'application/octet-stream'],
+    forceNew: false,
+    filetype: 'map',
+    title,
+  }
+}
+
 /** Ищет пакеты по id во всех коллекциях; неизвестные и ещё не опубликованные — в unavailable. */
 export function findPackages(
   spec: MapsSpec | null,

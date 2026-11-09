@@ -22,6 +22,7 @@ import type { ChatSource } from '../../types/chat'
 import { chatStreamErrorMessage } from './chat_stream.js'
 import { t } from '../../constants/i18n/index.js'
 import { errorText } from './error_text.js'
+import type { MapSearchResult } from '../../types/maps'
 
 export type PhonesInfo = {
   device: { isComputer: boolean; canChange: boolean }
@@ -129,6 +130,49 @@ class API {
   async setupWorldBasemap() {
     return catchInternal(async () => {
       const response = await this.client.post<{ success: boolean }>('/maps/setup-world-basemap')
+      return response.data
+    })()
+  }
+
+  /**
+   * Кладезъ: поиск по карте без интернета. Ошибки не показываются всплывающим окном —
+   * строка поиска сама пишет «не удалось», иначе каждая буква давала бы по сообщению.
+   */
+  async searchMap(q: string, lat?: number, lon?: number, signal?: AbortSignal): Promise<MapSearchResult[] | null> {
+    try {
+      const response = await this.client.get<{ results: MapSearchResult[] }>('/maps/search', {
+        params: { q, lat, lon, limit: 20 },
+        signal,
+      })
+      return response.data.results
+    } catch (error) {
+      if (axios.isCancel(error)) return []
+      return null
+    }
+  }
+
+  /** Кладезъ: адрес ближайшего дома по указателю поиска (для подсказки «что здесь»). */
+  async mapAddressAt(lat: number, lon: number): Promise<{ street: string; house: string; city: string | null } | null> {
+    try {
+      const response = await this.client.get('/maps/search/address', { params: { lat, lon } })
+      return response.data.address ?? null
+    } catch {
+      return null
+    }
+  }
+
+  async mapSearchStatus(): Promise<{ available: string[]; missing: { id: string; title: string; size_mb: number }[] } | null> {
+    try {
+      const response = await this.client.get('/maps/search/status')
+      return response.data
+    } catch {
+      return null
+    }
+  }
+
+  async downloadMapSearchIndexes(): Promise<{ queued: string[] }> {
+    return catchInternal(async () => {
+      const response = await this.client.post('/maps/search/download')
       return response.data
     })()
   }

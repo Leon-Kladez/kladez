@@ -258,6 +258,22 @@ router
       tags: ['maps'],
       request: mapExtractValidator,
     })
+    documented(router.get('/search', [MapsController, 'search']), {
+      summary: 'Search places, streets and addresses in downloaded maps (offline)',
+      tags: ['maps'],
+    })
+    documented(router.get('/search/address', [MapsController, 'searchAddress']), {
+      summary: 'Nearest known address to a point',
+      tags: ['maps'],
+    })
+    documented(router.get('/search/status', [MapsController, 'searchStatus']), {
+      summary: 'Search indexes: downloaded and missing for installed maps',
+      tags: ['maps'],
+    })
+    documented(router.post('/search/download', [MapsController, 'searchDownload']), {
+      summary: 'Download missing search indexes for installed maps',
+      tags: ['maps'],
+    })
     documented(router.get('/markers', [MapsController, 'listMarkers']), {
       summary: 'List map markers',
       tags: ['maps'],

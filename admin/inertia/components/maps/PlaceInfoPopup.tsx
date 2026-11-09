@@ -41,12 +41,18 @@ export default function PlaceInfoPopup({
       >
         <div className="text-sm font-semibold break-words text-gray-900">{info.title}</div>
         {info.kind && <div className="text-xs text-gray-600">{info.kind}</div>}
-        {info.house && (
+        {info.address ? (
           <div className="mt-1 text-xs text-gray-700">
-            {t('mapsUi.house')} {info.house}
+            {t('mapsUi.address')}: {info.address}
           </div>
+        ) : (
+          info.house && (
+            <div className="mt-1 text-xs text-gray-700">
+              {t('mapsUi.house')} {info.house}
+            </div>
+          )
         )}
-        {info.street && (
+        {!info.address && info.street && (
           <div className="mt-1 text-xs text-gray-700">
             {t('mapsUi.nearStreet')}: {info.street}
           </div>

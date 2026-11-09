@@ -149,6 +149,28 @@ const KIND_NAMES: Record<string, [string, string]> = {
   forest: ['Лес', 'Forest'],
   marina: ['Пристань', 'Marina'],
   cemetery: ['Кладбище', 'Cemetery'],
+  // Поиск по карте: населённые пункты, улицы, дома.
+  city: ['Город', 'City'],
+  town: ['Город', 'Town'],
+  village: ['Село', 'Village'],
+  hamlet: ['Деревня', 'Hamlet'],
+  isolated_dwelling: ['Хутор', 'Farmstead'],
+  suburb: ['Район', 'District'],
+  borough: ['Район', 'Borough'],
+  quarter: ['Квартал', 'Quarter'],
+  neighbourhood: ['Микрорайон', 'Neighbourhood'],
+  locality: ['Урочище', 'Locality'],
+  square: ['Площадь', 'Square'],
+  street: ['Улица', 'Street'],
+  house: ['Дом', 'House'],
+  building: ['Здание', 'Building'],
+  metro: ['Станция метро', 'Metro station'],
+  bus_station: ['Автовокзал', 'Bus station'],
+  ambulance_station: ['Скорая помощь', 'Ambulance station'],
+  defibrillator: ['Дефибриллятор', 'Defibrillator'],
+  canteen: ['Столовая', 'Canteen'],
+  swimming_pool: ['Бассейн', 'Swimming pool'],
+  car_wash: ['Автомойка', 'Car wash'],
 }
 
 export function placeKindName(kind: unknown, locale: Locale): string | null {

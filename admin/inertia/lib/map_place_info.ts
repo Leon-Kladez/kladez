@@ -18,6 +18,8 @@ export type PlaceInfo = {
   house: string | null
   /** Ближайшая улица. */
   street: string | null
+  /** Точный адрес из указателя поиска («Пятницкая улица, 7 с2»), если он скачан. */
+  address?: string | null
 }
 
 const POI_LAYERS = new Set(['kz_places', 'pois'])

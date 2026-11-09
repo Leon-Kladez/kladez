@@ -41,6 +41,8 @@ export type SpecResource = {
   contents?: string
   /** Файл ещё не опубликован (черновик списка карт): не скачивать, не считать обновлением. */
   planned?: boolean
+  /** Указатель поиска по карте — файл search-<регион>_<версия>.sqlite, скачивается вместе с картой. */
+  search?: { url: string; size_mb: number; sha256?: string; version: string }
 }
 
 export type SpecTier = {

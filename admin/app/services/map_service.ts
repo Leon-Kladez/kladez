@@ -40,6 +40,8 @@ import {
 import {
   baseAssetsUpToDate,
   buildPackageDownloadParams,
+  buildSearchDownloadParams,
+  searchFilename,
   downloadableResources,
   readPmtilesBounds,
   unionBounds,
@@ -56,6 +58,8 @@ import { createHash, randomBytes } from 'crypto'
 import { tmpdir } from 'os'
 import { promisify } from 'util'
 import { getLocale, t } from '../../constants/i18n/index.js'
+import { MapSearchService, SEARCH_FILE_RE } from './map_search_service.js'
+import { readdir } from 'fs/promises'
 
 const execFileAsync = promisify(execFile)
 const DRY_RUN_TIMEOUT_MS = 60_000
@@ -202,9 +206,96 @@ export class MapService implements IMapService {
       const params = buildPackageDownloadParams(resource, collectionSlug, pmtilesDir)
       downloadFilenames.push(basename(params.filepath))
       await RunDownloadJob.dispatch(params)
+      // Кладезъ: указатель поиска — вместе с картой.
+      await this.dispatchSearchIndex(resource)
     }
 
     return downloadFilenames
+  }
+
+  // ---- Кладезъ: указатели поиска по карте ----
+
+  private searchDir(): string {
+    return MapSearchService.dir()
+  }
+
+  /** Поставить в очередь указатель поиска пакета, если его ещё нет на диске. */
+  private async dispatchSearchIndex(resource: SpecResource): Promise<boolean> {
+    if (!resource.search) return false
+    const filename = searchFilename(resource.search.url)
+    if (!filename) return false
+    try {
+      assertNotPrivateUrl(resource.search.url)
+    } catch {
+      return false
+    }
+    if (await getFileStatsIfExists(join(this.searchDir(), filename))) return false
+    if (await RunDownloadJob.getActiveByUrl(resource.search.url)) return false
+    const params = buildSearchDownloadParams(
+      resource,
+      this.searchDir(),
+      t('mapsUi.searchIndexTitle', { title: resource.title })
+    )
+    if (!params) return false
+    await RunDownloadJob.dispatch(params)
+    return true
+  }
+
+  /** Установленные подробные карты и их указатели поиска: что уже есть, чего не хватает. */
+  async searchIndexStatus(): Promise<{
+    available: string[]
+    missing: { id: string; title: string; size_mb: number }[]
+  }> {
+    const available = await MapSearchService.available()
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    const installed = await InstalledResource.query().where('resource_type', 'map')
+    const missing: { id: string; title: string; size_mb: number }[] = []
+    for (const row of installed) {
+      const { found } = findPackages(spec, [row.resource_id])
+      const res = found[0]?.resource
+      if (!res?.search || available.includes(res.id)) continue
+      missing.push({ id: res.id, title: res.title, size_mb: res.search.size_mb })
+    }
+    return { available, missing }
+  }
+
+  /** Скачать недостающие указатели для уже установленных карт; убрать старые версии. */
+  async ensureSearchIndexes(): Promise<{ queued: string[] }> {
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    const installed = await InstalledResource.query().where('resource_type', 'map')
+    const queued: string[] = []
+    for (const row of installed) {
+      const res = findPackages(spec, [row.resource_id]).found[0]?.resource
+      if (res && (await this.dispatchSearchIndex(res))) queued.push(res.id)
+    }
+    await this.removeStaleSearchIndexes(false)
+    return { queued }
+  }
+
+  /**
+   * Старые версии указателей; с orphans — и указатели карт, которых больше нет
+   * (только при удалении карты: пока карта качается, её указатель уже может лежать на диске).
+   */
+  private async removeStaleSearchIndexes(orphans: boolean): Promise<void> {
+    let names: string[] = []
+    try {
+      names = await readdir(this.searchDir())
+    } catch {
+      return
+    }
+    const installed = new Set(
+      (await InstalledResource.query().where('resource_type', 'map')).map((r) => r.resource_id)
+    )
+    const newest = await MapSearchService.files()
+    const keep = new Set(newest.values())
+    for (const name of names) {
+      const m = SEARCH_FILE_RE.exec(name)
+      if (!m) continue
+      if (keep.has(name) && (!orphans || installed.has(m[1]))) continue
+      MapSearchService.closeAll()
+      await deleteFileIfExists(join(this.searchDir(), name))
+      logger.info(`[MapService] Removed search index ${name}`)
+    }
   }
 
   /** Удаляет установленный соседний вариант (подробно ↔ обзорно) того же региона. */
@@ -1029,6 +1120,12 @@ ${err.stderr ?? ''}`)))
         .where('resource_type', 'map')
         .delete()
       logger.info(`[MapService] Deleted InstalledResource entry for: ${parsed.resource_id}`)
+      // Кладезъ: указатель поиска удалённой карты больше не нужен.
+      try {
+        await this.removeStaleSearchIndexes(true)
+      } catch (err) {
+        logger.warn({ err }, '[MapService] Failed to remove search index of deleted map')
+      }
     }
   }
 

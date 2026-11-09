@@ -4,7 +4,8 @@ import { Head, Link, router } from '@inertiajs/react'
 import MapsLayout from '~/layouts/MapsLayout'
 import MapComponent from '~/components/maps/MapComponent'
 import StyledButton from '~/components/StyledButton'
-import { IconArrowLeft, IconCrosshair, IconMapPin, IconPlaneTilt } from '@tabler/icons-react'
+import { IconArrowLeft, IconCrosshair, IconMapPin } from '@tabler/icons-react'
+import MapSearchBox, { type MapSearchPick } from '~/components/maps/MapSearchBox'
 import { FileEntry } from '../../types/files'
 import Alert from '~/components/Alert'
 import { t } from '../../constants/i18n'
@@ -15,6 +16,8 @@ type MapCommand = {
   lat: number
   lng: number
   action: 'fly' | 'marker'
+  zoom?: number
+  place?: { title: string; kind: string | null; house: string | null; street: string | null; address?: string | null }
 }
 
 export default function Maps(props: {
@@ -23,43 +26,34 @@ export default function Maps(props: {
     worldBasemapExists: boolean
     regionFiles: FileEntry[]
     startBounds?: [number, number, number, number] | null
+    /** Регионы со скачанным указателем поиска. */
+    searchRegions?: string[]
   }
 }) {
   const [isHoveringUI, setIsHoveringUI] = useState(false)
   const { canChange } = useDevice()
 
-  const [coordinateSearch, setCoordinateSearch] = useState('')
   const [mapCommand, setMapCommand] = useState<MapCommand | null>(null)
   const [showCoordinatesEnabled, setShowCoordinatesEnabled] = useState(true)
+  // Кладезъ: последнее найденное — туда же ставится метка кнопкой рядом с поиском.
+  const [lastPick, setLastPick] = useState<MapSearchPick | null>(null)
+  const hasSearchIndex = (props.maps.searchRegions ?? []).length > 0
 
-  const parseCoordinates = () => {
-    const [latRaw, lngRaw] = coordinateSearch.split(',').map((value) => value.trim())
-    const lat = Number(latRaw)
-    const lng = Number(lngRaw)
-
-    if (
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lng) ||
-      lat < -90 ||
-      lat > 90 ||
-      lng < -180 ||
-      lng > 180
-    ) {
-      return null
-    }
-
-    return { lat, lng }
-  }
-
-  const handleCoordinateAction = (action: 'fly' | 'marker') => {
-    const coordinates = parseCoordinates()
-    if (!coordinates) return
-
+  const handlePick = (pick: MapSearchPick) => {
+    setLastPick(pick)
     setMapCommand({
       id: Date.now(),
-      ...coordinates,
-      action,
+      lat: pick.lat,
+      lng: pick.lng,
+      action: 'fly',
+      zoom: pick.zoom,
+      place: { title: pick.title, kind: pick.kind, house: null, street: null, address: pick.address },
     })
+  }
+
+  const handleMarkerAtPick = () => {
+    if (!lastPick) return
+    setMapCommand({ id: Date.now(), lat: lastPick.lat, lng: lastPick.lng, action: 'marker' })
   }
 
   const alertMessage = !props.maps.baseAssetsExist
@@ -88,31 +82,14 @@ export default function Maps(props: {
           </Link>
 
           <div className="flex flex-wrap items-center justify-end gap-2 min-w-0 flex-1">
-            <input
-              type="text"
-              placeholder={t('mapsPage.coordsPlaceholder')}
-              value={coordinateSearch}
-              onChange={(event) => setCoordinateSearch(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleCoordinateAction('fly')
-              }}
-              className="w-0 flex-1 min-w-[8rem] sm:flex-none sm:w-52 rounded border border-border-default bg-surface-primary px-2 py-1 text-sm text-text-primary placeholder:text-text-muted focus:border-desert-green focus:outline-none"
-            />
-
-            <button
-              type="button"
-              onClick={() => handleCoordinateAction('fly')}
-              className="rounded border border-border-default bg-surface-primary p-2 text-text-secondary hover:bg-surface-secondary"
-              title={t('mapsPage.flyTo')}
-            >
-              <IconPlaneTilt size={18}/>
-            </button>
+            <MapSearchBox hasIndex={hasSearchIndex} canChange={canChange} onPick={handlePick} />
 
             {canChange && (
             <button
               type="button"
-              onClick={() => handleCoordinateAction('marker')}
-              className="rounded border border-border-default bg-surface-primary p-2 text-text-secondary hover:bg-surface-secondary"
+              onClick={handleMarkerAtPick}
+              disabled={!lastPick}
+              className="rounded border border-border-default bg-surface-primary p-2 text-text-secondary hover:bg-surface-secondary disabled:opacity-40"
               title={t('mapsPage.addMarker')}
             >
               <IconMapPin size={18}/>
@@ -171,6 +148,7 @@ export default function Maps(props: {
         <div className="absolute inset-0">
           <MapComponent
             startBounds={props.maps.startBounds ?? null}
+            hasSearchIndex={hasSearchIndex}
             mapCommand={mapCommand}
             isHoveringUI={isHoveringUI}
             showCoordinatesEnabled={showCoordinatesEnabled}

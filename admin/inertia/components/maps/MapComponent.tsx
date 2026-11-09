@@ -25,6 +25,7 @@ import { registerPlaceIcons } from './place_icons_draw'
 import { shortPlaceLabel, type PlaceInfo } from '~/lib/map_place_info'
 import { placeAt } from './place_query'
 import { t } from '../../../constants/i18n'
+import api from '~/lib/api'
 
 type ScaleUnit = 'imperial' | 'metric' | 'nautical'
 
@@ -33,6 +34,10 @@ type MapCommand = {
   lat: number
   lng: number
   action: 'fly' | 'marker'
+  /** Кладезъ: масштаб для найденного поиском (город, улица, дом). */
+  zoom?: number
+  /** Кладезъ: что найдено — показать подсказку на месте. */
+  place?: PlaceInfo
 }
 
 type MapComponentProps = {
@@ -41,6 +46,8 @@ type MapComponentProps = {
   showCoordinatesEnabled?: boolean
   /** Границы скачанных регионов [запад, юг, восток, север] — карта открывается на них. */
   startBounds?: [number, number, number, number] | null
+  /** Кладезъ: скачан ли указатель поиска (тогда в подсказке — точный адрес). */
+  hasSearchIndex?: boolean
 }
 
 type MapLocationParams = {
@@ -144,6 +151,7 @@ export default function MapComponent({
                                        isHoveringUI = false,
                                        showCoordinatesEnabled = true,
                                        startBounds = null,
+                                       hasSearchIndex = false,
                                      }: MapComponentProps) {
   const mapRef = useRef<MapRef>(null)
   const animationFrameRef = useRef<number | null>(null)
@@ -262,9 +270,15 @@ export default function MapComponent({
 
       mapRef.current?.flyTo({
         center: [mapCommand.lng, mapCommand.lat],
-        zoom: currentZoom,
+        zoom: mapCommand.zoom ?? currentZoom,
         duration: 1500,
       })
+
+      if (mapCommand.place) {
+        setPlacingMarker(null)
+        setSelectedMarkerId(null)
+        setPlaceInfo({ lng: mapCommand.lng, lat: mapCommand.lat, info: mapCommand.place })
+      }
 
       return
     }
@@ -328,10 +342,21 @@ export default function MapComponent({
       const map = mapRef.current?.getMap()
       const info = map ? placeAt(map, e.point.x, e.point.y, true) : null
       if (info && !placingMarker) {
-        setPlaceInfo({ lng: e.lngLat.lng, lat: e.lngLat.lat, info })
+        const at = { lng: e.lngLat.lng, lat: e.lngLat.lat }
+        setPlaceInfo({ ...at, info })
         setSelectedMarkerId(null)
         setEditingMarkerId(null)
         setTargetIndicator(null)
+        // Точный адрес — из указателя поиска, если он скачан (у дома в карте только номер).
+        if (hasSearchIndex) {
+          api.mapAddressAt(at.lat, at.lng).then((a) => {
+            if (!a) return
+            const address = [a.street, a.house].filter(Boolean).join(', ') + (a.city ? `, ${a.city}` : '')
+            setPlaceInfo((cur) =>
+              cur && cur.lat === at.lat && cur.lng === at.lng ? { ...cur, info: { ...cur.info, address } } : cur
+            )
+          })
+        }
         return
       }
 
@@ -341,7 +366,7 @@ export default function MapComponent({
       setHasUnsavedMarkerChanges(false)
       setTargetIndicator(null)
     },
-    [confirmDiscardMarkerChanges, placingMarker, placeInfo]
+    [confirmDiscardMarkerChanges, placingMarker, placeInfo, hasSearchIndex]
   )
 
   const handleMouseMove = useCallback(

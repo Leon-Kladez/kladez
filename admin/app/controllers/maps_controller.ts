@@ -16,6 +16,23 @@ import vine from '@vinejs/vine'
 import { t } from '../../constants/i18n/index.js'
 import logger from '@adonisjs/core/services/logger'
 import { humanizeError } from '../utils/user_errors.js'
+import { MapSearchService } from '#services/map_search_service'
+import { getLocale } from '../../constants/i18n/index.js'
+
+const searchQueryValidator = vine.compile(
+  vine.object({
+    q: vine.string().trim().minLength(1).maxLength(200),
+    lat: vine.number().min(-90).max(90).optional(),
+    lon: vine.number().min(-180).max(180).optional(),
+    limit: vine.number().min(1).max(50).optional(),
+  })
+)
+const searchPointValidator = vine.compile(
+  vine.object({
+    lat: vine.number().min(-90).max(90),
+    lon: vine.number().min(-180).max(180),
+  })
+)
 
 @inject()
 export default class MapsController {
@@ -23,10 +40,11 @@ export default class MapsController {
 
   async index({ inertia }: HttpContext) {
     const baseAssetsCheck = await this.mapService.ensureBaseAssets()
-    const [regionFiles, worldBasemapExists, startBounds] = await Promise.all([
+    const [regionFiles, worldBasemapExists, startBounds, searchRegions] = await Promise.all([
       this.mapService.listRegions(),
       this.mapService.checkWorldBasemapExists(),
       this.mapService.downloadedRegionsBounds(),
+      MapSearchService.available(),
     ])
     return inertia.render('maps', {
       maps: {
@@ -34,8 +52,45 @@ export default class MapsController {
         worldBasemapExists,
         regionFiles: regionFiles.files,
         startBounds,
+        searchRegions,
       },
     })
+  }
+
+  // ---- Кладезъ: поиск по карте ----
+
+  async search({ request, response }: HttpContext) {
+    const { q, lat, lon, limit } = await searchQueryValidator.validate(request.qs())
+    try {
+      const results = await MapSearchService.search(q, { lat, lon, limit, english: getLocale() === 'en' })
+      return { results }
+    } catch (error) {
+      logger.error({ err: error }, '[MapsController] search failed')
+      return response.status(500).send({ message: humanizeError(error) })
+    }
+  }
+
+  async searchAddress({ request }: HttpContext) {
+    const { lat, lon } = await searchPointValidator.validate(request.qs())
+    try {
+      return { address: await MapSearchService.addressAt(lat, lon) }
+    } catch (error) {
+      logger.warn({ err: error }, '[MapsController] address lookup failed')
+      return { address: null }
+    }
+  }
+
+  async searchStatus({}: HttpContext) {
+    return await this.mapService.searchIndexStatus()
+  }
+
+  async searchDownload({ response }: HttpContext) {
+    try {
+      return await this.mapService.ensureSearchIndexes()
+    } catch (error) {
+      logger.error({ err: error }, '[MapsController] search index download failed')
+      return response.status(502).send({ message: humanizeError(error) })
+    }
   }
 
   async downloadBaseAssets({ request }: HttpContext) {
