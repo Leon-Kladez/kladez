@@ -19,7 +19,7 @@ export const mapsManagerRu: Record<keyof typeof mapsManagerEn, string> = {
   'mapsManager.globalBody': 'Будет скачана полная карта мира Protomaps ({size}, данные от {date}). Она покрывает всю планету, отдельные страны качать не придётся. Проверьте, что на диске хватает места.',
   'mapsManager.queuedWatch': 'Скачивание в очереди. Ход виден ниже.',
   'mapsManager.downloadFileTitle': 'Скачать файл карты',
-  'mapsManager.urlExample': 'например, https://github.com/Crosstalk-Solutions/project-nomad-maps/raw/refs/heads/master/pmtiles/california.pmtiles',
+  'mapsManager.urlExample': 'например, https://github.com/Leon-Kladez/kladez-maps/releases/download/maps-2026-11/by_2026-11.pmtiles',
   'mapsManager.refreshed': 'Список наборов карт обновлён.',
   'mapsManager.subtitle': 'Скачанные карты и новые страны.',
   'mapsManager.downloadAssets': 'Скачать основу',

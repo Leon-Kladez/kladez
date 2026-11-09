@@ -1,4 +1,5 @@
 import { rename, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import app from '@adonisjs/core/services/app'
@@ -13,10 +14,20 @@ import { ensureDirectoryExists, getFile } from '../utils/fs.js'
  * custom prompt is injected.
  */
 export class NomadMdService {
-  static STORAGE_PATH = 'storage/NOMAD.md'
+  // Kladez: «указания-ИИ.md» в папке библиотеки (D:\Kladez\library); раньше — NOMAD.md.
+  static STORAGE_PATH = 'storage/указания-ИИ.md'
+  static LEGACY_STORAGE_PATH = 'storage/NOMAD.md'
 
   private get filePath(): string {
     return app.makePath(NomadMdService.STORAGE_PATH)
+  }
+
+  /** Старый NOMAD.md переносим под новое имя один раз, если нового файла ещё нет. */
+  private async migrateLegacy(): Promise<void> {
+    const legacy = app.makePath(NomadMdService.LEGACY_STORAGE_PATH)
+    if (existsSync(legacy) && !existsSync(this.filePath)) {
+      await rename(legacy, this.filePath).catch(() => {})
+    }
   }
 
   /**
@@ -24,6 +35,7 @@ export class NomadMdService {
    * exist yet (the editor renders a template client-side in that case).
    */
   async read(): Promise<string> {
+    await this.migrateLegacy()
     const content = await getFile(this.filePath, 'string')
     return content ?? ''
   }

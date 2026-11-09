@@ -162,7 +162,7 @@ export default function ChatSidebar({
           size="sm"
           fullWidth
         >
-          NOMAD.md
+          {t('nomadMd.title')}
         </StyledButton>
         {sessions.length > 0 && (
           <StyledButton

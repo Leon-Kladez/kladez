@@ -283,15 +283,15 @@ export default class ServiceSeeder extends BaseSeeder {
         },
         ExposedPorts: { '80/tcp': {} },
         // Without an initial password FileBrowser generates a random one and prints it only to
-        // the container logs, which a non-technical user can't reach. Seed a known admin/nomad
+        // the container logs, which a non-technical user can't reach. Seed a known admin/kladez
         // login on first run instead (only applies when the DB doesn't exist yet); the docs tell
         // users to change it. FB_NOAUTH / --noauth don't work on this image (v2.63.x), so a login
         // stays, which is the safer default anyway for a read/write/delete file manager.
         // NOTE: FB_PASSWORD must be a bcrypt hash, not plaintext. The value below is the hash of
-        // "nomad" (generated via `filebrowser hash nomad`). Login is admin / nomad.
+        // "kladez" (bcrypt, cost 10). Login is admin / kladez.
         Env: [
           'FB_USERNAME=admin',
-          'FB_PASSWORD=$2a$10$Dvu3XTiLxvPTzvdOKu6y6.AmadN6Zt0ddLwK.8MQ.RCIQWunWBQXa',
+          'FB_PASSWORD=$2a$10$G2hTfErma4RJU6BadGJzx.tdDoUUXpCZ4HBRfasL87PAhkQSkPckC',
         ],
         User: 'root'
       }),

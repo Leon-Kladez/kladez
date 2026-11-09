@@ -33,7 +33,7 @@ Website: [stirlingpdf.com](https://stirlingpdf.com)
 
 Browse the Kladez files in your browser: upload, download, rename, delete.
 
-**Login:** username `admin`, password `nomad`. **Change the password right away** (Settings → Profile): it is the same for everyone who installs the app, so anyone on your network could log in.
+**Login:** username `admin`, password `kladez`. **Change the password right away** (Settings → Profile): it is the same for everyone who installs the app, so anyone on your network could log in.
 
 **Careful:** this deletes real files. The internal folders (AI models, search index) are hidden so they cannot be erased by accident.
 

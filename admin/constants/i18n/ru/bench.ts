@@ -25,7 +25,7 @@ export const benchRu: Record<keyof typeof benchEn, string> = {
   'bench.reference': 'Эталон = 1000.',
   'bench.legacyScale': 'По старой шкале: {score} из 100',
   'bench.share': 'Поделиться результатом',
-  'bench.shareText': 'Отправьте результат в общую таблицу пользователей NOMAD. Выберите позывной или отправьте без имени.',
+  'bench.shareText': 'Отправьте результат в общую таблицу. Выберите позывной или отправьте без имени.',
   'bench.yourTag': 'Ваш позывной',
   'bench.anonymous': 'Без имени (позывной в таблице не покажется)',
   'bench.submitting': 'Отправляем…',

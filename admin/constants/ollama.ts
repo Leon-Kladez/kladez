@@ -327,7 +327,7 @@ export const SYSTEM_PROMPTS = {
  - Use tables when presenting structured data.
 `,
   rag_context: (context: string) => `
-Information has been retrieved from the NOMAD knowledge base for the user's question. It
+Information has been retrieved from the Kladez knowledge base for the user's question. It
 cleared a relevance filter before reaching you, so it is likely on topic — but it was
 selected by automated search, so it may still not contain the specific detail asked for.
 

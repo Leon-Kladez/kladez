@@ -7,6 +7,6 @@ export const serverErrorEn = {
   'serverError.stalled': 'Download stalled - no data received for 5 minutes',
   'serverError.aborted': 'Download aborted',
   'serverError.mime': 'MIME type {type} is not allowed',
-  'serverError.gated': 'This content is hosted by Project NOMAD and requires an official release build.',
+  'serverError.gated': 'This content is only available in the official build of the original program, not in Kladez.',
   'serverError.diskInsufficient': 'Insufficient disk space: {free} free, {required} required',
 } as const

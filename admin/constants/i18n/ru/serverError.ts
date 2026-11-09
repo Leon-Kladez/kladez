@@ -9,6 +9,6 @@ export const serverErrorRu: Record<keyof typeof serverErrorEn, string> = {
   'serverError.stalled': 'Скачивание остановилось: данные не приходят уже 5 минут.',
   'serverError.aborted': 'Скачивание отменено.',
   'serverError.mime': 'Этот тип файла не подходит ({type}).',
-  'serverError.gated': 'Эти материалы хранятся у авторов Project NOMAD и доступны только в их официальной сборке.',
+  'serverError.gated': 'Эти материалы доступны только в официальной сборке исходной программы, в Кладезе их нет.',
   'serverError.diskInsufficient': 'Не хватает места на диске: свободно {free}, нужно {required}.',
 }

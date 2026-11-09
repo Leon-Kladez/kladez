@@ -17,7 +17,7 @@ export const mapsManagerEn = {
   'mapsManager.globalBody': 'This will download the full Protomaps global map ({size}, build {date}). Covers the entire planet so you won\'t need individual region files. Make sure you have enough disk space.',
   'mapsManager.queuedWatch': 'Download queued. Watch progress below.',
   'mapsManager.downloadFileTitle': 'Download Map File',
-  'mapsManager.urlExample': 'e.g. https://github.com/Crosstalk-Solutions/project-nomad-maps/raw/refs/heads/master/pmtiles/california.pmtiles',
+  'mapsManager.urlExample': 'e.g. https://github.com/Leon-Kladez/kladez-maps/releases/download/maps-2026-11/by_2026-11.pmtiles',
   'mapsManager.refreshed': 'Successfully refreshed map collections.',
   'mapsManager.subtitle': 'Manage your stored map files and explore new regions!',
   'mapsManager.downloadAssets': 'Download Base Assets',
