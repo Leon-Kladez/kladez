@@ -146,8 +146,11 @@ export class MapSearchService {
     const scored: { r: MapSearchResult; score: number }[] = []
     const seen = new Set<string>()
     const push = (r: MapSearchResult, score: number) => {
-      if (seen.has(r.id)) return
+      // Один и тот же город бывает в данных дважды (точка и граница) — показываем один раз.
+      const dup = `${r.cls}|${r.kind}|${r.name}|${r.city}|${Math.round(r.lat * 20)}|${Math.round(r.lon * 20)}`
+      if (seen.has(r.id) || seen.has(dup)) return
       seen.add(r.id)
+      seen.add(dup)
       scored.push({ r, score })
     }
 
