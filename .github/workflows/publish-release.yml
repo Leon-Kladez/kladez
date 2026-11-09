@@ -1,0 +1,43 @@
+name: Выложить установщик в выпуск
+
+# Прикрепляет уже собранный установщик (артефакт сборки «Установщик Кладезъ») к выпуску
+# installer-vX.Y.Z — без новой получасовой сборки. Нужен, если выпуск создан, а файл
+# установщика к нему не прикрепился.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Номер сборки «Установщик Кладезъ» (из адреса страницы сборки)'
+        required: true
+      version:
+        description: 'Версия, например 0.1.15'
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kladez-installer-${{ inputs.version }}
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Прикрепить к выпуску
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Неверная версия: $VERSION"; exit 1; }
+          ls -la dist
+          exe=$(ls -S dist/*.exe | head -1)
+          [ -n "$exe" ] && [ "$(stat -c %s "$exe")" -gt 104857600 ] || { echo "установщик не найден"; exit 1; }
+          gh release upload "installer-v$VERSION" "$exe" dist/SHA256SUMS.txt --repo "$REPO" --clobber
+          # Запускальщик Kladez.exe по ошибке попадал в выпуск 0.1.15 — убираем, если есть.
+          gh release delete-asset "installer-v$VERSION" Kladez.exe --repo "$REPO" --yes 2>/dev/null || true
+          gh release view "installer-v$VERSION" --repo "$REPO" --json assets -q '.assets[] | "\(.name) \(.size)"'

@@ -182,8 +182,10 @@ jobs:
 
           Что нового — в программе: Справка → «Что нового». Контрольные суммы — в SHA256SUMS.txt.
           "@
-          $exe = Get-ChildItem dist -Filter '*.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'installer exe not found in dist' }
+          # В dist лежит и Kladez.exe (запускальщик) — берём именно установщик, самый большой .exe.
+          $exe = Get-ChildItem dist -Filter '*.exe' | Where-Object { $_.Name -ne 'Kladez.exe' } |
+            Sort-Object Length -Descending | Select-Object -First 1
+          if (-not $exe -or $exe.Length -lt 100MB) { throw 'installer exe not found in dist' }
           gh release view $env:TAG *> $null
           if ($LASTEXITCODE -ne 0) {
             gh release create $env:TAG --title "Кладезъ $env:VERSION" --notes $notes --latest
