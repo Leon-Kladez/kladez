@@ -20,6 +20,10 @@ import CoordinateOverlay from './CoordinateOverlay'
 import ViewMapMarkerPopup from './ViewMapMarkerPopup'
 import MapMarkerFormPopup from './MapMarkerFormPopup'
 import ScaleUnitToggle from './ScaleUnitSelector'
+import PlaceInfoPopup from './PlaceInfoPopup'
+import { registerPlaceIcons } from './place_icons_draw'
+import { shortPlaceLabel, type PlaceInfo } from '~/lib/map_place_info'
+import { placeAt } from './place_query'
 import { t } from '../../../constants/i18n'
 
 type ScaleUnit = 'imperial' | 'metric' | 'nautical'
@@ -154,6 +158,20 @@ export default function MapComponent({
   const [editingMarkerId, setEditingMarkerId] = useState<number | null>(null)
   const [hasUnsavedMarkerChanges, setHasUnsavedMarkerChanges] = useState(false)
   const [showCoordinates, setShowCoordinates] = useState(false)
+  const [placeInfo, setPlaceInfo] = useState<{ lng: number; lat: number; info: PlaceInfo } | null>(null)
+  const [hoverPlaceLabel, setHoverPlaceLabel] = useState<string | null>(null)
+  const unregisterIconsRef = useRef<(() => void) | null>(null)
+
+  // Значки мест kz-* рисуются по запросу карты — подключаемся, как только карта создана,
+  // до загрузки первых кусочков карты.
+  const setMapRef = useCallback((ref: MapRef | null) => {
+    ;(mapRef as { current: MapRef | null }).current = ref
+    if (ref && !unregisterIconsRef.current) {
+      unregisterIconsRef.current = registerPlaceIcons(ref.getMap())
+    }
+  }, [])
+
+  useEffect(() => () => unregisterIconsRef.current?.(), [])
 
   const getInitialScaleUnit = (): ScaleUnit => {
     const stored = localStorage.getItem('nomad:map-scale-unit')
@@ -192,6 +210,7 @@ export default function MapComponent({
   const hideCoordinates = useCallback(() => {
     setShowCoordinates(false)
     setCursorLngLat(null)
+    setHoverPlaceLabel(null)
   }, [])
 
   const flyToLocationParams = useCallback(() => {
@@ -300,13 +319,29 @@ export default function MapComponent({
     (e: MapLayerMouseEvent) => {
       if (!confirmDiscardMarkerChanges()) return
 
+      // Кладезъ: нажали на место или дом — сначала подсказка «что здесь», метка — кнопкой в ней.
+      if (placeInfo) {
+        // Нажатие мимо открытой подсказки — просто закрыть её.
+        setPlaceInfo(null)
+        return
+      }
+      const map = mapRef.current?.getMap()
+      const info = map ? placeAt(map, e.point.x, e.point.y, true) : null
+      if (info && !placingMarker) {
+        setPlaceInfo({ lng: e.lngLat.lng, lat: e.lngLat.lat, info })
+        setSelectedMarkerId(null)
+        setEditingMarkerId(null)
+        setTargetIndicator(null)
+        return
+      }
+
       setPlacingMarker({ lng: e.lngLat.lng, lat: e.lngLat.lat })
       setSelectedMarkerId(null)
       setEditingMarkerId(null)
       setHasUnsavedMarkerChanges(false)
       setTargetIndicator(null)
     },
-    [confirmDiscardMarkerChanges]
+    [confirmDiscardMarkerChanges, placingMarker, placeInfo]
   )
 
   const handleMouseMove = useCallback(
@@ -314,10 +349,9 @@ export default function MapComponent({
       const target = e.originalEvent.target as HTMLElement | null
 
       if (
-        !showCoordinatesEnabled ||
         isHoveringUI ||
         isDraggingMap ||
-        target?.closest('.maplibregl-control-container, .maplibregl-ctrl')
+        target?.closest('.maplibregl-control-container, .maplibregl-ctrl, .maplibregl-popup')
       ) {
         hideCoordinates()
         return
@@ -328,6 +362,16 @@ export default function MapComponent({
       }
 
       animationFrameRef.current = requestAnimationFrame(() => {
+        // Кладезъ: при наведении — что это за место («Аптека «Ригла»», «Дом 5»).
+        const map = mapRef.current?.getMap()
+        const info = map ? placeAt(map, e.point.x, e.point.y, false) : null
+        const label = info ? shortPlaceLabel(info) : null
+        setHoverPlaceLabel(label)
+        if (!showCoordinatesEnabled && !label) {
+          setShowCoordinates(false)
+          setCursorLngLat(null)
+          return
+        }
         setShowCoordinates(true)
         setCursorLngLat({
           lng: e.lngLat.lng,
@@ -381,10 +425,10 @@ export default function MapComponent({
         }}
       >
         <Map
-          ref={mapRef}
+          ref={setMapRef}
           reuseMaps
           style={{ width: '100%', height: '100vh' }}
-          cursor={isDraggingMap ? 'grabbing' : 'crosshair'}
+          cursor={isDraggingMap ? 'grabbing' : hoverPlaceLabel ? 'pointer' : 'crosshair'}
           mapStyle={`${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/maps/styles`}
           mapLib={maplibregl}
           // «Кладезъ»: подсказки кнопок карты на языке панели, а не «Zoom in».
@@ -441,6 +485,8 @@ export default function MapComponent({
               longitude={cursorLngLat.lng}
               x={cursorLngLat.x}
               y={cursorLngLat.y}
+              label={hoverPlaceLabel}
+              showCoords={showCoordinatesEnabled}
             />
           )}
 
@@ -494,6 +540,21 @@ export default function MapComponent({
                 />
               </Marker>
             ))}
+
+          {placeInfo && !placingMarker && (
+            <PlaceInfoPopup
+              longitude={placeInfo.lng}
+              latitude={placeInfo.lat}
+              info={placeInfo.info}
+              onMouseEnter={hideCoordinates}
+              onClose={() => setPlaceInfo(null)}
+              onAddMarker={() => {
+                setPlacingMarker({ lng: placeInfo.lng, lat: placeInfo.lat })
+                setPlaceInfo(null)
+                setHasUnsavedMarkerChanges(false)
+              }}
+            />
+          )}
 
           {placingMarker && (
             <MapMarkerFormPopup

@@ -18,5 +18,8 @@ export const mapsPageRu: Record<keyof typeof mapsPageEn, string> = {
   'mapsUi.fullscreenExit': 'Выйти из полноэкранного режима',
   'mapsUi.findMe': 'Где я',
   'mapsUi.m': 'м',
+  'mapsUi.house': 'Дом',
+  'mapsUi.nearStreet': 'Улица рядом',
+  'mapsUi.addMarkerHere': 'Поставить метку',
   'mapsUi.km': 'км',
 }

@@ -2,6 +2,15 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="10 November 2026" versions="0.1.16" %}
+
+- **House numbers on the map** — on every building where they are known, already at medium zoom.
+- **Useful places with their own icons:** pharmacies, hospitals, clinics, dentists, police, fire stations, rescue stations, shelters, metro entrances, tram stops, fuel stations, banks and ATMs, places of worship, hotels, kindergartens, markets and malls, parking. Zoomed out, only the most important ones show: hospitals, police, fire stations, metro and fuel.
+- **“What's here?” on tap:** tap an icon or a building to see its name, the kind of place (“Pharmacy”), the house number and the nearby street; you can add a marker from there. On a computer the same shows on mouse hover.
+- **Map labels in the program's language:** in English, names are shown in English where available.
+
+{% /release %}
+
 {% release date="9 November 2026" versions="0.1.15, 0.1.14, 0.1.13, 0.1.12, 0.1.11, 0.1.10" %}
 
 - **Kladez is open to everyone.** Download it from the project page on GitHub; “Star on GitHub”, “Report a problem” and “Share” with a link now work.
@@ -14,7 +23,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Updates clean up after themselves.** The previous version is removed automatically, so the program does not grow with every update.
 - **“Delete” in My books** — even in simple mode (on the computer itself only, with a confirmation).
 - **Where the files are:** My materials and Map Management show the folder path step by step, with a warning not to move files by hand.
-- **“AI instructions”** instead of “NOMAD.md” in the chat.
+- **“AI instructions”** in the chat.
 - **How to help Kladez:** star it on GitHub, share it with friends, thank the author.
 - **Settings menu:** a large logo leads home; the API page is localized and has no third-party buttons.
 - **File Browser login:** `admin` / `kladez`.

@@ -10,7 +10,7 @@ const read = (...p: string[]) => readFileSync(join(ROOT, ...p), 'utf8')
 
 test('сборка установщика передаёт номер версии в образ панели', () => {
   const wf = read('.github', 'workflows', 'installer.yml')
-  assert.match(wf, /docker build --build-arg VERSION="\$\{VERSION\}" -t "ghcr\.io\/Leon-Kladez\/kladez:\$\{VERSION\}" \./)
+  assert.match(wf, /docker build --build-arg VERSION="\$\{VERSION\}" -t "ghcr\.io\/leon-kladez\/kladez:\$\{VERSION\}" \./)
 })
 
 test('пробная сборка тоже передаёт номер версии', () => {

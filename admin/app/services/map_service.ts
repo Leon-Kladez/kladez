@@ -1,4 +1,5 @@
 import { BaseStylesFile, MapLayer } from '../../types/maps.js'
+import { applyKladezStyle } from '../utils/map_style.js'
 import {
   DownloadRemoteSuccessCallback,
   FileEntry,
@@ -54,7 +55,7 @@ import { execFile } from 'child_process'
 import { createHash, randomBytes } from 'crypto'
 import { tmpdir } from 'os'
 import { promisify } from 'util'
-import { t } from '../../constants/i18n/index.js'
+import { getLocale, t } from '../../constants/i18n/index.js'
 
 const execFileAsync = promisify(execFile)
 const DRY_RUN_TIMEOUT_MS = 60_000
@@ -640,8 +641,10 @@ export class MapService implements IMapService {
     sprites: string,
     glyphs: string
   ): Promise<BaseStylesFile> {
-    const layersTemplates = template.layers.filter((layer) => layer.source)
-    const withoutSources = template.layers.filter((layer) => !layer.source)
+    // Кладезъ: номера домов и важные места (аптеки, больницы, полиция, метро…) — см. map_style.ts.
+    const allLayers = applyKladezStyle(template.layers, getLocale())
+    const layersTemplates = allLayers.filter((layer) => layer.source)
+    const withoutSources = allLayers.filter((layer) => !layer.source)
 
     template.sources = {} // Clear existing sources
     template.layers = [...withoutSources] // Start with layers that don't depend on sources
