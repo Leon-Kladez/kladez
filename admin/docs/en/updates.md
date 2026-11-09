@@ -1,29 +1,29 @@
 # Updates
 
-Kladez finds out by itself whether a new version is out. To do that it only contacts the project's open catalog and reports nothing about you.
+Kladez checks by itself whether a new version is out. It only looks at the project's open page on GitHub and sends nothing about you.
 
-## How to update Kladez
+## How to update
 
 When a new version is out, the home page says **“An update is available for Kladez!”**.
 
-1. Open Settings → **[Check for Updates](/settings/update)**.
-2. Click **Start Update**.
-3. Wait a few minutes. During the update the page may briefly show a connection error — that is expected. When it is done, the page reloads by itself.
+1. Open Settings → **[Check for updates](/settings/update)**.
+2. Press **“Download the new version”** — the release page on GitHub opens.
+3. Download **“Кладезъ-установка-…exe”** and run it, just like the first installation.
+4. The installer finds the previous version and updates it. Kladez starts by itself a few minutes later.
 
-Your downloaded library, maps and settings are kept during the update.
+Your library, maps and settings are kept. The previous version is removed automatically, so no extra disk space is used.
 
-Sometimes a new version also comes with a Windows file named **«Кладезъ-обновление-…»** (Kladez update). Download it from the same place as the installer and run it like the installer. It does not touch your library.
+What changed — see [What's new](/docs/release-notes).
 
-## Automatic updates
+## Automatic content updates
 
-In Settings → **[Check for Updates](/settings/update)** you can turn on:
+In Settings → **[Check for updates](/settings/update)** you can turn on:
 
-- **Automatic program updates** — new Kladez versions install themselves;
-- **Automatic app updates** — the same for apps from the depot;
-- **Automatic content updates** — new editions of Wikipedia and other material download themselves. Mind that these are large files.
+- **App auto-update** — new versions of Supply Depot apps install by themselves;
+- **Content auto-update** — new editions of Wikipedia and other content download by themselves. These are large files.
 
-Updates run at the time you choose, for example at night. Without internet nothing happens; Kladez tries again later.
+Updates run at the chosen time, e.g. at night. Without internet nothing happens; the program tries again later.
 
-## Should you update content?
+## Should you update content
 
-It is not required. Wikipedia changes slowly, and for life without internet last year's edition is almost as useful. Update when you have a good connection and free space.
+Not necessarily. Wikipedia changes slowly, and last year's edition is almost as useful offline. Update when you have good internet and free space.

@@ -14,7 +14,7 @@ export const KLADEZ_ISSUES_URL = `${KLADEZ_PROJECT_URL}/issues`
  * не показываются (у посторонних они открывали бы «404»), а «Поделиться» шлёт
  * текст без ссылки. После публикации: поставить true (и при смене адреса — KLADEZ_REPO).
  */
-export const KLADEZ_REPO_PUBLIC = false
+export const KLADEZ_REPO_PUBLIC = true
 /**
  * Kladez: добровольный сбор автора (СБП, Озон Банк) для карточки «Поблагодарить».
  * QR-код того же адреса — public/thanks/kladez-thanks-qr.svg (сделан из этой ссылки).
@@ -74,4 +74,9 @@ export const KLADEZ_FEATURES = {
   releaseNotesEmail: false,
   /** Uploading benchmark results to NOMAD's shared leaderboard. */
   benchmarkSharing: false,
+  /**
+   * Обновление «внутри» панели (новые образы из реестра). Образы Кладезя в реестр пока
+   * не выкладываются, поэтому новая версия ставится новым установщиком из выпуска.
+   */
+  inAppUpdate: false,
 } as const

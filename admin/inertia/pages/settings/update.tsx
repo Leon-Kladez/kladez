@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react'
-import { KLADEZ_FEATURES } from '../../../constants/kladez'
+import { KLADEZ_DOWNLOAD_URL, KLADEZ_FEATURES } from '../../../constants/kladez'
 import SettingsLayout from '~/layouts/SettingsLayout'
 import StyledButton from '~/components/StyledButton'
 import StyledSectionHeader from '~/components/StyledSectionHeader'
@@ -363,10 +363,18 @@ export default function SystemUpdatePage(props: { system: Props }) {
                     variant="primary"
                     size="lg"
                     icon="IconDownload"
-                    onClick={handleStartUpdate}
-                    disabled={!versionInfo.updateAvailable}
+                    onClick={() =>
+                      KLADEZ_FEATURES.inAppUpdate
+                        ? handleStartUpdate()
+                        : window.open(KLADEZ_DOWNLOAD_URL, '_blank', 'noopener,noreferrer')
+                    }
+                    disabled={!versionInfo.updateAvailable || (!KLADEZ_FEATURES.inAppUpdate && !KLADEZ_DOWNLOAD_URL)}
                   >
-                    {versionInfo.updateAvailable ? t('update.start') : t('update.none')}
+                    {versionInfo.updateAvailable
+                      ? KLADEZ_FEATURES.inAppUpdate
+                        ? t('update.start')
+                        : t('update.download')
+                      : t('update.none')}
                   </StyledButton>
                   <StyledButton
                     variant="ghost"
@@ -461,7 +469,7 @@ export default function SystemUpdatePage(props: { system: Props }) {
               description={t('update.earlyAccessText')}
             />
           </div>
-          <CoreAutoUpdateSection />
+          {KLADEZ_FEATURES.inAppUpdate && <CoreAutoUpdateSection />}
           <AppAutoUpdateSection />
           <ContentAutoUpdateSection />
           <ContentUpdatesSection />

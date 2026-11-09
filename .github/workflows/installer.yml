@@ -98,7 +98,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     permissions:
-      contents: read
+      contents: write  # выложить установщик выпуском (только при теге installer-v*)
       actions: write   # удалить промежуточный артефакт linux-dist после скачивания
     env:
       VERSION: ${{ needs.linux.outputs.version }}
@@ -164,6 +164,33 @@ jobs:
             dist/SHA256SUMS.txt
           retention-days: 3
           compression-level: 0
+
+      # Kladez: при теге installer-v* установщик выкладывается выпуском на GitHub — оттуда его
+      # скачивают люди (ссылка «Скачать Кладезъ») и по нему программа узнаёт о новой версии.
+      - name: Выпуск на GitHub
+        if: startsWith(github.ref, 'refs/tags/installer-v')
+        # pwsh (PowerShell 7) читает встроенный скрипт как UTF-8; Windows PowerShell — как ANSI.
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          $notes = @"
+          Кладезъ $env:VERSION — пробная версия для Windows 10 и 11.
+
+          Скачайте «Кладезъ-установка-$env:VERSION.exe» и запустите. Если уже стоит прежняя версия — установщик обновит её, библиотека и карты сохранятся.
+
+          Что нового — в программе: Справка → «Что нового». Контрольные суммы — в SHA256SUMS.txt.
+          "@
+          $exe = Get-ChildItem dist -Filter '*.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'installer exe not found in dist' }
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:TAG --title "Кладезъ $env:VERSION" --notes $notes --latest
+            if ($LASTEXITCODE -ne 0) { throw 'gh release create failed' }
+          }
+          gh release upload $env:TAG $exe.FullName dist/SHA256SUMS.txt --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'gh release upload failed' }
 
       - name: Файл обновления без интернета
         if: ${{ github.event.inputs.update_file == 'true' }}

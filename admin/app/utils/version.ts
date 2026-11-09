@@ -47,3 +47,8 @@ export function parseMajorVersion(tag: string): number {
   const major = parseInt(normalized.split('.')[0], 10)
   return isNaN(major) ? 0 : major
 }
+
+/** Kladez: «installer-v0.1.15» / «v0.1.15» / «0.1.15» → «0.1.15» (теги выпусков установщика). */
+export function versionFromTag(tag: string): string {
+  return String(tag ?? '').trim().replace(/^installer-/, '').replace(/^v/, '')
+}
