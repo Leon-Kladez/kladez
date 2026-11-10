@@ -123,3 +123,15 @@ test('модели: estimated_pulls и size бывают null — без пад�
   assert.equal(parseModelSizeGb('4.7GB'), 4.7)
   assert.equal(parseModelSizeGb('900MB'), 0.9)
 })
+
+test('сторож сети: ручное «Обновить список» пробует и во время паузы', async () => {
+  let now = 1_000
+  const gate = new OfflineGate('t', 60_000, () => now)
+  await assert.rejects(gate.run(async () => Promise.reject(new Error('timeout'))))
+  assert.ok(gate.isDown())
+  // Фоновая попытка — сразу «нет сети».
+  await assert.rejects(gate.run(async () => 'x'), (e: unknown) => isOfflineError(e))
+  // Человек нажал сам — пробуем; удача снимает паузу.
+  assert.equal(await gate.run(async () => 'ok', { force: true }), 'ok')
+  assert.ok(!gate.isDown())
+})

@@ -8,6 +8,11 @@
  *  - короткий таймаут — NETWORK_TIMEOUT_MS (5 с).
  */
 export const NETWORK_TIMEOUT_MS = 5_000
+/**
+ * Когда человек сам нажал «Обновить список»: ждём дольше (медленный интернет — тоже интернет;
+ * список карт с GitHub бывает и 6–10 с) и не смотрим на паузу после прошлой неудачи.
+ */
+export const MANUAL_TIMEOUT_MS = 30_000
 export const OFFLINE_COOLDOWN_MS = 12 * 60_000
 
 export class OfflineError extends Error {
@@ -57,9 +62,10 @@ export class OfflineGate {
    * Выполнить сетевую попытку. Пока сторож «закрыт» — сразу OfflineError.
    * Любая ошибка fn закрывает сторож на cooldown и пробрасывается дальше.
    */
-  run<T>(fn: () => Promise<T>): Promise<T> {
+  run<T>(fn: () => Promise<T>, opts: { force?: boolean } = {}): Promise<T> {
     const attempt = async (): Promise<T> => {
-      if (this.isDown()) throw new OfflineError(this.name, this.lastError)
+      // force — попытка по просьбе человека: пауза после неудачи её не останавливает.
+      if (this.isDown() && !opts.force) throw new OfflineError(this.name, this.lastError)
       try {
         const result = await fn()
         this.markUp()

@@ -1,5 +1,14 @@
 // Кладезъ: мелочи строки поиска на карте — координаты в строке и масштаб для найденного.
 
+/** Середина карты прямо сейчас (обновляет карта при каждом сдвиге) — поиск ищет «рядом с ней». */
+let liveCenter: { lat: number; lon: number } | null = null
+export function setLiveMapCenter(lat: number, lon: number): void {
+  liveCenter = { lat, lon }
+}
+export function getLiveMapCenter(): { lat: number; lon: number } | null {
+  return liveCenter
+}
+
 /** «55.75, 37.62», «55,75 37,62», «55.75 37.62» → {lat, lng}; иначе null. */
 export function parseCoordinatesInput(input: string): { lat: number; lng: number } | null {
   const s = input.trim()

@@ -173,7 +173,7 @@ export default function Maps(props: {
         {/* Кладезъ: окно маршрута — слева под верхней панелью */}
         {routeOpen && (
           <div
-            className="absolute left-4 top-20 z-40"
+            className="absolute left-4 top-[6.5rem] z-40"
             onMouseEnter={() => setIsHoveringUI(true)}
             onMouseLeave={() => setIsHoveringUI(false)}
           >

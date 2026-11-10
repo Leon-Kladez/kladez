@@ -55,7 +55,8 @@ export default class EasySetupController {
   async refreshManifests({}: HttpContext) {
     const manifestService = new CollectionManifestService()
     const types = ['zim_categories', 'maps', 'wikipedia', 'bundles', 'mirrors'] as const
-    const statuses = await Promise.all(types.map((type) => manifestService.fetchSpecStatus(type)))
+    // Нажали сами — ждём дольше и не смотрим на паузу после прошлой неудачи.
+    const statuses = await Promise.all(types.map((type) => manifestService.fetchSpecStatus(type, { manual: true })))
     const changed = Object.fromEntries(types.map((type, i) => [type, statuses[i] === 'changed']))
     // Kladez: какие списки скачать не удалось (нет связи) — интерфейс скажет об этом честно.
     const failed = types.filter((_, i) => statuses[i] === 'failed')

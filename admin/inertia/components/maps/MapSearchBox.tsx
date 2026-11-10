@@ -14,7 +14,7 @@ import api from '~/lib/api'
 import type { MapSearchResult } from '../../../types/maps'
 import { getLocale, t } from '../../../constants/i18n'
 import { placeKindName } from '../../../constants/map_places'
-import { parseCoordinatesInput, searchZoom } from '~/lib/map_search_ui'
+import { getLiveMapCenter, parseCoordinatesInput, searchZoom } from '~/lib/map_search_ui'
 
 export type MapSearchPick = {
   lat: number
@@ -34,8 +34,10 @@ type Props = {
   onFocusChange?: (focused: boolean) => void
 }
 
-/** Где сейчас карта — из запомненного вида (MapComponent пишет его при каждом сдвиге). */
+/** Где сейчас карта: середина прямо сейчас, иначе — запомненный вид. */
 function currentMapCenter(): { lat: number; lon: number } | null {
+  const live = getLiveMapCenter()
+  if (live) return live
   try {
     const v = JSON.parse(localStorage.getItem('kladez:map-view') ?? 'null')
     if (v && Number.isFinite(v.latitude) && Number.isFinite(v.longitude)) return { lat: v.latitude, lon: v.longitude }
@@ -80,6 +82,8 @@ export default function MapSearchBox({ hasIndex, canChange, onPick, onFocusChang
   // Поиск с задержкой: не на каждую букву.
   useEffect(() => {
     setFailed(false)
+    // Старые результаты — прочь: Enter не должен выбрать найденное по прошлому запросу.
+    setResults([])
     if (!hasIndex || coords || query.length < 2) {
       setResults([])
       setLoading(false)

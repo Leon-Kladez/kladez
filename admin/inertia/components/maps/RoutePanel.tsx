@@ -134,7 +134,7 @@ export default function RoutePanel(props: Props) {
   }
 
   return (
-    <div className="flex max-h-[calc(100vh-8rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-border-default bg-surface-primary shadow-lg">
+    <div className="flex max-h-[calc(100vh-9rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-border-default bg-surface-primary shadow-lg">
       <div className="flex items-center justify-between border-b border-border-default px-3 py-2">
         <div className="flex items-center gap-2 font-semibold text-text-primary">
           <IconRoute size={18} /> {t('routes.title')}

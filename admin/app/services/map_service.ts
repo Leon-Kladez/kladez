@@ -587,7 +587,7 @@ export class MapService implements IMapService {
 
   async fetchLatestCollections(): Promise<boolean> {
     const manifestService = new CollectionManifestService()
-    return manifestService.fetchAndCacheSpec('maps')
+    return manifestService.fetchAndCacheSpec('maps', { manual: true })
   }
 
   async ensureBaseAssets(): Promise<boolean> {

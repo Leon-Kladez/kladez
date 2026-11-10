@@ -27,7 +27,7 @@ import {
 import { isGatedResource } from '../utils/hosted_content.js'
 import { catalogUrl, mapsCatalogUrl } from '../utils/catalog_source.js'
 import env from '#start/env'
-import { catalogGate, isOfflineError, NETWORK_TIMEOUT_MS } from '../utils/offline_gate.js'
+import { catalogGate, isOfflineError, MANUAL_TIMEOUT_MS, NETWORK_TIMEOUT_MS } from '../utils/offline_gate.js'
 import { BackgroundRefresher, specWithFallback } from '../utils/spec_fallback.js'
 import {
   ensureDirectoryExists,
@@ -73,19 +73,24 @@ export class CollectionManifestService {
 
   // ---- Spec management ----
 
-  async fetchAndCacheSpec(type: ManifestType): Promise<boolean> {
-    return (await this.fetchSpecStatus(type)) === 'changed'
+  async fetchAndCacheSpec(type: ManifestType, opts: { manual?: boolean } = {}): Promise<boolean> {
+    return (await this.fetchSpecStatus(type, opts)) === 'changed'
   }
 
   /**
    * Kladez: как fetchAndCacheSpec, но отличает «не изменился» от «не удалось скачать» —
    * чтобы кнопка «Обновить список» не писала «обновлён», когда связи нет.
    */
-  async fetchSpecStatus(type: ManifestType): Promise<'changed' | 'same' | 'failed'> {
+  async fetchSpecStatus(
+    type: ManifestType,
+    opts: { manual?: boolean } = {}
+  ): Promise<'changed' | 'same' | 'failed'> {
     try {
       // Kladez: короткий таймаут и «сторож сети» — без интернета не ждём 15 с
       // на каждый вид каталога и не повторяем попытку чаще раза в 12 минут.
-      const response = await catalogGate.run(() => axios.get(specUrl(type), { timeout: NETWORK_TIMEOUT_MS }))
+      // Нажали «Обновить список» сами (manual) — ждём до 30 с и пробуем даже во время паузы.
+      const timeout = opts.manual ? MANUAL_TIMEOUT_MS : NETWORK_TIMEOUT_MS
+      const response = await catalogGate.run(() => axios.get(specUrl(type), { timeout }), { force: opts.manual })
 
       const validated = await vine.validate({
         schema: VALIDATORS[type],

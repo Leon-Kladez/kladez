@@ -26,6 +26,7 @@ import PlaceInfoPopup from './PlaceInfoPopup'
 import { registerPlaceIcons } from './place_icons_draw'
 import { shortPlaceLabel, type PlaceInfo } from '~/lib/map_place_info'
 import { placeAt } from './place_query'
+import { setLiveMapCenter } from '~/lib/map_search_ui'
 import { t } from '../../../constants/i18n'
 import api from '~/lib/api'
 import type { RouteResult } from '../../../app/utils/map_route'
@@ -352,6 +353,8 @@ export default function MapComponent({
   }, [])
 
   const handleMapLoad = useCallback(() => {
+    const c = mapRef.current?.getCenter()
+    if (c) setLiveMapCenter(c.lat, c.lng)
     flyToLocationParams()
   }, [flyToLocationParams])
 
@@ -506,6 +509,7 @@ export default function MapComponent({
             'ScaleControl.Kilometers': t('mapsUi.km'),
           }}
           initialViewState={initialViewState}
+          onMove={(e) => setLiveMapCenter(e.viewState.latitude, e.viewState.longitude)}
           onMoveEnd={(e) => {
             // Persist the view so a refresh restores where the user was, not the default.
             const { longitude, latitude, zoom } = e.viewState
