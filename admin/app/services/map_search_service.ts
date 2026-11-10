@@ -260,7 +260,7 @@ export class MapSearchService {
             distanceKm: d,
           }
           const score =
-            scoreResult({ rank: row.rank, name: row.name, words: q.words, distanceKm: d, cls: row.cls }) +
+            scoreResult({ rank: row.rank, name: row.name, words: q.words, distanceKm: d, cls: row.cls, kind: row.kind }) +
             cityBonus(row.city, parsed.city)
 
           if (q.withHouse && parsed.house && (row.cls === 'street' || row.cls === 'place')) {

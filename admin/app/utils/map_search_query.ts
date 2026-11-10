@@ -128,6 +128,8 @@ export function scoreResult(opts: {
   distanceKm: number | null
   /** Для мест (аптека, школа) совпадение названия весит меньше: «аптека» — это ближайшая аптека. */
   cls?: string
+  /** Вид населённого пункта: город ищут по первым буквам издалека, деревню — рядом. */
+  kind?: string | null
 }): number {
   const name = normalizeText(opts.name)
   const q = opts.words.join(' ')
@@ -139,8 +141,12 @@ export function scoreResult(opts: {
   // «Аптекарский переулок» по запросу «аптека» — не начало названия: нужно целое слово.
   else if (q && name.startsWith(q) && /^[\s,.-]?$/.test(name.charAt(q.length))) score += 30 * k
   else if (opts.words.length > 0 && name.split(/[\s-]+/).some((w) => w === opts.words[0])) score += 15 * k
+  // «Каза» → Казань: у населённых пунктов и начало слова считается («Казан» — начало «Казань»).
+  else if (opts.cls === 'place' && q.length >= 3 && name.startsWith(q)) score += 22
   // Близость важна: «аптека» — ближайшая, а не самая известная в области.
-  if (opts.distanceKm !== null) score -= 30 * Math.log10(1 + opts.distanceKm)
+  // Но большой город ищут издалека: «Каза» из Москвы — это Казань, а не Казанский собор рядом.
+  const far = opts.cls === 'place' ? (opts.kind === 'city' ? 0.35 : opts.kind === 'town' ? 0.6 : 1) : 1
+  if (opts.distanceKm !== null) score -= 30 * far * Math.log10(1 + opts.distanceKm)
   return score
 }
 

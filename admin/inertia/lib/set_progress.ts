@@ -6,6 +6,7 @@
  */
 import type { SpecResource, SpecTier } from '../../types/collections.js'
 import type { DownloadJobWithProgress } from '../../types/downloads.js'
+import { oneVariantPerRegion } from '../../constants/map_variants.js'
 
 /** Один файл набора: сколько весит и что с ним сейчас. */
 export type SetItem = { sizeBytes: number } & (
@@ -64,15 +65,17 @@ export function jobForUrl(
   )
 }
 
-/** Файлы набора карт: черновые (planned) не считаются — их пока нельзя скачать. */
+/**
+ * Файлы набора карт — по одному на регион (подробный или обзорный вариант, см. map_variants):
+ * регион с любым скачанным вариантом считается скачанным. Черновые (planned) не считаются.
+ */
 export function mapSetItems(
   resources: SpecResource[] | undefined,
   installedIds: Iterable<string>,
   jobs: DownloadJobWithProgress[]
 ): SetItem[] {
   const installed = new Set(installedIds)
-  return (resources ?? [])
-    .filter((r) => !r.planned)
+  return oneVariantPerRegion(resources ?? [], installed, (r) => !!jobForUrl(jobs, r.url))
     .map((r): SetItem => {
       const sizeBytes = Math.round((r.size_mb ?? 0) * MB)
       const job = jobForUrl(jobs, r.url)

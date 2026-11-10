@@ -25,6 +25,7 @@ import {
   type ValidatedCatalogType,
 } from '../utils/bundled_catalog.js'
 import { isGatedResource } from '../utils/hosted_content.js'
+import { oneVariantPerRegion } from '../../constants/map_variants.js'
 import { catalogUrl, mapsCatalogUrl } from '../utils/catalog_source.js'
 import env from '#start/env'
 import { catalogGate, isOfflineError, MANUAL_TIMEOUT_MS, NETWORK_TIMEOUT_MS } from '../utils/offline_gate.js'
@@ -359,12 +360,14 @@ export class CollectionManifestService {
     const installedIds = new Set(installedResources.map((r) => r.resource_id))
 
     return spec.collections.map((collection) => {
-      const installedCount = collection.resources.filter((r) => installedIds.has(r.id)).length
+      // Кладезъ: считаем регионы, а не файлы — подробный и обзорный варианты региона это одно.
+      const regions = oneVariantPerRegion(collection.resources, installedIds)
+      const installedCount = regions.filter((r) => installedIds.has(r.id)).length
       return {
         ...collection,
-        all_installed: installedCount === collection.resources.length,
+        all_installed: regions.length > 0 && installedCount === regions.length,
         installed_count: installedCount,
-        total_count: collection.resources.length,
+        total_count: regions.length,
         installed_ids: collection.resources.filter((r) => installedIds.has(r.id)).map((r) => r.id),
       }
     })

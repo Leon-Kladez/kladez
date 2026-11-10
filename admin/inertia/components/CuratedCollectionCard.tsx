@@ -6,6 +6,7 @@ import { IconCircleCheck } from '@tabler/icons-react'
 import { t } from '../../constants/i18n'
 import { canStartSet, type SetProgress } from '~/lib/set_progress'
 import SetDownloadStatus from './SetDownloadStatus'
+import { oneVariantPerRegion } from '../../constants/map_variants'
 
 export interface CuratedCollectionCardProps {
   collection: CollectionWithStatus
@@ -19,10 +20,9 @@ export interface CuratedCollectionCardProps {
 }
 
 const CuratedCollectionCard: React.FC<CuratedCollectionCardProps> = ({ collection, onClick, size = 'small', progress }) => {
-  const totalSizeBytes = collection.resources?.reduce(
-    (acc, resource) => acc + resource.size_mb * 1024 * 1024,
-    0
-  )
+  // Кладезъ: регион считается один раз — подробный и обзорный варианты не складываются.
+  const regions = oneVariantPerRegion(collection.resources ?? [], new Set(collection.installed_ids ?? []))
+  const totalSizeBytes = regions.reduce((acc, resource) => acc + resource.size_mb * 1024 * 1024, 0)
   const installed = progress ? progress.state === 'installed' : collection.all_installed
   const clickable = progress ? canStartSet(progress) : !collection.all_installed
   return (
@@ -62,7 +62,7 @@ const CuratedCollectionCard: React.FC<CuratedCollectionCardProps> = ({ collectio
       </div>
       <p className="text-gray-200 grow">{collection.description}</p>
       <p className="text-gray-200 text-xs mt-2">
-        {t('collection.itemsAndSize', { n: collection.resources?.length ?? 0, size: formatBytes(totalSizeBytes, 0) })}
+        {t('collection.itemsAndSize', { n: regions.length, size: formatBytes(totalSizeBytes, 0) })}
       </p>
       {progress && <SetDownloadStatus progress={progress} />}
     </div>

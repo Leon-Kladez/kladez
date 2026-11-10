@@ -12,6 +12,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **The map list updates on slow internet too:** “Refresh list” waits longer and tries right away, without a pause after a previous failure.
 - **Detailed maps of the Volga and North-West districts** — in parts (west / centre / east; St Petersburg and west / north). The parts share one search index and one roads file.
 - **Route “From” and “To” fields search:** start typing a town and pick the suggestion, then add a comma and the street (“Kazan, Baum”) — only that town’s streets are suggested. A place or coordinates work too; the map flies there.
+- **Map sets with a choice:** clicking “Russia”, “Europe” and other sets opens the country and district picker — only what you tick is downloaded. A region counts as downloaded when its detailed or overview map is there: a set no longer pulls overview maps over detailed ones, and “Downloaded” and the size count regions.
+- **Find a town by its first letters:** “Kaza” is Kazan even when the map is open on Moscow.
 - **Update check without false alarms:** when there is no newer release, the app says “no updates” instead of “error 404”.
 - **Map menu on the right**, like openstreetmap.org: “What is here?” (on by default), “Route”, “Add markers”, “Where am I”, “Coordinates”. A tap on a building or place opens “What is here?” on the left: address, nearby places with distances, district, settlement, region and “Route from / to here”, “Add a marker”.
 - **Routes across the whole country:** “Download roads of the whole country” adds roads of regions whose maps you do not have (e.g. the Volga district) so long routes pass through them.

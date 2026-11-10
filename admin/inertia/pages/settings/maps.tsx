@@ -20,7 +20,6 @@ import ActiveDownloads from '~/components/ActiveDownloads'
 import Alert from '~/components/Alert'
 import { formatBytes } from '~/lib/util'
 import { hasDownloadedGlobalMap } from '~/lib/global_map_banner'
-import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
 import { mapSetItems, setProgress, type SetProgress } from '~/lib/set_progress'
 import StorageFolderNote from '~/components/StorageFolderNote'
@@ -137,35 +136,6 @@ export default function MapsManager(props: {
     return setProgress(mapSetItems(collection.resources, collection.installed_ids ?? [], activeMapDownloads))
   }
 
-  async function downloadCollection(record: CollectionWithStatus) {
-    try {
-      const res = await api.downloadMapCollection(record.slug)
-      // The request itself failed: catchInternal has already shown the error.
-      if (!res) return
-      invalidateDownloads()
-      queryClient.invalidateQueries({ queryKey: [CURATED_COLLECTIONS_KEY] })
-      // The server answers 200 even when it started nothing (every file still
-      // unpublished, blocked, or already on disk / in flight) — say so instead of
-      // a «queued» message for a download that will never appear.
-      if (!res.resources || res.resources.length === 0) {
-        const state = collectionProgress(record).state
-        if (state !== 'downloading' && state !== 'installed') {
-          addNotification({
-            type: 'error',
-            message: t('mapsManager.nothingStarted', { name: record.name }),
-          })
-        }
-        return
-      }
-      addNotification({
-        type: 'success',
-        message: t('mapsManager.collectionQueued', { name: record.name }),
-      })
-    } catch (error) {
-      console.error('Error downloading collection:', error)
-    }
-  }
-
   async function downloadCustomFile(url: string) {
     try {
       await api.downloadRemoteMapRegion(url)
@@ -222,38 +192,6 @@ export default function MapsManager(props: {
     )
   }
 
-  async function confirmDownload(record: CollectionWithStatus) {
-    const isCollection = 'resources' in record
-    openModal(
-      <StyledModal
-        title={t('mapsManager.confirmDownload')}
-        onConfirm={() => {
-          if (isCollection) {
-            if (collectionProgress(record).state === 'installed') {
-              addNotification({
-                message: t('mapsManager.alreadyDownloaded', { name: record.name }),
-                type: 'info',
-              })
-              return
-            }
-            downloadCollection(record)
-          }
-          closeAllModals()
-        }}
-        onCancel={closeAllModals}
-        open={true}
-        confirmText={t('common.download')}
-        cancelText={t('common.cancel')}
-        confirmVariant="primary"
-      >
-        <p className="text-text-secondary">
-          {tx('mapsManager.downloadQuestion', { name: <strong>{isCollection ? record.name : record}</strong> })}
-        </p>
-      </StyledModal>,
-      'confirm-download-file-modal'
-    )
-  }
-
   async function confirmGlobalMapDownload() {
     if (!globalMapInfo) return
     openModal(
@@ -275,10 +213,23 @@ export default function MapsManager(props: {
     )
   }
 
-  function openRegionPicker() {
+  // Кладезъ: нажатие на набор открывает выбор регионов (для набора одной страны — сразу её),
+  // а не качает весь набор подряд: человек берёт только нужные округа.
+  function openSetPicker(collection: CollectionWithStatus) {
+    const countries = [
+      ...new Set(
+        collection.resources.flatMap((r) => [r.country, ...(r.countries ?? [])]).filter((c): c is string => !!c)
+      ),
+    ]
+    openRegionPicker(countries.length === 1 ? countries[0] : undefined, countries)
+  }
+
+  function openRegionPicker(initialCountry?: string, onlyCountries?: string[]) {
     openModal(
       <MapRegionPicker
         mode="modal"
+        initialCountry={initialCountry}
+        onlyCountries={onlyCountries}
         onCancel={closeAllModals}
         onDownloadStart={(unavailable) => {
           invalidateDownloads()
@@ -388,7 +339,7 @@ export default function MapsManager(props: {
               variant: 'primary',
               children: t('mapRegions.chooseRegion'),
               icon: 'IconMap',
-              onClick: openRegionPicker,
+              onClick: () => openRegionPicker(),
             }}
           />
 
@@ -408,7 +359,7 @@ export default function MapsManager(props: {
                 key={collection.slug}
                 collection={collection}
                 progress={collectionProgress(collection)}
-                onClick={(collection) => confirmDownload(collection)}
+                onClick={(collection) => openSetPicker(collection)}
               />
             ))}
             {curatedCollections && curatedCollections.length === 0 && (

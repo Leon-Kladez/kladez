@@ -206,6 +206,15 @@ test('«Город, улица дом»: город — отдельно, тол
   assert.equal(parseCitySearch('Пятницкая 7').city, undefined)
 })
 
+test('«Каза» из Москвы: город Казань выше Казанского собора рядом', () => {
+  const kazan = scoreResult({ rank: 100, name: 'Казань', words: ['каза'], distanceKm: 720, cls: 'place', kind: 'city' })
+  const cathedral = scoreResult({ rank: 40, name: 'Казанский собор', words: ['каза'], distanceKm: 0.5, cls: 'poi' })
+  assert.ok(kazan > cathedral, `${kazan} > ${cathedral}`)
+  // Деревня издалека не обгоняет ближнее: послабление только для городов.
+  const village = scoreResult({ rank: 65, name: 'Казанка', words: ['каза'], distanceKm: 720, cls: 'place', kind: 'village' })
+  assert.ok(village < kazan)
+})
+
 test('запятая в адресе запроса: список из разбора склеивается обратно в строку', async () => {
   const { searchQueryString } = await import('../../app/utils/map_search_query.js')
   assert.deepEqual(searchQueryString({ q: ['Ростов', ' Бол'], lat: '47' }), { q: 'Ростов, Бол', lat: '47' })

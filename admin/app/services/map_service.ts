@@ -53,6 +53,7 @@ import {
   pickBaseAssetsSource,
   siblingVariantId,
 } from '../utils/map_packages.js'
+import { missingRegionIds } from '../../constants/map_variants.js'
 import { copyFile, open as openFile, readFile, statfs } from 'fs/promises'
 import { explainExtractError, pickerCountries, type PickerCountry } from '../utils/map_picker.js'
 import { CountriesService } from './countries_service.js'
@@ -167,7 +168,11 @@ export class MapService implements IMapService {
     const collection = spec.collections.find((c) => c.slug === slug)
     if (!collection) return null
 
-    const ids = downloadableResources(collection.resources).map((r) => r.id)
+    // Кладезъ: по региону — один вариант. Где уже стоит подробный или обзорный, ничего не качаем:
+    // иначе набор докачал бы обзорные карты и они заменили бы подробные (на диске держится один вариант).
+    const installed = await InstalledResource.query().where('resource_type', 'map')
+    const installedIds = new Set(installed.map((r) => r.resource_id))
+    const ids = missingRegionIds(downloadableResources(collection.resources), installedIds)
     const filenames = await this.dispatchPackages(spec, ids)
     return filenames.length > 0 ? filenames : null
   }

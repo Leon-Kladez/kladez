@@ -23,7 +23,15 @@ type Detail = 'full' | 'overview'
 const DETAIL_MAXZOOM: Record<Detail, number> = { full: 15, overview: 13 }
 
 export type MapRegionPickerProps =
-  | { mode: 'modal'; onCancel: () => void; onDownloadStart?: (unavailable: string[]) => void }
+  | {
+      mode: 'modal'
+      onCancel: () => void
+      onDownloadStart?: (unavailable: string[]) => void
+      /** Открыть сразу эту страну (нажали на набор «Россия» — сразу округа). */
+      initialCountry?: string
+      /** Показать только эти страны (нажали на набор «Европа» — только страны Европы). */
+      onlyCountries?: string[]
+    }
   | {
       mode: 'inline'
       onChange: (ids: string[], bytes: number) => void
@@ -38,7 +46,9 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
     refetchOnWindowFocus: false,
   })
   const restored = restoreSelection(props.mode === 'inline' ? props.initialIds ?? [] : [])
-  const [country, setCountry] = useState<string | null>(null)
+  const [country, setCountry] = useState<string | null>(
+    props.mode === 'modal' ? props.initialCountry ?? null : null
+  )
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set(restored.selected))
   const [detail, setDetail] = useState<Detail>(restored.detail)
@@ -51,9 +61,11 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
     () => ({ spec_version: '', collections: [{ name: '', slug: '', description: '', icon: '', language: 'ru', resources }] }),
     [resources]
   )
+  const only = props.mode === 'modal' && props.onlyCountries?.length ? new Set(props.onlyCountries) : null
   const countries = useMemo(
-    () => (data?.countries ?? []).filter((c) => matchesQuery(c, search)),
-    [data, search]
+    () => (data?.countries ?? []).filter((c) => (!only || only.has(c.code)) && matchesQuery(c, search)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, search, only ? [...only].join(',') : '']
   )
   const current = data?.countries.find((c) => c.code === country) ?? null
   const packages = country ? packagesForCountry(spec, country) : []
