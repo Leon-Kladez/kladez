@@ -196,3 +196,12 @@ test('регион файла указателя и дорог (у частей 
   assert.equal(dataRegion('https://x/y/ru-volga-west_2026-11.pmtiles'), null)
   assert.equal(dataRegion(undefined), null)
 })
+
+test('«Город, улица дом»: город — отдельно, только если до запятой нет цифр', async () => {
+  const { parseCitySearch } = await import('../../app/utils/map_search_query.js')
+  assert.deepEqual(parseCitySearch('Каз, Баум 5'), { words: ['баум'], house: '5', city: ['каз'] })
+  assert.deepEqual(parseCitySearch('Ростов-на-Дону, Берберовская'), { words: ['берберовская'], house: null, city: ['ростов-на-дону'] })
+  assert.equal(parseCitySearch('Ленина 5, кв 3').city, undefined)
+  assert.equal(parseCitySearch('Казань, ').city, undefined)
+  assert.equal(parseCitySearch('Пятницкая 7').city, undefined)
+})

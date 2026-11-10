@@ -8,7 +8,7 @@ import {
   ftsQuery,
   houseMatches,
   normalizeText,
-  parseSearch,
+  parseCitySearch,
   scoreResult,
 } from '../utils/map_search_query.js'
 
@@ -62,8 +62,19 @@ function searchRows(
   db: DatabaseSync,
   match: string,
   wordCount: number,
-  near: { lat: number; lon: number } | null
+  near: { lat: number; lon: number } | null,
+  cityMatch: string | null = null
 ): Row[] {
+  // «Город, улица»: улица — по названию, город — только по полю «город».
+  if (cityMatch) {
+    const rows = db
+      .prepare(
+        `SELECT i.* FROM items_fts JOIN items i ON i.id = items_fts.rowid
+         WHERE items_fts MATCH ? ORDER BY bm25(items_fts, 10.0, 8.0, 4.0, 1.0) LIMIT 300`
+      )
+      .all(`{name name_en words}: (${match}) AND {city}: (${cityMatch})`) as Row[]
+    return rows
+  }
   const byName = `{name name_en words}: (${match})`
   const sql = (extra: string, limit: number) =>
     `SELECT i.* FROM items_fts JOIN items i ON i.id = items_fts.rowid
@@ -97,6 +108,20 @@ function searchRows(
   add(db.prepare(sql('', 300)).all(byName))
   if (wordCount > 1) add(db.prepare(sql('', 300)).all(match))
   return [...rows.values()]
+}
+
+/**
+ * «Ростов, Бер»: город, название которого начинается с введённого целым словом
+ * (Ростов-на-Дону, «Ростов» = Ростов) — выше, чем где это лишь начало слова (Ростовцево).
+ */
+export function cityBonus(city: string | null, cityWords: string[] | undefined): number {
+  if (!cityWords?.length || !city) return 0
+  const c = normalizeText(city)
+  const q = cityWords.join(' ')
+  if (c === q) return 60
+  if (c.startsWith(q) && /^[\s-]/.test(c.slice(q.length))) return 45
+  if (c.startsWith(q)) return 10
+  return 0
 }
 
 export class MapSearchService {
@@ -182,7 +207,8 @@ export class MapSearchService {
     input: string,
     opts: { lat?: number | null; lon?: number | null; limit?: number; english?: boolean } = {}
   ): Promise<MapSearchResult[]> {
-    const parsed = parseSearch(input)
+    const parsed = parseCitySearch(input)
+    const cityMatch = parsed.city ? ftsQuery(parsed.city) : null
     const limit = Math.min(Math.max(opts.limit ?? 20, 1), 50)
     const hasPos = Number.isFinite(opts.lat) && Number.isFinite(opts.lon)
     const dist = (lat: number, lon: number) => (hasPos ? distanceKm(opts.lat!, opts.lon!, lat, lon) : null)
@@ -214,7 +240,7 @@ export class MapSearchService {
         if (!match) continue
         let rows: Row[]
         try {
-          rows = searchRows(db, match, q.words.length, hasPos ? { lat: opts.lat!, lon: opts.lon! } : null)
+          rows = searchRows(db, match, q.words.length, hasPos ? { lat: opts.lat!, lon: opts.lon! } : null, cityMatch)
         } catch (err) {
           logger.warn({ err }, `[MapSearch] ошибка запроса «${match}» в ${region}`)
           continue
@@ -233,7 +259,9 @@ export class MapSearchService {
             lon: row.lon,
             distanceKm: d,
           }
-          const score = scoreResult({ rank: row.rank, name: row.name, words: q.words, distanceKm: d, cls: row.cls })
+          const score =
+            scoreResult({ rank: row.rank, name: row.name, words: q.words, distanceKm: d, cls: row.cls }) +
+            cityBonus(row.city, parsed.city)
 
           if (q.withHouse && parsed.house && (row.cls === 'street' || row.cls === 'place')) {
             // Дома этой улицы/посёлка: сперва точное совпадение номера, потом корпуса и строения.

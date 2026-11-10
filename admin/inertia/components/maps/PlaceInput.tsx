@@ -15,19 +15,26 @@ type Props = {
   placeholder: string
   onPick: (pick: PlacePick) => void
   hasIndex: boolean
+  /** Выбрали город: перелететь к нему (точка ещё не поставлена — дальше улица). */
+  onPreview?: (lat: number, lon: number, zoom: number) => void
 }
+
+const SETTLEMENTS = ['city', 'town', 'village', 'hamlet', 'isolated_dwelling']
 
 /**
  * Кладезъ: поле с поиском для «Откуда» / «Куда»: город, улица, дом, место или координаты.
  * Подсказки — из скачанных указателей поиска, ближние к открытому месту карты — первыми.
  */
-export default function PlaceInput({ value, placeholder, onPick, hasIndex }: Props) {
+export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPreview }: Props) {
   const locale = getLocale()
   const [text, setText] = useState<string | null>(null) // null — не редактируется, показываем value
   const [results, setResults] = useState<MapSearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [active, setActive] = useState(0)
   const boxRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  // Город, уже выбранный в этом поле: Enter без новых подсказок — «весь город».
+  const [cityPick, setCityPick] = useState<MapSearchResult | null>(null)
 
   const query = (text ?? '').trim()
   const coords = text !== null ? parseCoordinatesInput(text) : null
@@ -62,12 +69,30 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex }: Pro
     return () => document.removeEventListener('mousedown', onDown)
   }, [])
 
-  const pick = (r: MapSearchResult) => {
+  const finish = (r: MapSearchResult) => {
     const kind = placeKindName(r.kind, locale)
     const name = r.name || kind || ''
     const label = [name, r.city && r.cls !== 'place' ? r.city : null].filter(Boolean).join(', ')
     onPick({ lat: r.lat, lon: r.lon, label, zoom: searchZoom(r.cls, r.kind) })
     setText(null)
+    setCityPick(null)
+  }
+
+  // Город — не конец: «Казань, » и ждём улицу; карта перелетает к городу.
+  const pick = (r: MapSearchResult) => {
+    const isCity = r.cls === 'place' && SETTLEMENTS.includes(r.kind ?? '') && !(text ?? '').includes(',')
+    if (!isCity) return finish(r)
+    setCityPick(r)
+    setText(`${r.name}, `)
+    setResults([])
+    onPreview?.(r.lat, r.lon, searchZoom(r.cls, r.kind))
+    window.setTimeout(() => {
+      const el = inputRef.current
+      if (el) {
+        el.focus()
+        el.setSelectionRange(el.value.length, el.value.length)
+      }
+    }, 0)
   }
 
   const pickCoords = () => {
@@ -79,11 +104,15 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex }: Pro
   return (
     <div ref={boxRef} className="relative min-w-0 flex-1">
       <input
+        ref={inputRef}
         type="text"
         value={text ?? value ?? ''}
         placeholder={placeholder}
         onFocus={(e) => {
-          setText('')
+          if (text === null) {
+            setText('')
+            setCityPick(null)
+          }
           e.target.select()
         }}
         onChange={(e) => setText(e.target.value)}
@@ -98,12 +127,19 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex }: Pro
           } else if (e.key === 'Enter') {
             if (coords) pickCoords()
             else if (results[active]) pick(results[active])
+            // «Казань, » и Enter — точка в самом городе.
+            else if (cityPick && /,\s*$/.test(text ?? '')) finish(cityPick)
           }
         }}
         className={`w-full truncate rounded border px-2 py-1 text-sm focus:border-desert-green focus:outline-none ${
           value ? 'border-border-default text-text-primary' : 'border-dashed border-border-default'
         } bg-surface-primary placeholder:text-text-muted`}
       />
+      {text !== null && cityPick && /,\s*$/.test(text) && results.length === 0 && !loading && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded border border-border-default bg-surface-primary px-2 py-1.5 text-xs text-text-muted shadow-lg">
+          {t('routes.cityThenStreet', { city: cityPick.name })}
+        </div>
+      )}
       {text !== null && (coords || loading || results.length > 0) && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded border border-border-default bg-surface-primary shadow-lg">
           {coords && (

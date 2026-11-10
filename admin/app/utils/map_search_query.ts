@@ -8,6 +8,26 @@ export type ParsedSearch = {
   words: string[]
   /** Номер дома в нормальном виде («7с2», «5к1», «12а», «3/1»), если есть. */
   house: string | null
+  /** «Казань, Баумана 5» — слова города (до запятой); words — тогда только улица/место. */
+  city?: string[]
+}
+
+/**
+ * «Каз, Баум 5» → город [«каз»], дальше — как обычно. Город — только если до запятой нет цифр
+ * («Ленина 5, кв 3» — не город) и после запятой что-то есть.
+ */
+export function parseCitySearch(input: string): ParsedSearch {
+  const i = input.indexOf(',')
+  if (i > 0) {
+    const head = input.slice(0, i)
+    const tail = input.slice(i + 1)
+    const cityWords = parseSearch(head).words
+    if (!/\d/.test(head) && tail.trim() && cityWords.length > 0) {
+      const rest = parseSearch(tail)
+      if (rest.words.length > 0) return { ...rest, city: cityWords }
+    }
+  }
+  return parseSearch(input)
 }
 
 const STOP_WORDS = new Set([

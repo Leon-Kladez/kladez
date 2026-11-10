@@ -108,6 +108,7 @@ export default function RoutePanel(props: Props) {
               onRoute(null)
               props.onFly?.(p.lat, p.lon, p.zoom)
             }}
+            onPreview={(lat, lon, zoom) => props.onFly?.(lat, lon, zoom)}
           />
           <button
             type="button"
