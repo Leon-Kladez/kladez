@@ -23,6 +23,21 @@
     })();
   </script>
 
+  <style>
+    /* Кладезъ: экран загрузки — виден, пока программа не нарисовала страницу (#app пустой).
+       Без скриптов: как только React заполнит #app, правило перестаёт действовать. */
+    #kz-splash { display: none; }
+    #app:empty ~ #kz-splash {
+      display: flex; position: fixed; inset: 0; z-index: 9999;
+      flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      background: #f7efe0; color: #424420; font: 500 16px/1.4 system-ui, sans-serif;
+    }
+    [data-theme="dark"] #app:empty ~ #kz-splash { background: #1c1b17; color: #e8e2d0; }
+    #kz-splash img { width: min(260px, 60vw); height: auto; }
+    #kz-splash .kz-dots::after { content: ''; animation: kz-dots 1.2s steps(4, end) infinite; }
+    @keyframes kz-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+  </style>
+
   @stack('dumper')
   @viteReactRefresh()
   @inertiaHead()
@@ -31,6 +46,10 @@
 
 <body class="min-h-screen w-screen font-sans">
   @inertia()
+  <div id="kz-splash" aria-live="polite">
+    <img src="/kladez-logo.svg" alt="Кладезъ">
+    <div><span>{{ (page.props && page.props.locale) === 'en' ? 'Loading' : 'Загружаю' }}</span><span class="kz-dots"></span></div>
+  </div>
 </body>
 
 </html>

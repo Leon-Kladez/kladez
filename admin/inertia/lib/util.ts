@@ -70,6 +70,41 @@ export const extractFileName = (path: string) => {
  * @param fn The asynchronous function to be wrapped.
  * @returns A new function that executes the original function and logs any errors. Returns undefined in case of an error.
  */
+// Кладезъ: без интернета фоновые проверки (обновления, каталог…) не должны сыпать красными
+// ошибками — одна спокойная строка, и не чаще раза в минуту.
+const OFFLINE_NOTICE_EVERY_MS = 60_000
+let lastOfflineNotice = 0
+
+/** Ошибка значит «нет интернета» (а не поломку программы)? */
+export function isOfflineMessage(message: string): boolean {
+  return message === t('serverError.noInternet') || message === t('serverError.dns')
+}
+
+/** Показать ли сейчас спокойную строку «без интернета» (не чаще раза в минуту). */
+export function shouldShowOfflineNotice(now: number = Date.now()): boolean {
+  if (now - lastOfflineNotice < OFFLINE_NOTICE_EVERY_MS) return false
+  lastOfflineNotice = now
+  return true
+}
+
+/**
+ * Что показать вместо сообщения: «нет интернета» → одна спокойная строка (не чаще раза в минуту),
+ * остальное — как есть. null — не показывать.
+ */
+export function softenNotification<T extends { message: string; type: string; duration?: number }>(n: T): T | null {
+  if (!isOfflineMessage(n.message) && n.message !== t('serverError.offlineCalm')) return n
+  if (!shouldShowOfflineNotice()) return null
+  return { ...n, message: t('serverError.offlineCalm'), type: 'info', duration: 6000 }
+}
+
+/** id без crypto.randomUUID: на телефоне по http://192.168.… его нет (не «безопасная» страница). */
+export function notificationId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  } catch {}
+  return `n-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 export function catchInternal<Fn extends (...args: any[]) => any>(fn: Fn): (...args: Parameters<Fn>) => Promise<ReturnType<Fn> | undefined> {
   return async (...args: any[]) => {
     try {

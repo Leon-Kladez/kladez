@@ -34,5 +34,6 @@ export const mapsPageRu: Record<keyof typeof mapsPageEn, string> = {
   'mapsUi.distanceM': '{m} м',
   'mapsUi.address': 'Адрес',
   'mapsUi.searching': 'Ищу…',
+  'mapsUi.loadingMap': 'Загружаю карту…',
   'mapsUi.km': 'км',
 }

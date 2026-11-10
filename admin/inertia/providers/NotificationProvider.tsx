@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
 import { NotificationContext, Notification } from '../context/NotificationContext'
 import { IconExclamationCircle, IconCircleCheck, IconInfoCircle } from '@tabler/icons-react'
-import { setGlobalNotificationCallback } from '~/lib/util'
+import { notificationId, setGlobalNotificationCallback, softenNotification } from '~/lib/util'
 
 const NotificationsProvider = ({ children }: { children: React.ReactNode }) => {
   const [notifications, setNotifications] = useState<(Notification & { id: string })[]>([])
 
-  const addNotification = (newNotif: Notification) => {
+  const addNotification = (incoming: Notification) => {
+    // Кладезъ: без интернета — одна спокойная строка вместо стопки красных ошибок.
+    const newNotif = softenNotification(incoming)
+    if (!newNotif) return
     const { message, type, duration = 5000 } = newNotif
-    const id = crypto.randomUUID()
-    setNotifications((prev) => [...prev, { id, message, type, duration }])
+    const id = notificationId()
+    // То же сообщение уже на экране — второе такое же не добавляем.
+    setNotifications((prev) => (prev.some((n) => n.message === message) ? prev : [...prev, { id, message, type, duration }]))
 
     if (duration > 0) {
       setTimeout(() => {

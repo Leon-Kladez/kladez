@@ -1,6 +1,7 @@
 export const serverErrorEn = {
   'serverError.noSpace': 'No space left on device',
   'serverError.dns': 'Cannot look up the server name: check the internet connection. If a VPN is on, turn it off or switch servers.',
+  'serverError.offlineCalm': 'Working without internet — everything already downloaded is available.',
   'serverError.noInternet': 'No internet connection',
   'serverError.http': 'Failed to download: HTTP {status}',
   'serverError.request': 'Kladez could not complete the action (error {status}). Try again; if it keeps failing, restart the program.',

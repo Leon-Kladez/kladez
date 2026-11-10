@@ -32,5 +32,6 @@ export const mapsPageEn = {
   'mapsUi.distanceM': '{m} m',
   'mapsUi.address': 'Address',
   'mapsUi.searching': 'Searching…',
+  'mapsUi.loadingMap': 'Loading the map…',
   'mapsUi.km': 'km',
 } as const

@@ -27,6 +27,8 @@ server.use([
   () => import('@adonisjs/cors/cors_middleware'),
   () => import('@adonisjs/vite/vite_middleware'),
   () => import('@adonisjs/inertia/inertia_middleware'),
+  // Кладезъ: сжатие файлов интерфейса — до static, иначе они уходят несжатыми.
+  () => import('#middleware/assets_compression_middleware'),
   () => import('@adonisjs/static/static_middleware'),
   () => import('#middleware/maps_static_middleware')
 ])

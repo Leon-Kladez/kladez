@@ -182,6 +182,13 @@ export default function MapComponent({
   const [showCoordinates, setShowCoordinates] = useState(false)
   const [placeInfo, setPlaceInfo] = useState<{ lng: number; lat: number; info: PlaceInfo } | null>(null)
   const [hoverPlaceLabel, setHoverPlaceLabel] = useState<string | null>(null)
+  // Кладезъ: пока карта рисуется в первый раз — «Загружаю карту…», а не пустой серый экран.
+  const [mapReady, setMapReady] = useState(false)
+  useEffect(() => {
+    // Запасной выход: если «готово» почему-то не пришло — не держим надпись вечно.
+    const timer = window.setTimeout(() => setMapReady(true), 30000)
+    return () => window.clearTimeout(timer)
+  }, [])
   const unregisterIconsRef = useRef<(() => void) | null>(null)
 
   // Значки мест kz-* рисуются по запросу карты — подключаемся, как только карта создана,
@@ -523,6 +530,7 @@ export default function MapComponent({
             }
           }}
           onLoad={handleMapLoad}
+          onIdle={() => setMapReady(true)}
           onMouseDown={() => {
             setIsDraggingMap(true)
             hideCoordinates()
@@ -545,6 +553,15 @@ export default function MapComponent({
           <NavigationControl style={{ marginTop: '110px', marginRight: '36px' }} />
           <FullscreenControl style={{ marginTop: '30px', marginRight: '36px' }} />
           <ScaleControl position="bottom-left" maxWidth={150} unit={scaleUnit} />
+
+          {!mapReady && (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+              <div className="flex items-center gap-2 rounded-lg bg-surface-primary/90 px-4 py-2 text-sm font-medium text-text-primary shadow">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-desert-green border-t-transparent" />
+                {t('mapsUi.loadingMap')}
+              </div>
+            </div>
+          )}
 
           {showCoordinates && cursorLngLat && (
             <CoordinateOverlay
