@@ -205,3 +205,11 @@ test('«Город, улица дом»: город — отдельно, тол
   assert.equal(parseCitySearch('Казань, ').city, undefined)
   assert.equal(parseCitySearch('Пятницкая 7').city, undefined)
 })
+
+test('запятая в адресе запроса: список из разбора склеивается обратно в строку', async () => {
+  const { searchQueryString } = await import('../../app/utils/map_search_query.js')
+  assert.deepEqual(searchQueryString({ q: ['Ростов', ' Бол'], lat: '47' }), { q: 'Ростов, Бол', lat: '47' })
+  assert.deepEqual(searchQueryString({ q: ['Казань', ''] }), { q: 'Казань,' })
+  const plain = { q: 'аптека' }
+  assert.equal(searchQueryString(plain), plain)
+})

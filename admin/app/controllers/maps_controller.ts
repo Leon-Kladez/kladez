@@ -21,6 +21,7 @@ import { MapRouteService, RouteError } from '#services/map_route_service'
 import { DockerService } from '#services/docker_service'
 import { ROUTE_MODES, type RouteMode } from '../utils/map_route.js'
 import { getLocale } from '../../constants/i18n/index.js'
+import { searchQueryString } from '../utils/map_search_query.js'
 
 const searchQueryValidator = vine.compile(
   vine.object({
@@ -72,7 +73,7 @@ export default class MapsController {
   // ---- Кладезъ: поиск по карте ----
 
   async search({ request, response }: HttpContext) {
-    const { q, lat, lon, limit } = await searchQueryValidator.validate(request.qs())
+    const { q, lat, lon, limit } = await searchQueryValidator.validate(searchQueryString(request.qs()))
     try {
       const results = await MapSearchService.search(q, { lat, lon, limit, english: getLocale() === 'en' })
       return { results }
