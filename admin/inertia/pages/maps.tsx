@@ -4,14 +4,18 @@ import { Head, Link, router } from '@inertiajs/react'
 import MapsLayout from '~/layouts/MapsLayout'
 import MapComponent from '~/components/maps/MapComponent'
 import StyledButton from '~/components/StyledButton'
-import { IconArrowLeft, IconCrosshair, IconMapPin, IconRoute } from '@tabler/icons-react'
+import { IconArrowLeft } from '@tabler/icons-react'
 import RoutePanel, { type RouteEnd, type RouteEnds } from '~/components/maps/RoutePanel'
+import HerePanel, { type HerePoint } from '~/components/maps/HerePanel'
+import MapToolbar, { type MapTool } from '~/components/maps/MapToolbar'
 import type { RouteResult } from '../../app/utils/map_route'
 import MapSearchBox, { type MapSearchPick } from '~/components/maps/MapSearchBox'
 import { FileEntry } from '../../types/files'
 import Alert from '~/components/Alert'
 import { t } from '../../constants/i18n'
 import { useDevice } from '~/hooks/useDevice'
+import { useNotifications } from '~/context/NotificationContext'
+import type { PlaceInfo } from '~/lib/map_place_info'
 
 type MapCommand = {
   id: number
@@ -19,7 +23,7 @@ type MapCommand = {
   lng: number
   action: 'fly' | 'marker'
   zoom?: number
-  place?: { title: string; kind: string | null; house: string | null; street: string | null; address?: string | null }
+  place?: PlaceInfo
 }
 
 export default function Maps(props: {
@@ -34,41 +38,73 @@ export default function Maps(props: {
 }) {
   const [isHoveringUI, setIsHoveringUI] = useState(false)
   const { canChange } = useDevice()
+  const { addNotification } = useNotifications()
 
   const [mapCommand, setMapCommand] = useState<MapCommand | null>(null)
-  const [showCoordinatesEnabled, setShowCoordinatesEnabled] = useState(true)
-  // Кладезъ: последнее найденное — туда же ставится метка кнопкой рядом с поиском.
-  const [lastPick, setLastPick] = useState<MapSearchPick | null>(null)
+  const [showCoordinatesEnabled, setShowCoordinatesEnabled] = useState(false)
   const hasSearchIndex = (props.maps.searchRegions ?? []).length > 0
 
-  // Кладезъ: маршрут — окно, точки А/Б, выбор точки на карте, готовая линия.
-  const [routeOpen, setRouteOpen] = useState(false)
+  // Кладезъ: меню справа. По умолчанию — «Что здесь?»: нажатие показывает подробности слева.
+  const [tool, setTool] = useState<MapTool>('info')
+  // Слева — одна панель: «Что здесь?» или «Маршрут».
+  const [leftPanel, setLeftPanel] = useState<'here' | 'route' | null>(null)
+  const [here, setHere] = useState<HerePoint | null>(null)
+
+  // Маршрут — точки А/Б, выбор точки на карте, готовая линия.
   const [routeEnds, setRouteEnds] = useState<RouteEnds>({ from: null, to: null })
   const [routePickMode, setRoutePickMode] = useState<'from' | 'to' | null>(null)
   const [route, setRoute] = useState<RouteResult | null>(null)
 
+  // «Где я».
+  const [myPosition, setMyPosition] = useState<{ lat: number; lon: number; accuracy?: number } | null>(null)
+  const [locating, setLocating] = useState(false)
+
   const handleRoutePoint = (which: 'from' | 'to', end: RouteEnd) => {
-    setRouteOpen(true)
+    setLeftPanel('route')
     setRoute(null)
     setRouteEnds((cur) => ({ ...cur, [which]: end }))
     setRoutePickMode(null)
   }
 
-  const handlePick = (pick: MapSearchPick) => {
-    setLastPick(pick)
-    setMapCommand({
-      id: Date.now(),
-      lat: pick.lat,
-      lng: pick.lng,
-      action: 'fly',
-      zoom: pick.zoom,
-      place: { title: pick.title, kind: pick.kind, house: null, street: null, address: pick.address },
-    })
+  const showHere = (lat: number, lon: number, place: PlaceInfo | null) => {
+    setHere({ lat, lon, place })
+    setLeftPanel('here')
   }
 
-  const handleMarkerAtPick = () => {
-    if (!lastPick) return
-    setMapCommand({ id: Date.now(), lat: lastPick.lat, lng: lastPick.lng, action: 'marker' })
+  const handlePick = (pick: MapSearchPick) => {
+    setMapCommand({ id: Date.now(), lat: pick.lat, lng: pick.lng, action: 'fly', zoom: pick.zoom })
+    showHere(pick.lat, pick.lng, { title: pick.title, kind: pick.kind, house: null, street: null, address: pick.address })
+  }
+
+  const handleLocate = () => {
+    // Браузер даёт место только защищённой странице (https или localhost).
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      addNotification({ type: 'info', message: t('mapsUi.locateNeedsHttps'), duration: 10000 })
+      return
+    }
+    if (!navigator.geolocation) {
+      addNotification({ type: 'info', message: t('mapsUi.locateUnavailable'), duration: 8000 })
+      return
+    }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false)
+        const p = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy }
+        setMyPosition(p)
+        setMapCommand({ id: Date.now(), lat: p.lat, lng: p.lon, action: 'fly', zoom: 16 })
+        showHere(p.lat, p.lon, { title: t('mapsUi.locateYou'), kind: null, house: null, street: null })
+      },
+      (err) => {
+        setLocating(false)
+        addNotification({
+          type: 'info',
+          message: err.code === err.PERMISSION_DENIED ? t('mapsUi.locateDenied') : t('mapsUi.locateUnavailable'),
+          duration: 8000,
+        })
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+    )
   }
 
   const alertMessage = !props.maps.baseAssetsExist
@@ -84,7 +120,7 @@ export default function Maps(props: {
       <Head title={t('home.tiles.maps.title')} />
 
       <div className="relative w-full h-screen overflow-hidden">
-        {/* Navbar + alert. На узком экране (телефон) кнопки переносятся на вторую строку. */}
+        {/* Верх: на главную, поиск, управление картами. Всё остальное — в меню справа. */}
         <div className="absolute top-0 left-0 right-0 z-50 flex flex-col">
         <div
           className="flex flex-wrap items-center justify-between gap-2 p-4 bg-surface-secondary backdrop-blur-sm shadow-sm"
@@ -98,43 +134,6 @@ export default function Maps(props: {
 
           <div className="flex flex-wrap items-center justify-end gap-2 min-w-0 flex-1">
             <MapSearchBox hasIndex={hasSearchIndex} canChange={canChange} onPick={handlePick} />
-
-            <button
-              type="button"
-              onClick={() => setRouteOpen((v) => !v)}
-              className={`flex items-center gap-1 rounded border border-border-default p-2 text-sm ${
-                routeOpen ? 'bg-desert-green text-white' : 'bg-surface-primary text-text-secondary hover:bg-surface-secondary'
-              }`}
-              title={t('routes.button')}
-            >
-              <IconRoute size={18} />
-              <span>{t('routes.button')}</span>
-            </button>
-
-            {canChange && (
-            <button
-              type="button"
-              onClick={handleMarkerAtPick}
-              disabled={!lastPick}
-              className="rounded border border-border-default bg-surface-primary p-2 text-text-secondary hover:bg-surface-secondary disabled:opacity-40"
-              title={t('mapsPage.addMarker')}
-            >
-              <IconMapPin size={18}/>
-            </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setShowCoordinatesEnabled((prev) => !prev)}
-              className={`rounded border border-border-default p-2 transition-colors ${
-                showCoordinatesEnabled
-                  ? 'bg-desert-green text-white'
-                  : 'bg-surface-primary text-text-secondary hover:bg-surface-secondary'
-              }`}
-              title={showCoordinatesEnabled ? t('mapsPage.hideCoords') : t('mapsPage.showCoords')}
-            >
-              <IconCrosshair size={18}/>
-            </button>
 
             {canChange && (
               <Link href="/settings/maps" className="sm:mr-4" aria-label={t('mapsPage.manageRegions')} title={t('mapsPage.manageRegions')}>
@@ -170,27 +169,66 @@ export default function Maps(props: {
         )}
         </div>
 
-        {/* Кладезъ: окно маршрута — слева под верхней панелью */}
-        {routeOpen && (
+        {/* Кладезъ: меню карты справа, под «+ / −» и «во весь экран». */}
+        <div className="absolute right-[46px] top-[17rem] z-40">
+          <MapToolbar
+            tool={tool}
+            onTool={(next) => {
+              setTool(next)
+              if (next === 'marker') addNotification({ type: 'info', message: t('mapsUi.markerModeHint'), duration: 6000 })
+            }}
+            routeOpen={leftPanel === 'route'}
+            onRoute={() => {
+              setLeftPanel((cur) => (cur === 'route' ? null : 'route'))
+              setRoutePickMode(null)
+            }}
+            onLocate={handleLocate}
+            locating={locating}
+            showCoords={showCoordinatesEnabled}
+            onCoords={() => setShowCoordinatesEnabled((v) => !v)}
+            canChange={canChange}
+            onMouseEnter={() => setIsHoveringUI(true)}
+            onMouseLeave={() => setIsHoveringUI(false)}
+          />
+        </div>
+
+        {/* Слева под верхней панелью: «Что здесь?» или «Маршрут». */}
+        {leftPanel && (
           <div
             className="absolute left-4 top-[6.5rem] z-40"
             onMouseEnter={() => setIsHoveringUI(true)}
             onMouseLeave={() => setIsHoveringUI(false)}
           >
-            <RoutePanel
-              ends={routeEnds}
-              onEndsChange={setRouteEnds}
-              pickMode={routePickMode}
-              onPickMode={setRoutePickMode}
-              route={route}
-              onRoute={setRoute}
-              onStepClick={(lon, lat) => setMapCommand({ id: Date.now(), lat, lng: lon, action: 'fly', zoom: 17 })}
-              onClose={() => {
-                setRouteOpen(false)
-                setRoutePickMode(null)
-              }}
-              canChange={canChange}
-            />
+            {leftPanel === 'here' && here && (
+              <HerePanel
+                here={here}
+                hasIndex={hasSearchIndex}
+                canChange={canChange}
+                onClose={() => setLeftPanel(null)}
+                onRouteFrom={(label) => handleRoutePoint('from', { lat: here.lat, lon: here.lon, label })}
+                onRouteTo={(label) => handleRoutePoint('to', { lat: here.lat, lon: here.lon, label })}
+                onAddMarker={() => {
+                  setMapCommand({ id: Date.now(), lat: here.lat, lng: here.lon, action: 'marker' })
+                  setLeftPanel(null)
+                }}
+              />
+            )}
+            {leftPanel === 'route' && (
+              <RoutePanel
+                ends={routeEnds}
+                onEndsChange={setRouteEnds}
+                pickMode={routePickMode}
+                onPickMode={setRoutePickMode}
+                route={route}
+                onRoute={setRoute}
+                onStepClick={(lon, lat) => setMapCommand({ id: Date.now(), lat, lng: lon, action: 'fly', zoom: 17 })}
+                onClose={() => {
+                  setLeftPanel(null)
+                  setRoutePickMode(null)
+                }}
+                canChange={canChange}
+              />
+            )}
           </div>
         )}
 
@@ -204,6 +242,9 @@ export default function Maps(props: {
             routeEnds={routeEnds}
             routePickMode={routePickMode}
             onRoutePoint={handleRoutePoint}
+            tool={tool}
+            onHere={showHere}
+            myPosition={myPosition}
             mapCommand={mapCommand}
             isHoveringUI={isHoveringUI}
             showCoordinatesEnabled={showCoordinatesEnabled}

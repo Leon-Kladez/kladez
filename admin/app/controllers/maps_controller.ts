@@ -16,7 +16,7 @@ import vine from '@vinejs/vine'
 import { t } from '../../constants/i18n/index.js'
 import logger from '@adonisjs/core/services/logger'
 import { humanizeError } from '../utils/user_errors.js'
-import { MapSearchService } from '#services/map_search_service'
+import { describeHere, MapSearchService } from '#services/map_search_service'
 import { MapRouteService, RouteError } from '#services/map_route_service'
 import { DockerService } from '#services/docker_service'
 import { ROUTE_MODES, type RouteMode } from '../utils/map_route.js'
@@ -79,6 +79,18 @@ export default class MapsController {
     } catch (error) {
       logger.error({ err: error }, '[MapsController] search failed')
       return response.status(500).send({ message: humanizeError(error) })
+    }
+  }
+
+  /** «Что здесь?»: адрес, места рядом, район, город и регион — из скачанных указателей. */
+  async here({ request }: HttpContext) {
+    const { lat, lon } = await searchPointValidator.validate(request.qs())
+    try {
+      const info = await describeHere(lat, lon)
+      return { ...info, regionTitle: info.region ? await this.mapService.regionTitle(info.region) : null }
+    } catch (error) {
+      logger.warn({ err: error }, '[MapsController] here failed')
+      return { address: null, nearby: [], district: null, settlement: null, region: null, regionTitle: null }
     }
   }
 

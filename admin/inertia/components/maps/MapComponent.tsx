@@ -25,6 +25,7 @@ import ScaleUnitToggle from './ScaleUnitSelector'
 import PlaceInfoPopup from './PlaceInfoPopup'
 import { registerPlaceIcons } from './place_icons_draw'
 import { shortPlaceLabel, type PlaceInfo } from '~/lib/map_place_info'
+export type { PlaceInfo }
 import { placeAt } from './place_query'
 import { setLiveMapCenter } from '~/lib/map_search_ui'
 import { t } from '../../../constants/i18n'
@@ -58,6 +59,12 @@ type MapComponentProps = {
   routeEnds?: { from: RouteEnd | null; to: RouteEnd | null }
   routePickMode?: 'from' | 'to' | null
   onRoutePoint?: (which: 'from' | 'to', end: RouteEnd) => void
+  /** Кладезъ: инструмент из меню справа — «Что здесь?» (по умолчанию) или «Ставить метки». */
+  tool?: 'info' | 'marker'
+  /** «Что здесь?»: нажали на карту — страница показывает панель слева. */
+  onHere?: (lat: number, lon: number, place: PlaceInfo | null) => void
+  /** «Где я»: синяя точка. */
+  myPosition?: { lat: number; lon: number; accuracy?: number } | null
 }
 
 type MapLocationParams = {
@@ -166,6 +173,9 @@ export default function MapComponent({
                                        routeEnds,
                                        routePickMode = null,
                                        onRoutePoint,
+                                       tool = 'info',
+                                       onHere,
+                                       myPosition = null,
                                      }: MapComponentProps) {
   const mapRef = useRef<MapRef>(null)
   const animationFrameRef = useRef<number | null>(null)
@@ -308,7 +318,7 @@ export default function MapComponent({
         duration: 1500,
       })
 
-      if (mapCommand.place) {
+      if (mapCommand.place && !onHere) {
         setPlacingMarker(null)
         setSelectedMarkerId(null)
         setPlaceInfo({ lng: mapCommand.lng, lat: mapCommand.lat, info: mapCommand.place })
@@ -341,7 +351,7 @@ export default function MapComponent({
         setHasUnsavedMarkerChanges(false)
       }, 750)
     }
-  }, [mapCommand, confirmDiscardMarkerChanges])
+  }, [mapCommand, confirmDiscardMarkerChanges, onHere])
 
   useEffect(() => {
     if (!selectedMarkerId) return
@@ -378,6 +388,28 @@ export default function MapComponent({
           lon: e.lngLat.lng,
           label: info ? shortPlaceLabel(info) : t('routes.point', { coords: `${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}` }),
         })
+        return
+      }
+
+      // Кладезъ: меню справа. «Ставить метки» — нажатие сразу ставит метку.
+      if (tool === 'marker') {
+        setPlaceInfo(null)
+        setPlacingMarker({ lng: e.lngLat.lng, lat: e.lngLat.lat })
+        setSelectedMarkerId(null)
+        setEditingMarkerId(null)
+        setHasUnsavedMarkerChanges(false)
+        setTargetIndicator(null)
+        return
+      }
+      // «Что здесь?» — панель слева (как на openstreetmap.org), точка отмечается прицелом.
+      if (onHere) {
+        const map = mapRef.current?.getMap()
+        const info = map ? placeAt(map, e.point.x, e.point.y, true) : null
+        setPlaceInfo(null)
+        setPlacingMarker(null)
+        setSelectedMarkerId(null)
+        setTargetIndicator({ lng: e.lngLat.lng, lat: e.lngLat.lat })
+        onHere(e.lngLat.lat, e.lngLat.lng, info)
         return
       }
 
@@ -424,7 +456,7 @@ export default function MapComponent({
       setHasUnsavedMarkerChanges(false)
       setTargetIndicator(null)
     },
-    [confirmDiscardMarkerChanges, placingMarker, placeInfo, hasSearchIndex, routePickMode, onRoutePoint]
+    [confirmDiscardMarkerChanges, placingMarker, placeInfo, hasSearchIndex, routePickMode, onRoutePoint, tool, onHere]
   )
 
   const handleMouseMove = useCallback(
@@ -623,6 +655,15 @@ export default function MapComponent({
               </Marker>
             )
           })}
+
+          {myPosition && (
+            <Marker longitude={myPosition.lon} latitude={myPosition.lat} anchor="center">
+              <div className="pointer-events-none relative flex h-6 w-6 items-center justify-center" title={t('mapsUi.locateYou')}>
+                <span className="absolute h-6 w-6 animate-ping rounded-full bg-blue-500/40" />
+                <span className="relative h-4 w-4 rounded-full border-2 border-white bg-blue-600 shadow" />
+              </div>
+            </Marker>
+          )}
 
           {targetIndicator && (
             <Marker longitude={targetIndicator.lng} latitude={targetIndicator.lat} anchor="center">

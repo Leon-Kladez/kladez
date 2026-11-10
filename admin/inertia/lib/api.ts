@@ -152,6 +152,23 @@ class API {
     }
   }
 
+  /** Кладезъ: «Что здесь?» — адрес, места рядом, район, город, регион (из указателей поиска). */
+  async mapHere(lat: number, lon: number): Promise<{
+    address: { street: string; house: string; city: string | null } | null
+    nearby: { name: string; kind: string | null; distanceM: number; address: string | null }[]
+    district: { name: string; kind: string | null } | null
+    settlement: { name: string; kind: string | null } | null
+    region: string | null
+    regionTitle: string | null
+  } | null> {
+    try {
+      const response = await this.client.get('/maps/here', { params: { lat, lon } })
+      return response.data
+    } catch {
+      return null
+    }
+  }
+
   /** Кладезъ: адрес ближайшего дома по указателю поиска (для подсказки «что здесь»). */
   async mapAddressAt(lat: number, lon: number): Promise<{ street: string; house: string; city: string | null } | null> {
     try {

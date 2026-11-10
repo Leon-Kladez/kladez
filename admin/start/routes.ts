@@ -262,6 +262,10 @@ router
       summary: 'Search places, streets and addresses in downloaded maps (offline)',
       tags: ['maps'],
     })
+    documented(router.get('/here', [MapsController, 'here']), {
+      summary: 'What is here: address, nearby places, district, city, region (offline)',
+      tags: ['maps'],
+    })
     documented(router.get('/search/address', [MapsController, 'searchAddress']), {
       summary: 'Nearest known address to a point',
       tags: ['maps'],

@@ -10,6 +10,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Map labels in the program's language:** in English, names are shown in English where available.
 - **Calmer without internet:** instead of a stack of red “No internet connection” messages — one line “Working without internet — everything already downloaded is available”; a “Loading…” screen instead of a blank one, and “Loading the map…” on the map. Faster to open on a phone: interface files are compressed and cached.
 - **The map list updates on slow internet too:** “Refresh list” waits longer and tries right away, without a pause after a previous failure.
+- **Map menu on the right**, like openstreetmap.org: “What is here?” (on by default), “Route”, “Add markers”, “Where am I”, “Coordinates”. A tap on a building or place opens “What is here?” on the left: address, nearby places with distances, district, settlement, region and “Route from / to here”, “Add a marker”.
+- **Routes across the whole country:** “Download roads of the whole country” adds roads of regions whose maps you do not have (e.g. the Volga district) so long routes pass through them.
 - **Offline routes:** by car, on foot and by bicycle — the line on the map, distance, time and step-by-step directions. Points come from a tap on the map, a marker or a place's hint; routes cross the borders of downloaded districts. Turn them on once with “Enable routes”.
 - **Offline map search:** towns and villages, streets and house numbers, kinds of places (“pharmacy”, “hospital”, “fuel”) and their names; the nearest first. The search index downloads together with the map; for maps you already have, use “Download search” in the search box. “What's here?” now shows the exact house address.
 

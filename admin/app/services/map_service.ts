@@ -246,6 +246,16 @@ export class MapService implements IMapService {
     return true
   }
 
+  /** Название пакета карты по id («Южный федеральный округ») — для «Что здесь?». */
+  async regionTitle(id: string): Promise<string | null> {
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    for (const col of spec?.collections ?? []) {
+      const r = col.resources.find((x) => x.id === id)
+      if (r) return r.title
+    }
+    return null
+  }
+
   // ---- Кладезъ: дороги для маршрутов ----
 
   /** Поставить в очередь файл дорог пакета, если его дорог ещё нет. */
@@ -300,7 +310,8 @@ export class MapService implements IMapService {
   private neighbourRoads(spec: MapsSpec | null, installedIds: string[], have: string[], missing: string[]): SpecResource[] {
     const out: SpecResource[] = []
     for (const col of spec?.collections ?? []) {
-      const all = downloadableResources(col.resources)
+      // Все пакеты, в том числе «карта ещё не выложена» (planned): дороги у них уже могут быть.
+      const all = col.resources
       // Только страны, где у человека уже есть хоть одна карта.
       const touched = all.some((r) => installedIds.includes(r.id) || installedIds.includes(siblingVariantId(r.id)))
       if (!touched) continue

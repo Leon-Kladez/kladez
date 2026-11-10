@@ -125,7 +125,7 @@ export class MapSearchService {
     this.open.clear()
   }
 
-  private static async databases(): Promise<OpenDb[]> {
+  static async databases(): Promise<OpenDb[]> {
     const files = await this.files()
     const out: OpenDb[] = []
     // Закрыть то, чего больше нет (удалили карту, пришла новая версия).
@@ -294,6 +294,108 @@ export class MapSearchService {
     }
     return best ? { street: best.street, house: best.house, city: best.city } : null
   }
+}
+
+export type HereInfo = {
+  /** Адрес ближайшего дома (до ~60 м). */
+  address: { street: string; house: string; city: string | null } | null
+  /** Места рядом (до ~150 м), ближние первыми. */
+  nearby: { name: string; kind: string | null; distanceM: number; address: string | null }[]
+  /** Район, микрорайон, жилой комплекс. */
+  district: { name: string; kind: string | null } | null
+  /** Город или посёлок. */
+  settlement: { name: string; kind: string | null } | null
+  /** Регион указателя (id пакета карты), где нашлось. */
+  region: string | null
+}
+
+/** Радиус «принадлежности» к населённому пункту, км. */
+const SETTLEMENT_REACH_KM: Record<string, number> = { city: 25, town: 8, village: 3, hamlet: 1.5, isolated_dwelling: 0.7 }
+const DISTRICT_KINDS = ['suburb', 'borough', 'quarter', 'neighbourhood']
+
+/** «Что здесь?»: всё, что скачанные указатели знают о точке. */
+export async function describeHere(lat: number, lon: number): Promise<HereInfo> {
+  const out: HereInfo = { address: null, nearby: [], district: null, settlement: null, region: null }
+  let bestHouse = Infinity
+  let bestDistrict = Infinity
+  let bestSettlement = Infinity
+  const box = (km: number): [number, number, number, number] => {
+    const dLat = km / 111.2
+    const dLon = km / (111.2 * Math.max(0.2, Math.cos((lat * Math.PI) / 180)))
+    return [lat - dLat, lat + dLat, lon - dLon, lon + dLon]
+  }
+  for (const { db, region } of await MapSearchService.databases()) {
+    const houses = db
+      .prepare(
+        `SELECT h.house, h.lat, h.lon, i.name, i.city FROM houses h JOIN items i ON i.id = h.street_id
+         WHERE h.lat BETWEEN ? AND ? AND h.lon BETWEEN ? AND ? LIMIT 300`
+      )
+      .all(...box(0.06)) as { house: string; lat: number; lon: number; name: string; city: string | null }[]
+    for (const h of houses) {
+      const d = distanceKm(lat, lon, h.lat, h.lon)
+      if (d <= 0.06 && d < bestHouse) {
+        bestHouse = d
+        out.address = { street: h.name, house: h.house, city: h.city }
+        out.region = region
+      }
+    }
+    const pois = db
+      .prepare(
+        `SELECT name, kind, street, house, lat, lon FROM items
+         WHERE cls = 'poi' AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? LIMIT 400`
+      )
+      .all(...box(0.15)) as {
+      name: string
+      kind: string | null
+      street: string | null
+      house: string | null
+      lat: number
+      lon: number
+    }[]
+    for (const p of pois) {
+      const d = distanceKm(lat, lon, p.lat, p.lon)
+      if (d > 0.15) continue
+      out.nearby.push({
+        name: p.name,
+        kind: p.kind,
+        distanceM: Math.round(d * 1000),
+        address: p.street ? [p.street, p.house].filter(Boolean).join(', ') : null,
+      })
+      if (!out.region) out.region = region
+    }
+    const places = db
+      .prepare(`SELECT name, kind, lat, lon FROM items WHERE cls = 'place' AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?`)
+      .all(...box(25)) as { name: string; kind: string | null; lat: number; lon: number }[]
+    for (const p of places) {
+      const d = distanceKm(lat, lon, p.lat, p.lon)
+      if (p.kind && DISTRICT_KINDS.includes(p.kind) && d <= 2.5 && d < bestDistrict) {
+        bestDistrict = d
+        out.district = { name: p.name, kind: p.kind }
+      }
+      const reach = p.kind ? SETTLEMENT_REACH_KM[p.kind] : undefined
+      if (reach && d / reach < 1 && d / reach < bestSettlement) {
+        bestSettlement = d / reach
+        out.settlement = { name: p.name, kind: p.kind }
+        if (!out.region) out.region = region
+      }
+    }
+  }
+  // Город из адреса дома точнее «ближайшего города» (у границ городов).
+  if (out.address?.city && out.settlement?.name !== out.address.city) {
+    out.settlement = { name: out.address.city, kind: null }
+  }
+  // Ближние первыми; одно и то же место (точка и здание) — один раз.
+  out.nearby.sort((a, b) => a.distanceM - b.distanceM)
+  const seen = new Set<string>()
+  out.nearby = out.nearby
+    .filter((n) => {
+      const key = `${n.kind}|${n.name}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 10)
+  return out
 }
 
 /** Для тестов и журнала: короткая подпись результата. */
