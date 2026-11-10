@@ -2,7 +2,7 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="10 November 2026" versions="0.1.16" %}
+{% release date="11 November 2026" versions="0.1.16" %}
 
 - **House numbers on the map** — on every building where they are known, already at medium zoom.
 - **Useful places with their own icons:** pharmacies, hospitals, clinics, dentists, police, fire stations, rescue stations, shelters, metro entrances, tram stops, fuel stations, banks and ATMs, places of worship, hotels, kindergartens, markets and malls, parking. Zoomed out, only the most important ones show: hospitals, police, fire stations, metro and fuel.
@@ -11,7 +11,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Calmer without internet:** instead of a stack of red “No internet connection” messages — one line “Working without internet — everything already downloaded is available”; a “Loading…” screen instead of a blank one, and “Loading the map…” on the map. Faster to open on a phone: interface files are compressed and cached.
 - **The map list updates on slow internet too:** “Refresh list” waits longer and tries right away, without a pause after a previous failure.
 - **Detailed maps of the Volga and North-West districts** — in parts (west / centre / east; St Petersburg and west / north). The parts share one search index and one roads file.
-- **Route “From” and “To” fields search:** type a town, street or place and the map flies there.
+- **Route “From” and “To” fields search:** start typing a town and pick the suggestion, then add a comma and the street (“Kazan, Baum”) — only that town’s streets are suggested. A place or coordinates work too; the map flies there.
+- **Update check without false alarms:** when there is no newer release, the app says “no updates” instead of “error 404”.
 - **Map menu on the right**, like openstreetmap.org: “What is here?” (on by default), “Route”, “Add markers”, “Where am I”, “Coordinates”. A tap on a building or place opens “What is here?” on the left: address, nearby places with distances, district, settlement, region and “Route from / to here”, “Add a marker”.
 - **Routes across the whole country:** “Download roads of the whole country” adds roads of regions whose maps you do not have (e.g. the Volga district) so long routes pass through them.
 - **Offline routes:** by car, on foot and by bicycle — the line on the map, distance, time and step-by-step directions. Points come from a tap on the map, a marker or a place's hint; routes cross the borders of downloaded districts. Turn them on once with “Enable routes”.
