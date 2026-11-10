@@ -70,6 +70,16 @@ export function buildPackageDownloadParams(
 
 export const PMTILES_MIME_TYPES = ['application/vnd.pmtiles', 'application/octet-stream']
 
+/**
+ * Регион файла указателя поиска / дорог по его имени (search-ru-volga_2026-11.sqlite → ru-volga).
+ * У частей нарезанного региона (Поволжье: запад, центр, восток) файл один — от целого округа.
+ */
+export function dataRegion(url: string | undefined | null): string | null {
+  if (!url) return null
+  const name = new URL(url).pathname.split('/').pop() ?? ''
+  return /^(?:search|routes)-([a-z0-9-]+)_\d{4}-\d{2}\.(?:sqlite|tar)$/.exec(name)?.[1] ?? null
+}
+
 /** Имя файла дорог по его адресу; null — адрес не похож на файл дорог. */
 export function routesFilename(url: string): string | null {
   const name = new URL(url).pathname.split('/').pop() ?? ''

@@ -188,3 +188,11 @@ test('поиск по указателю: улица с домом, места, 
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('регион файла указателя и дорог (у частей округа — общий)', async () => {
+  const { dataRegion } = await import('../../app/utils/map_packages.js')
+  assert.equal(dataRegion('https://x/y/search-ru-volga_2026-11.sqlite'), 'ru-volga')
+  assert.equal(dataRegion('https://x/y/routes-ru-northwest_2026-11.tar'), 'ru-northwest')
+  assert.equal(dataRegion('https://x/y/ru-volga-west_2026-11.pmtiles'), null)
+  assert.equal(dataRegion(undefined), null)
+})

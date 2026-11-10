@@ -42,6 +42,7 @@ import {
   buildPackageDownloadParams,
   buildSearchDownloadParams,
   buildRoutesDownloadParams,
+  dataRegion,
   routesFilename,
   searchFilename,
   downloadableResources,
@@ -268,7 +269,8 @@ export class MapService implements IMapService {
     } catch {
       return false
     }
-    if ((await MapRouteService.installedRegions()).includes(resource.id)) return false
+    const packRegion = dataRegion(resource.routes.url) ?? resource.id
+    if ((await MapRouteService.installedRegions()).includes(packRegion)) return false
     if (await RunDownloadJob.getActiveByUrl(resource.routes.url)) return false
     await MapRouteService.prepare()
     const params = buildRoutesDownloadParams(
@@ -294,11 +296,14 @@ export class MapService implements IMapService {
     const missing: { id: string; title: string; size_mb: number }[] = []
     for (const row of installed) {
       const res = findPackages(spec, [row.resource_id]).found[0]?.resource
-      if (!res?.routes || regions.includes(res.id)) continue
-      missing.push({ id: res.id, title: res.title, size_mb: res.routes.size_mb })
+      const packRegion = dataRegion(res?.routes?.url)
+      if (!res?.routes || !packRegion || regions.includes(packRegion)) continue
+      // Части одного округа делят один файл дорог — считаем его один раз.
+      if (missing.some((m) => m.id === packRegion)) continue
+      missing.push({ id: packRegion, title: res.title, size_mb: res.routes.size_mb })
     }
     const extra = this.neighbourRoads(spec, installed.map((r) => r.resource_id), regions, missing.map((m) => m.id)).map(
-      (res) => ({ id: res.id, title: res.title, size_mb: res.routes!.size_mb })
+      (res) => ({ id: dataRegion(res.routes!.url) ?? res.id, title: res.title, size_mb: res.routes!.size_mb })
     )
     return { service: await MapRouteService.serviceState(), regions, missing, extra }
   }
@@ -316,8 +321,10 @@ export class MapService implements IMapService {
       const touched = all.some((r) => installedIds.includes(r.id) || installedIds.includes(siblingVariantId(r.id)))
       if (!touched) continue
       for (const r of all) {
-        if (!r.routes || have.includes(r.id) || missing.includes(r.id)) continue
-        if (out.some((o) => o.id === r.id)) continue
+        const packRegion = dataRegion(r.routes?.url)
+        if (!r.routes || !packRegion || have.includes(packRegion) || missing.includes(packRegion)) continue
+        // Один файл дорог на несколько частей — один раз.
+        if (out.some((o) => dataRegion(o.routes?.url) === packRegion)) continue
         out.push(r)
       }
     }
@@ -359,8 +366,10 @@ export class MapService implements IMapService {
     for (const row of installed) {
       const { found } = findPackages(spec, [row.resource_id])
       const res = found[0]?.resource
-      if (!res?.search || available.includes(res.id)) continue
-      missing.push({ id: res.id, title: res.title, size_mb: res.search.size_mb })
+      const packRegion = dataRegion(res?.search?.url)
+      if (!res?.search || !packRegion || available.includes(packRegion)) continue
+      if (missing.some((m) => m.id === packRegion)) continue
+      missing.push({ id: packRegion, title: res.title, size_mb: res.search.size_mb })
     }
     return { available, missing }
   }
@@ -389,9 +398,14 @@ export class MapService implements IMapService {
     } catch {
       return
     }
-    const installed = new Set(
-      (await InstalledResource.query().where('resource_type', 'map')).map((r) => r.resource_id)
-    )
+    const installedIds = (await InstalledResource.query().where('resource_type', 'map')).map((r) => r.resource_id)
+    const installed = new Set(installedIds)
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    for (const id of installedIds) {
+      const r = findPackages(spec, [id]).found[0]?.resource
+      const packRegion = dataRegion(r?.search?.url)
+      if (packRegion) installed.add(packRegion)
+    }
     const newest = await MapSearchService.files()
     const keep = new Set(newest.values())
     for (const name of names) {
@@ -1247,7 +1261,13 @@ ${err.stderr ?? ''}`)))
         logger.warn({ err }, '[MapService] Failed to remove search index of deleted map')
       }
       try {
-        if (await MapRouteService.removePack(parsed.resource_id)) await MapRouteService.reload(new DockerService())
+        const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+        const regionOf = (id: string) => dataRegion(findPackages(spec, [id]).found[0]?.resource.routes?.url) ?? id
+        const packRegion = regionOf(parsed.resource_id)
+        const others = (await InstalledResource.query().where('resource_type', 'map')).map((r) => regionOf(r.resource_id))
+        if (!others.includes(packRegion) && (await MapRouteService.removePack(packRegion))) {
+          await MapRouteService.reload(new DockerService())
+        }
       } catch (err) {
         logger.warn({ err }, '[MapService] Failed to remove roads of deleted map')
       }
