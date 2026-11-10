@@ -222,6 +222,8 @@ export default function Maps(props: {
                 route={route}
                 onRoute={setRoute}
                 onStepClick={(lon, lat) => setMapCommand({ id: Date.now(), lat, lng: lon, action: 'fly', zoom: 17 })}
+                onFly={(lat, lon, zoom) => setMapCommand({ id: Date.now(), lat, lng: lon, action: 'fly', zoom })}
+                hasSearchIndex={hasSearchIndex}
                 onClose={() => {
                   setLeftPanel(null)
                   setRoutePickMode(null)

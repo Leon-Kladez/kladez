@@ -11,6 +11,7 @@ import {
 } from '@tabler/icons-react'
 
 import api from '~/lib/api'
+import PlaceInput from './PlaceInput'
 import { useMapMarkers } from '~/hooks/useMapMarkers'
 import type { RouteMode, RouteResult } from '../../../app/utils/map_route'
 import { getLocale, t } from '../../../constants/i18n'
@@ -28,6 +29,9 @@ type Props = {
   onStepClick: (lon: number, lat: number) => void
   onClose: () => void
   canChange: boolean
+  /** Перелететь к выбранной точке (город — целиком, дом — близко). */
+  onFly?: (lat: number, lon: number, zoom: number) => void
+  hasSearchIndex?: boolean
 }
 
 const MODES: { id: RouteMode; icon: typeof IconCar }[] = [
@@ -95,13 +99,16 @@ export default function RoutePanel(props: Props) {
       <div className="flex flex-col gap-1">
         <div className="text-xs font-medium text-text-secondary">{t(which === 'from' ? 'routes.from' : 'routes.to')}</div>
         <div className="flex items-center gap-1">
-          <span
-            className={`min-w-0 flex-1 truncate rounded border px-2 py-1 text-sm ${
-              end ? 'border-border-default text-text-primary' : 'border-dashed border-border-default text-text-muted'
-            }`}
-          >
-            {end ? end.label : '—'}
-          </span>
+          <PlaceInput
+            value={end?.label ?? null}
+            placeholder={t('routes.typePlace')}
+            hasIndex={!!props.hasSearchIndex}
+            onPick={(p) => {
+              onEndsChange({ ...ends, [which]: { lat: p.lat, lon: p.lon, label: p.label } })
+              onRoute(null)
+              props.onFly?.(p.lat, p.lon, p.zoom)
+            }}
+          />
           <button
             type="button"
             title={t('routes.pickOnMap')}
