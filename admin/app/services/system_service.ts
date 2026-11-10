@@ -718,8 +718,16 @@ export class SystemService {
       } else {
         const response = await axios.get(
           `${KLADEZ_RELEASES_API_URL}/latest`,
-          { headers: { Accept: 'application/vnd.github+json' }, timeout: 5000 }
+          {
+            headers: { Accept: 'application/vnd.github+json' },
+            timeout: 5000,
+            // 404 — выпусков ещё нет (например, сразу после переезда репозитория): это не ошибка, обновлений просто нет.
+            validateStatus: (s) => (s >= 200 && s < 300) || s === 404,
+          }
         )
+        if (response.status === 404) {
+          return { success: true, updateAvailable: false, currentVersion, latestVersion: currentVersion }
+        }
         if (!response?.data?.tag_name) throw new Error('Invalid response from GitHub API')
         latestVersion = versionFromTag(response.data.tag_name)
       }
