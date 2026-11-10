@@ -43,6 +43,8 @@ export type SpecResource = {
   planned?: boolean
   /** Указатель поиска по карте — файл search-<регион>_<версия>.sqlite, скачивается вместе с картой. */
   search?: { url: string; size_mb: number; sha256?: string; version: string }
+  /** Файл дорог для маршрутов — routes-<регион>_<версия>.tar, скачивается, если маршруты включены. */
+  routes?: { url: string; size_mb: number; sha256?: string; version: string }
 }
 
 export type SpecTier = {

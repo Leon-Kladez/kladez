@@ -41,6 +41,8 @@ import {
   baseAssetsUpToDate,
   buildPackageDownloadParams,
   buildSearchDownloadParams,
+  buildRoutesDownloadParams,
+  routesFilename,
   searchFilename,
   downloadableResources,
   readPmtilesBounds,
@@ -59,6 +61,8 @@ import { tmpdir } from 'os'
 import { promisify } from 'util'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { MapSearchService, SEARCH_FILE_RE } from './map_search_service.js'
+import { MapRouteService, ROUTES_FILE_RE } from './map_route_service.js'
+import { DockerService } from './docker_service.js'
 import { readdir } from 'fs/promises'
 
 const execFileAsync = promisify(execFile)
@@ -206,8 +210,9 @@ export class MapService implements IMapService {
       const params = buildPackageDownloadParams(resource, collectionSlug, pmtilesDir)
       downloadFilenames.push(basename(params.filepath))
       await RunDownloadJob.dispatch(params)
-      // Кладезъ: указатель поиска — вместе с картой.
+      // Кладезъ: указатель поиска — вместе с картой; дороги — если маршруты включены.
       await this.dispatchSearchIndex(resource)
+      if ((await MapRouteService.serviceState()) !== 'none') await this.dispatchRoutesPack(resource)
     }
 
     return downloadFilenames
@@ -239,6 +244,62 @@ export class MapService implements IMapService {
     if (!params) return false
     await RunDownloadJob.dispatch(params)
     return true
+  }
+
+  // ---- Кладезъ: дороги для маршрутов ----
+
+  /** Поставить в очередь файл дорог пакета, если его дорог ещё нет. */
+  private async dispatchRoutesPack(resource: SpecResource): Promise<boolean> {
+    if (!resource.routes) return false
+    const filename = routesFilename(resource.routes.url)
+    if (!filename) return false
+    try {
+      assertNotPrivateUrl(resource.routes.url)
+    } catch {
+      return false
+    }
+    if ((await MapRouteService.installedRegions()).includes(resource.id)) return false
+    if (await RunDownloadJob.getActiveByUrl(resource.routes.url)) return false
+    await MapRouteService.prepare()
+    const params = buildRoutesDownloadParams(
+      resource,
+      MapRouteService.packsDir(),
+      t('routes.packTitle', { title: resource.title })
+    )
+    if (!params) return false
+    await RunDownloadJob.dispatch(params)
+    return true
+  }
+
+  /** Маршруты: программа, дороги каких регионов есть, каких не хватает для установленных карт. */
+  async routesStatus(): Promise<{
+    service: 'none' | 'installing' | 'installed'
+    regions: string[]
+    missing: { id: string; title: string; size_mb: number }[]
+  }> {
+    const regions = await MapRouteService.installedRegions()
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    const installed = await InstalledResource.query().where('resource_type', 'map')
+    const missing: { id: string; title: string; size_mb: number }[] = []
+    for (const row of installed) {
+      const res = findPackages(spec, [row.resource_id]).found[0]?.resource
+      if (!res?.routes || regions.includes(res.id)) continue
+      missing.push({ id: res.id, title: res.title, size_mb: res.routes.size_mb })
+    }
+    return { service: await MapRouteService.serviceState(), regions, missing }
+  }
+
+  /** Включить маршруты: поставить программу и скачать дороги для установленных карт. */
+  async enableRoutes(docker: DockerService): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
+    const service = await MapRouteService.installService(docker)
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    const installed = await InstalledResource.query().where('resource_type', 'map')
+    const queued: string[] = []
+    for (const row of installed) {
+      const res = findPackages(spec, [row.resource_id]).found[0]?.resource
+      if (res && (await this.dispatchRoutesPack(res))) queued.push(res.id)
+    }
+    return { queued, service }
   }
 
   /** Установленные подробные карты и их указатели поиска: что уже есть, чего не хватает. */
@@ -320,6 +381,20 @@ export class MapService implements IMapService {
     for (const url of urls) {
       const filename = url.split('/').pop()
       if (!filename) continue
+
+      // Кладезъ: скачан файл дорог — распаковать в общую папку и перезапустить программу маршрутов.
+      if (ROUTES_FILE_RE.test(filename)) {
+        try {
+          const done = await MapRouteService.installPack(join(MapRouteService.packsDir(), filename))
+          if (done) {
+            logger.info(`[MapService] Roads for ${done.region}: ${done.files} files`)
+            await MapRouteService.reload(new DockerService())
+          }
+        } catch (err) {
+          logger.error({ err }, `[MapService] Failed to unpack roads ${filename}`)
+        }
+        continue
+      }
 
       const parsed = CollectionManifestService.parseMapFilename(filename)
       if (!parsed) continue
@@ -1120,11 +1195,16 @@ ${err.stderr ?? ''}`)))
         .where('resource_type', 'map')
         .delete()
       logger.info(`[MapService] Deleted InstalledResource entry for: ${parsed.resource_id}`)
-      // Кладезъ: указатель поиска удалённой карты больше не нужен.
+      // Кладезъ: указатель поиска и дороги удалённой карты больше не нужны.
       try {
         await this.removeStaleSearchIndexes(true)
       } catch (err) {
         logger.warn({ err }, '[MapService] Failed to remove search index of deleted map')
+      }
+      try {
+        if (await MapRouteService.removePack(parsed.resource_id)) await MapRouteService.reload(new DockerService())
+      } catch (err) {
+        logger.warn({ err }, '[MapService] Failed to remove roads of deleted map')
       }
     }
   }

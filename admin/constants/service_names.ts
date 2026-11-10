@@ -2,6 +2,8 @@ export const SERVICE_NAMES = {
   KIWIX: 'nomad_kiwix_server',
   OLLAMA: 'nomad_ollama',
   QDRANT: 'nomad_qdrant',
+  // Кладезъ: маршруты по карте без интернета (Valhalla) — служебная программа, ставится по кнопке.
+  ROUTES: 'nomad_valhalla',
   CYBERCHEF: 'nomad_cyberchef',
   FLATNOTES: 'nomad_flatnotes',
   KOLIBRI: 'nomad_kolibri',

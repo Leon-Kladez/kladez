@@ -50,6 +50,7 @@ import { uploadRu } from './ru/upload.js'
 import { homeRu } from './ru/home.js'
 import { easySetupRu } from './ru/easySetup.js'
 import { mapsPageRu } from './ru/mapsPage.js'
+import { routesRu } from './ru/routes.js'
 import { zimManagerRu } from './ru/zimManager.js'
 import { appsRu } from './ru/apps.js'
 import { mapsManagerRu } from './ru/mapsManager.js'
@@ -179,6 +180,7 @@ export const ru: Record<MessageKey, string> = {
   ...homeRu,
   ...easySetupRu,
   ...mapsPageRu,
+  ...routesRu,
   ...zimManagerRu,
   ...appsRu,
   ...mapsManagerRu,

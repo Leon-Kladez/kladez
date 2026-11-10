@@ -35,6 +35,15 @@ export const specResourceValidator = vine.object({
   contents: vine.string().optional(),
   // Черновик до первой сборки карт: файла ещё нет, программа такой ресурс не скачивает.
   planned: vine.boolean().optional(),
+  // Файл дорог для маршрутов (Valhalla) — скачивается, если маршруты включены.
+  routes: vine
+    .object({
+      url: vine.string().url(),
+      size_mb: vine.number().min(0),
+      sha256: vine.string().regex(/^[a-f0-9]{64}$/).optional(),
+      version: vine.string(),
+    })
+    .optional(),
   // Указатель поиска по карте (города, улицы, адреса, места) — скачивается вместе с картой.
   search: vine
     .object({

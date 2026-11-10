@@ -70,6 +70,30 @@ export function buildPackageDownloadParams(
 
 export const PMTILES_MIME_TYPES = ['application/vnd.pmtiles', 'application/octet-stream']
 
+/** Имя файла дорог по его адресу; null — адрес не похож на файл дорог. */
+export function routesFilename(url: string): string | null {
+  const name = new URL(url).pathname.split('/').pop() ?? ''
+  return /^routes-[a-z0-9-]+_\d{4}-\d{2}\.tar$/.test(name) ? name : null
+}
+
+/** Загрузка файла дорог региона (маршруты). После скачивания распаковывается и удаляется. */
+export function buildRoutesDownloadParams(resource: SpecResource, packsDir: string, title: string): RunDownloadJobParams | null {
+  const r = resource.routes
+  if (!r) return null
+  const filename = routesFilename(r.url)
+  if (!filename) return null
+  return {
+    url: r.url,
+    expectedSha256: r.sha256,
+    filepath: join(packsDir, filename),
+    timeout: 30000,
+    allowedMimeTypes: ['application/x-tar', 'application/octet-stream'],
+    forceNew: false,
+    filetype: 'map',
+    title,
+  }
+}
+
 /** Имя файла указателя поиска по его адресу; null — адрес не похож на указатель. */
 export function searchFilename(url: string): string | null {
   const name = new URL(url).pathname.split('/').pop() ?? ''

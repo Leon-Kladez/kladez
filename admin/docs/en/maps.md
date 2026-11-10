@@ -23,6 +23,7 @@ On the home page click the **Maps** tile. Drag the map with the mouse, zoom with
 - **Search** — the box at the top: a town, a street and house number, a kind of place (“pharmacy”, “hospital”, “fuel”, “metro”) or its name. Places closer to the part of the map you are looking at come first. Coordinates work too: `55.75, 37.62`.
 - **What's here?** — tap an icon or a building to see its name, kind and address, and add a marker from there.
 - **Markers** — mark important places: a well, a pharmacy, a relative's house.
+- **Route** — the button at the top. Set where from and where to: a point on the map, a marker (“Home”) or “Route from here” / “Route to here” in a place's hint. Choose Car, On foot or Bicycle to see the line on the map, distance, time and step-by-step directions. Traffic is not known: time is estimated from usual speeds. The first time, press “Enable routes” (the routing program and the roads of your maps are downloaded).
 - **Icons** — pharmacies, hospitals, clinics, police, fire stations, metro, fuel, banks and more have their own icons; zoomed out, only the most important ones show. House numbers appear as you zoom in.
 
 Outside the countries you downloaded, the map is blank or very rough — that is normal.

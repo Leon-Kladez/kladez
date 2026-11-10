@@ -10,6 +10,9 @@ type PlaceInfoPopupProps = {
   onClose: () => void
   onAddMarker: () => void
   onMouseEnter?: () => void
+  /** Кладезъ: поставить эту точку началом или концом маршрута. */
+  onRouteFrom?: () => void
+  onRouteTo?: () => void
 }
 
 /** Кладезъ: что это за место — по нажатию на значок или дом. */
@@ -20,6 +23,8 @@ export default function PlaceInfoPopup({
   onClose,
   onAddMarker,
   onMouseEnter,
+  onRouteFrom,
+  onRouteTo,
 }: PlaceInfoPopupProps) {
   return (
     <Popup
@@ -55,6 +60,29 @@ export default function PlaceInfoPopup({
         {!info.address && info.street && (
           <div className="mt-1 text-xs text-gray-700">
             {t('mapsUi.nearStreet')}: {info.street}
+          </div>
+        )}
+
+        {(onRouteFrom || onRouteTo) && (
+          <div className="mt-2 flex justify-end gap-1.5">
+            {onRouteFrom && (
+              <button
+                type="button"
+                onClick={onRouteFrom}
+                className="rounded border border-[#424420] px-2.5 py-1 text-xs text-[#424420] hover:bg-gray-100 outline-none"
+              >
+                {t('routes.setFrom')}
+              </button>
+            )}
+            {onRouteTo && (
+              <button
+                type="button"
+                onClick={onRouteTo}
+                className="rounded border border-[#424420] px-2.5 py-1 text-xs text-[#424420] hover:bg-gray-100 outline-none"
+              >
+                {t('routes.setTo')}
+              </button>
+            )}
           </div>
         )}
 

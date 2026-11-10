@@ -50,6 +50,7 @@ import { uploadEn } from './en/upload.js'
 import { homeEn } from './en/home.js'
 import { easySetupEn } from './en/easySetup.js'
 import { mapsPageEn } from './en/mapsPage.js'
+import { routesEn } from './en/routes.js'
 import { zimManagerEn } from './en/zimManager.js'
 import { appsEn } from './en/apps.js'
 import { mapsManagerEn } from './en/mapsManager.js'
@@ -179,6 +180,7 @@ export const en = {
   ...homeEn,
   ...easySetupEn,
   ...mapsPageEn,
+  ...routesEn,
   ...zimManagerEn,
   ...appsEn,
   ...mapsManagerEn,

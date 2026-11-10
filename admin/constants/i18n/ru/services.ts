@@ -5,6 +5,8 @@ export const servicesRu: Record<keyof typeof servicesEn, string> = {
   'services.nomad_kiwix_server.description': 'Википедия, медицинские справочники, инструкции и энциклопедии без интернета',
   'services.nomad_qdrant.title': 'База для поиска Qdrant',
   'services.nomad_qdrant.description': 'Служебная база, в которой ИИ-помощник ищет по вашим материалам',
+  'services.nomad_valhalla.title': 'Маршруты по карте',
+  'services.nomad_valhalla.description': 'Маршруты без интернета: на машине, пешком и на велосипеде',
   'services.nomad_ollama.title': 'ИИ-помощник',
   'services.nomad_ollama.description': 'ИИ-помощник прямо на вашем компьютере — интернет не нужен',
   'services.nomad_cyberchef.title': 'Работа с данными',

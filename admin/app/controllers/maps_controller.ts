@@ -17,6 +17,9 @@ import { t } from '../../constants/i18n/index.js'
 import logger from '@adonisjs/core/services/logger'
 import { humanizeError } from '../utils/user_errors.js'
 import { MapSearchService } from '#services/map_search_service'
+import { MapRouteService, RouteError } from '#services/map_route_service'
+import { DockerService } from '#services/docker_service'
+import { ROUTE_MODES, type RouteMode } from '../utils/map_route.js'
 import { getLocale } from '../../constants/i18n/index.js'
 
 const searchQueryValidator = vine.compile(
@@ -25,6 +28,15 @@ const searchQueryValidator = vine.compile(
     lat: vine.number().min(-90).max(90).optional(),
     lon: vine.number().min(-180).max(180).optional(),
     limit: vine.number().min(1).max(50).optional(),
+  })
+)
+const routeQueryValidator = vine.compile(
+  vine.object({
+    fromLat: vine.number().min(-90).max(90),
+    fromLon: vine.number().min(-180).max(180),
+    toLat: vine.number().min(-90).max(90),
+    toLon: vine.number().min(-180).max(180),
+    mode: vine.enum(ROUTE_MODES),
   })
 )
 const searchPointValidator = vine.compile(
@@ -77,6 +89,38 @@ export default class MapsController {
     } catch (error) {
       logger.warn({ err: error }, '[MapsController] address lookup failed')
       return { address: null }
+    }
+  }
+
+  // ---- Кладезъ: маршруты ----
+
+  /** Маршрут — GET: только чтение, работает и с телефона. */
+  async route({ request, response }: HttpContext) {
+    const q = await routeQueryValidator.validate(request.qs())
+    try {
+      return await MapRouteService.route(
+        new DockerService(),
+        { lat: q.fromLat, lon: q.fromLon },
+        { lat: q.toLat, lon: q.toLon },
+        q.mode as RouteMode
+      )
+    } catch (error) {
+      const key = error instanceof RouteError ? error.key : 'routes.failed'
+      if (!(error instanceof RouteError)) logger.error({ err: error }, '[MapsController] route failed')
+      return response.status(422).send({ key, message: t(key as any) })
+    }
+  }
+
+  async routesStatus({}: HttpContext) {
+    return await this.mapService.routesStatus()
+  }
+
+  async routesEnable({ response }: HttpContext) {
+    try {
+      return await this.mapService.enableRoutes(new DockerService())
+    } catch (error) {
+      logger.error({ err: error }, '[MapsController] enable routes failed')
+      return response.status(502).send({ message: humanizeError(error) })
     }
   }
 

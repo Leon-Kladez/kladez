@@ -1,6 +1,8 @@
 import Map, {
   FullscreenControl,
+  Layer,
   Marker,
+  Source,
   MapProvider,
   NavigationControl,
   ScaleControl,
@@ -26,6 +28,8 @@ import { shortPlaceLabel, type PlaceInfo } from '~/lib/map_place_info'
 import { placeAt } from './place_query'
 import { t } from '../../../constants/i18n'
 import api from '~/lib/api'
+import type { RouteResult } from '../../../app/utils/map_route'
+import type { RouteEnd } from './RoutePanel'
 
 type ScaleUnit = 'imperial' | 'metric' | 'nautical'
 
@@ -48,6 +52,11 @@ type MapComponentProps = {
   startBounds?: [number, number, number, number] | null
   /** Кладезъ: скачан ли указатель поиска (тогда в подсказке — точный адрес). */
   hasSearchIndex?: boolean
+  /** Кладезъ: маршрут — линия, точки, выбор точки нажатием на карту. */
+  route?: RouteResult | null
+  routeEnds?: { from: RouteEnd | null; to: RouteEnd | null }
+  routePickMode?: 'from' | 'to' | null
+  onRoutePoint?: (which: 'from' | 'to', end: RouteEnd) => void
 }
 
 type MapLocationParams = {
@@ -152,6 +161,10 @@ export default function MapComponent({
                                        showCoordinatesEnabled = true,
                                        startBounds = null,
                                        hasSearchIndex = false,
+                                       route = null,
+                                       routeEnds,
+                                       routePickMode = null,
+                                       onRoutePoint,
                                      }: MapComponentProps) {
   const mapRef = useRef<MapRef>(null)
   const animationFrameRef = useRef<number | null>(null)
@@ -180,6 +193,19 @@ export default function MapComponent({
   }, [])
 
   useEffect(() => () => unregisterIconsRef.current?.(), [])
+
+  // Кладезъ: новый маршрут — показать целиком.
+  useEffect(() => {
+    if (!route) return
+    const [w, s, e, n] = route.bounds
+    mapRef.current?.fitBounds(
+      [
+        [w, s],
+        [e, n],
+      ],
+      { padding: { top: 120, bottom: 60, left: 380, right: 60 }, duration: 1200, maxZoom: 17 }
+    )
+  }, [route])
 
   const getInitialScaleUnit = (): ScaleUnit => {
     const stored = localStorage.getItem('nomad:map-scale-unit')
@@ -333,6 +359,18 @@ export default function MapComponent({
     (e: MapLayerMouseEvent) => {
       if (!confirmDiscardMarkerChanges()) return
 
+      // Кладезъ: выбирается точка маршрута — нажатие ставит её, без подсказок и меток.
+      if (routePickMode && onRoutePoint) {
+        const map = mapRef.current?.getMap()
+        const info = map ? placeAt(map, e.point.x, e.point.y, false) : null
+        onRoutePoint(routePickMode, {
+          lat: e.lngLat.lat,
+          lon: e.lngLat.lng,
+          label: info ? shortPlaceLabel(info) : t('routes.point', { coords: `${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}` }),
+        })
+        return
+      }
+
       // Кладезъ: нажали на место или дом — сначала подсказка «что здесь», метка — кнопкой в ней.
       if (placeInfo) {
         // Нажатие мимо открытой подсказки — просто закрыть её.
@@ -366,7 +404,7 @@ export default function MapComponent({
       setHasUnsavedMarkerChanges(false)
       setTargetIndicator(null)
     },
-    [confirmDiscardMarkerChanges, placingMarker, placeInfo, hasSearchIndex]
+    [confirmDiscardMarkerChanges, placingMarker, placeInfo, hasSearchIndex, routePickMode, onRoutePoint]
   )
 
   const handleMouseMove = useCallback(
@@ -453,7 +491,7 @@ export default function MapComponent({
           ref={setMapRef}
           reuseMaps
           style={{ width: '100%', height: '100vh' }}
-          cursor={isDraggingMap ? 'grabbing' : hoverPlaceLabel ? 'pointer' : 'crosshair'}
+          cursor={isDraggingMap ? 'grabbing' : routePickMode ? 'copy' : hoverPlaceLabel ? 'pointer' : 'crosshair'}
           mapStyle={`${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/maps/styles`}
           mapLib={maplibregl}
           // «Кладезъ»: подсказки кнопок карты на языке панели, а не «Zoom in».
@@ -515,6 +553,46 @@ export default function MapComponent({
             />
           )}
 
+          {route && (
+            <Source
+              id="kz-route"
+              type="geojson"
+              data={{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: route.line } }}
+            >
+              <Layer
+                id="kz-route-casing"
+                type="line"
+                layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+                paint={{ 'line-color': '#ffffff', 'line-width': 9 }}
+              />
+              <Layer
+                id="kz-route-line"
+                type="line"
+                layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+                paint={{
+                  'line-color': route.mode === 'pedestrian' ? '#7c3aed' : route.mode === 'bicycle' ? '#15803d' : '#2563eb',
+                  'line-width': 5,
+                }}
+              />
+            </Source>
+          )}
+
+          {(['from', 'to'] as const).map((which) => {
+            const end = routeEnds?.[which]
+            if (!end) return null
+            return (
+              <Marker key={`route-${which}`} longitude={end.lon} latitude={end.lat} anchor="bottom">
+                <div
+                  className={`pointer-events-none flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-sm font-bold text-white shadow-lg ${
+                    which === 'from' ? 'bg-green-700' : 'bg-red-700'
+                  }`}
+                >
+                  {which === 'from' ? 'А' : 'Б'}
+                </div>
+              </Marker>
+            )
+          })}
+
           {targetIndicator && (
             <Marker longitude={targetIndicator.lng} latitude={targetIndicator.lat} anchor="center">
               <div
@@ -573,6 +651,22 @@ export default function MapComponent({
               info={placeInfo.info}
               onMouseEnter={hideCoordinates}
               onClose={() => setPlaceInfo(null)}
+              onRouteFrom={
+                onRoutePoint
+                  ? () => {
+                      onRoutePoint('from', { lat: placeInfo.lat, lon: placeInfo.lng, label: shortPlaceLabel(placeInfo.info) })
+                      setPlaceInfo(null)
+                    }
+                  : undefined
+              }
+              onRouteTo={
+                onRoutePoint
+                  ? () => {
+                      onRoutePoint('to', { lat: placeInfo.lat, lon: placeInfo.lng, label: shortPlaceLabel(placeInfo.info) })
+                      setPlaceInfo(null)
+                    }
+                  : undefined
+              }
               onAddMarker={() => {
                 setPlacingMarker({ lng: placeInfo.lng, lat: placeInfo.lat })
                 setPlaceInfo(null)

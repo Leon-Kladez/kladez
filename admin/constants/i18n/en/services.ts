@@ -3,6 +3,8 @@ export const servicesEn = {
   'services.nomad_kiwix_server.description': 'Offline access to Wikipedia, medical references, how-to guides, and encyclopedias',
   'services.nomad_qdrant.title': 'Qdrant Vector Database',
   'services.nomad_qdrant.description': 'Vector database for storing and searching embeddings',
+  'services.nomad_valhalla.title': 'Map routes',
+  'services.nomad_valhalla.description': 'Offline routes on the map: by car, on foot and by bicycle',
   'services.nomad_ollama.title': 'AI Assistant',
   'services.nomad_ollama.description': 'Local AI chat that runs entirely on your hardware - no internet required',
   'services.nomad_cyberchef.title': 'Data Tools',

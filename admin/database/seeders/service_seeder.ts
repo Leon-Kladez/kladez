@@ -92,6 +92,34 @@ export default class ServiceSeeder extends BaseSeeder {
       depends_on: null,
     },
     {
+      // Кладезъ: маршруты по карте без интернета. Файлы дорог — в storage/maps/routes/tiles,
+      // настройки и запуск — start.sh, который пишет панель (MapRouteService). Наружу порт не открыт:
+      // к программе обращается только панель по внутренней сети.
+      service_name: SERVICE_NAMES.ROUTES,
+      friendly_name: 'Map routes',
+      powered_by: 'Valhalla',
+      display_order: 101,
+      description: 'Offline routes on the map: by car, on foot and by bicycle',
+      icon: 'IconRoute',
+      container_image: 'ghcr.io/valhalla/valhalla:3.9.1',
+      source_repo: 'https://github.com/valhalla/valhalla',
+      container_command: 'bash /data/start.sh',
+      container_config: JSON.stringify({
+        HostConfig: {
+          RestartPolicy: { Name: 'unless-stopped' },
+          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/maps/routes:/data`],
+        },
+        ExposedPorts: { '8002/tcp': {} },
+      }),
+      ui_location: '8002',
+      installed: false,
+      installation_status: 'idle',
+      is_dependency_service: true,
+      is_custom: false,
+      category: null,
+      depends_on: null,
+    },
+    {
       service_name: SERVICE_NAMES.OLLAMA,
       friendly_name: 'AI Assistant',
       powered_by: 'Ollama',

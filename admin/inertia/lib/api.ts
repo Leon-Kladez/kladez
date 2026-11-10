@@ -23,6 +23,7 @@ import { chatStreamErrorMessage } from './chat_stream.js'
 import { t } from '../../constants/i18n/index.js'
 import { errorText } from './error_text.js'
 import type { MapSearchResult } from '../../types/maps'
+import type { RouteResult } from '../../app/utils/map_route.js'
 
 export type PhonesInfo = {
   device: { isComputer: boolean; canChange: boolean }
@@ -159,6 +160,42 @@ class API {
     } catch {
       return null
     }
+  }
+
+  /** Кладезъ: маршрут без интернета; ошибка — {message} с понятной причиной. */
+  async mapRoute(
+    from: { lat: number; lon: number },
+    to: { lat: number; lon: number },
+    mode: 'auto' | 'pedestrian' | 'bicycle'
+  ): Promise<{ route: RouteResult } | { message: string }> {
+    try {
+      const response = await this.client.get<RouteResult>('/maps/route', {
+        params: { fromLat: from.lat, fromLon: from.lon, toLat: to.lat, toLon: to.lon, mode },
+      })
+      return { route: response.data }
+    } catch (error: any) {
+      return { message: error?.response?.data?.message || t('routes.failed') }
+    }
+  }
+
+  async mapRoutesStatus(): Promise<{
+    service: 'none' | 'installing' | 'installed'
+    regions: string[]
+    missing: { id: string; title: string; size_mb: number }[]
+  } | null> {
+    try {
+      const response = await this.client.get('/maps/routes/status')
+      return response.data
+    } catch {
+      return null
+    }
+  }
+
+  async enableMapRoutes(): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
+    return catchInternal(async () => {
+      const response = await this.client.post('/maps/routes/enable')
+      return response.data
+    })()
   }
 
   async mapSearchStatus(): Promise<{ available: string[]; missing: { id: string; title: string; size_mb: number }[] } | null> {

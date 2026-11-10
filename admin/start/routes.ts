@@ -266,6 +266,18 @@ router
       summary: 'Nearest known address to a point',
       tags: ['maps'],
     })
+    documented(router.get('/route', [MapsController, 'route']), {
+      summary: 'Offline route between two points (car, on foot, bicycle)',
+      tags: ['maps'],
+    })
+    documented(router.get('/routes/status', [MapsController, 'routesStatus']), {
+      summary: 'Routes: routing program and roads for installed maps',
+      tags: ['maps'],
+    })
+    documented(router.post('/routes/enable', [MapsController, 'routesEnable']), {
+      summary: 'Install the routing program and download roads for installed maps',
+      tags: ['maps'],
+    })
     documented(router.get('/search/status', [MapsController, 'searchStatus']), {
       summary: 'Search indexes: downloaded and missing for installed maps',
       tags: ['maps'],
