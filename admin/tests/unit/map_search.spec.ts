@@ -103,6 +103,16 @@ function makeIndex(dir: string) {
     item.run(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10])
     fts.run(r[0], r[3], r[4] ?? '', r[11], r[5] ?? '')
   }
+  // 400 дальних аптек с «аптека» в названии — ближняя «Ригла» (только по виду) не должна потеряться.
+  for (let k = 0; k < 400; k++) {
+    item.run(1000 + k, 'poi', 'pharmacy', `Аптека ${k}`, null, 'Тверь', null, null, 56.86, 35.9, 45)
+    fts.run(1000 + k, `Аптека ${k}`, '', 'аптека pharmacy', 'Тверь')
+  }
+  // Больница дважды: точкой и зданием рядом — в выдаче один раз.
+  item.run(2000, 'poi', 'hospital', 'Морозовская больница', null, 'Москва', null, null, 55.7270, 37.6240, 70)
+  fts.run(2000, 'Морозовская больница', '', 'больница hospital', 'Москва')
+  item.run(2001, 'poi', 'hospital', 'Морозовская больница', null, 'Москва', null, null, 55.7275, 37.6250, 70)
+  fts.run(2001, 'Морозовская больница', '', 'больница hospital', 'Москва')
   // Сотни мест «в Москве» (совпадают по полю город) — сам город не должен из-за них пропасть.
   for (let k = 0; k < 400; k++) {
     item.run(100 + k, 'poi', 'cafe', `Кафе ${k}`, null, 'Москва', null, null, 55.75, 37.6, 30)
@@ -142,11 +152,14 @@ test('поиск по указателю: улица с домом, места, 
 
     // По виду места: ближайшая аптека первой — даже если у дальней название ровно «Аптека».
     const a = await MapSearchService.search('аптека', { lat: 55.3, lon: 37.0 })
-    assert.equal(a.length, 3)
     assert.equal(a[0].name, '')
     assert.equal(a[1].name, 'Аптека')
-    assert.equal(a[2].name, 'Ригла')
-    assert.equal(a[2].address, 'Пятницкая улица, 7')
+    // У Пятницкой — «Ригла» первой, хотя 400 дальних аптек называются «Аптека …».
+    const near = await MapSearchService.search('аптека', { lat: 55.744, lon: 37.627 })
+    assert.equal(near[0].name, 'Ригла')
+    assert.equal(near[0].address, 'Пятницкая улица, 7')
+    const h = await MapSearchService.search('морозовская', { lat: 55.744, lon: 37.627 })
+    assert.equal(h.filter((x) => x.name === 'Морозовская больница').length, 1)
 
     // «школа 5» — и как «Школа № 5».
     const s = await MapSearchService.search('школа 5')

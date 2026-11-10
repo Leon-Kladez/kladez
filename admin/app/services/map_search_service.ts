@@ -58,7 +58,12 @@ export function newestPerRegion(names: string[]): Map<string, string> {
  *  • по городу — лишь когда слов несколько («пятницкая москва»);
  *  • населённые пункты — отдельно, чтобы город всегда был среди кандидатов.
  */
-function searchRows(db: DatabaseSync, match: string, wordCount: number): Row[] {
+function searchRows(
+  db: DatabaseSync,
+  match: string,
+  wordCount: number,
+  near: { lat: number; lon: number } | null
+): Row[] {
   const byName = `{name name_en words}: (${match})`
   const sql = (extra: string, limit: number) =>
     `SELECT i.* FROM items_fts JOIN items i ON i.id = items_fts.rowid
@@ -68,6 +73,27 @@ function searchRows(db: DatabaseSync, match: string, wordCount: number): Row[] {
     for (const r of list as Row[]) if (!rows.has(r.id)) rows.set(r.id, r)
   }
   add(db.prepare(sql(`AND i.cls = 'place'`, 30)).all(byName))
+  // Рядом с открытым местом карты (~15 км): аптек в округе тысячи — ближние не должны теряться.
+  if (near) {
+    const dLat = 0.14
+    const dLon = 0.14 / Math.max(0.2, Math.cos((near.lat * Math.PI) / 180))
+    add(
+      db
+        .prepare(sql('AND i.lat BETWEEN ? AND ? AND i.lon BETWEEN ? AND ?', 300))
+        .all(byName, near.lat - dLat, near.lat + dLat, near.lon - dLon, near.lon + dLon)
+    )
+  }
+  // По виду места («аптека», «метро») совсем рядом (~3 км): иначе ближнюю «Ригла» вытесняют
+  // сотни «Аптека …» в названиях по всему округу.
+  if (near) {
+    const dLat = 0.03
+    const dLon = 0.03 / Math.max(0.2, Math.cos((near.lat * Math.PI) / 180))
+    add(
+      db
+        .prepare(sql('AND i.lat BETWEEN ? AND ? AND i.lon BETWEEN ? AND ?', 200))
+        .all(`{words}: (${match})`, near.lat - dLat, near.lat + dLat, near.lon - dLon, near.lon + dLon)
+    )
+  }
   add(db.prepare(sql('', 300)).all(byName))
   if (wordCount > 1) add(db.prepare(sql('', 300)).all(match))
   return [...rows.values()]
@@ -166,21 +192,19 @@ export class MapSearchService {
 
     const scored: { r: MapSearchResult; score: number }[] = []
     const seen = new Set<string>()
-    const places: MapSearchResult[] = []
+    const kept: MapSearchResult[] = []
+    // Одно и то же бывает в данных дважды: город точкой и границей (середина границы — за
+    // несколько км), больница точкой и зданием. Повтор рядом — не показываем.
+    const twinRadiusKm = { place: 15, street: 1.5, poi: 0.4, house: 0.05 } as const
     const push = (r: MapSearchResult, score: number) => {
       if (seen.has(r.id)) return
-      // Один и тот же город бывает в данных дважды (точка и граница; середина границы — за
-      // несколько км от центра) — показываем один раз.
-      if (r.cls === 'place') {
-        const twin = places.find((p) => p.kind === r.kind && p.name === r.name && distanceKm(p.lat, p.lon, r.lat, r.lon) < 15)
-        if (twin) return
-        places.push(r)
-      } else {
-        const dup = `${r.cls}|${r.kind}|${r.name}|${r.city}|${Math.round(r.lat * 20)}|${Math.round(r.lon * 20)}`
-        if (seen.has(dup)) return
-        seen.add(dup)
-      }
+      const radius = twinRadiusKm[r.cls] ?? 0.1
+      const twin = kept.find(
+        (p) => p.cls === r.cls && p.kind === r.kind && p.name === r.name && distanceKm(p.lat, p.lon, r.lat, r.lon) < radius
+      )
+      if (twin) return
       seen.add(r.id)
+      kept.push(r)
       scored.push({ r, score })
     }
 
@@ -190,7 +214,7 @@ export class MapSearchService {
         if (!match) continue
         let rows: Row[]
         try {
-          rows = searchRows(db, match, q.words.length)
+          rows = searchRows(db, match, q.words.length, hasPos ? { lat: opts.lat!, lon: opts.lon! } : null)
         } catch (err) {
           logger.warn({ err }, `[MapSearch] ошибка запроса «${match}» в ${region}`)
           continue

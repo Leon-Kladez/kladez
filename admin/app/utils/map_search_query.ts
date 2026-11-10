@@ -107,7 +107,8 @@ export function scoreResult(opts: {
   // Места между собой различаются мало (безымянная аптека за углом нужнее известной в 5 км).
   let score = opts.cls === 'poi' ? 40 + (opts.rank - 40) * 0.25 : opts.rank
   if (q && name === q) score += 50 * k
-  else if (q && name.startsWith(q)) score += 30 * k
+  // «Аптекарский переулок» по запросу «аптека» — не начало названия: нужно целое слово.
+  else if (q && name.startsWith(q) && /^[\s,.-]?$/.test(name.charAt(q.length))) score += 30 * k
   else if (opts.words.length > 0 && name.split(/[\s-]+/).some((w) => w === opts.words[0])) score += 15 * k
   // Близость важна: «аптека» — ближайшая, а не самая известная в области.
   if (opts.distanceKm !== null) score -= 30 * Math.log10(1 + opts.distanceKm)
