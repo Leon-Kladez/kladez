@@ -108,7 +108,7 @@ export default function Maps(props: {
               title={t('routes.button')}
             >
               <IconRoute size={18} />
-              <span className="hidden md:inline">{t('routes.button')}</span>
+              <span>{t('routes.button')}</span>
             </button>
 
             {canChange && (

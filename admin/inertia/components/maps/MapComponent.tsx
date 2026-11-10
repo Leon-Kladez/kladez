@@ -388,7 +388,17 @@ export default function MapComponent({
         return
       }
       const map = mapRef.current?.getMap()
-      const info = map ? placeAt(map, e.point.x, e.point.y, true) : null
+      // Пустое место — тоже «что здесь»: координаты, маршрут отсюда/сюда, метка — по кнопке.
+      const info =
+        (map ? placeAt(map, e.point.x, e.point.y, true) : null) ??
+        (!placingMarker
+          ? {
+              title: t('routes.point', { coords: `${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}` }),
+              kind: null,
+              house: null,
+              street: null,
+            }
+          : null)
       if (info && !placingMarker) {
         const at = { lng: e.lngLat.lng, lat: e.lngLat.lat }
         setPlaceInfo({ ...at, info })

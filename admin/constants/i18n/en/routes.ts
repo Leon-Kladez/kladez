@@ -36,5 +36,10 @@ export const routesEn = {
   'routes.noData': 'There are no roads here in the downloaded maps. Download the map of this region with routes.',
   'routes.tooFar': 'The points are too far apart for this way of travel.',
   'routes.failed': 'Could not build the route.',
+  'routes.gap': 'The route goes through a region whose roads are not downloaded. Download the roads of the whole country below.',
+  'routes.allTitle': 'Routes across neighbouring regions',
+  'routes.allText': 'Roads of regions without a downloaded map ({regions}) — {size} MB. With them, routes go across the whole country.',
+  'routes.allButton': 'Download roads of the whole country',
+  'routes.allQueued': 'Downloading roads. Progress is shown in Map Management.',
   'routes.computerOnly': 'Routes are enabled on the computer itself.',
 } as const

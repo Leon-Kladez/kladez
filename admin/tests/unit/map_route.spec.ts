@@ -86,6 +86,7 @@ test('ответ Valhalla → расстояние, время, линия, по
 test('ошибки Valhalla → понятная причина', () => {
   assert.equal(routeErrorKey({ error_code: 442 }), 'routes.noRoad')
   assert.equal(routeErrorKey({ error_code: 171 }), 'routes.noData')
+  assert.equal(routeErrorKey({ error_code: 170 }), 'routes.gap')
   assert.equal(routeErrorKey({ error_code: 154 }), 'routes.tooFar')
   assert.equal(routeErrorKey({}), 'routes.failed')
 })

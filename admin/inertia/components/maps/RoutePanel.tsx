@@ -55,6 +55,8 @@ export default function RoutePanel(props: Props) {
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<Awaited<ReturnType<typeof api.mapRoutesStatus>>>(null)
   const [enableMessage, setEnableMessage] = useState<string | null>(null)
+  const [allMessage, setAllMessage] = useState<string | null>(null)
+  const [errorKey, setErrorKey] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -70,12 +72,14 @@ export default function RoutePanel(props: Props) {
     if (!ends.from || !ends.to) return
     setLoading(true)
     setError(null)
+    setErrorKey(null)
     const res = await api.mapRoute(ends.from, ends.to, m)
     setLoading(false)
     if ('route' in res) onRoute(res.route)
     else {
       onRoute(null)
       setError(res.message)
+      setErrorKey(res.key ?? null)
     }
   }
 
@@ -242,6 +246,45 @@ export default function RoutePanel(props: Props) {
         </div>
 
         {error && <p className="text-sm text-red-700">{error}</p>}
+
+        {/* Дороги соседних регионов без скачанной карты: маршрут через всю страну. */}
+        {ready && status && status.extra.length > 0 && (errorKey === 'routes.gap' || allMessage || error === null) && (
+          <div
+            className={`rounded border p-2 text-sm text-text-secondary ${
+              errorKey === 'routes.gap' ? 'border-desert-green bg-surface-secondary' : 'border-border-default'
+            }`}
+          >
+            <div className="font-medium text-text-primary">{t('routes.allTitle')}</div>
+            <p className="mt-1">
+              {t('routes.allText', {
+                regions: status.extra.map((r) => r.title.replace(/ федеральный округ/i, '')).join(', '),
+                size: status.extra.reduce((n, r) => n + r.size_mb, 0),
+              })}
+            </p>
+            {props.canChange ? (
+              allMessage ? (
+                <p className="mt-2 text-text-primary">{allMessage}</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api.enableMapRoutes(true)
+                      setAllMessage(t('routes.allQueued'))
+                    } catch {
+                      setAllMessage(t('routes.failed'))
+                    }
+                  }}
+                  className="mt-2 rounded bg-desert-green px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                >
+                  {t('routes.allButton')}
+                </button>
+              )
+            ) : (
+              <p className="mt-1">{t('routes.computerOnly')}</p>
+            )}
+          </div>
+        )}
 
         {route && (
           <div className="flex flex-col gap-1">

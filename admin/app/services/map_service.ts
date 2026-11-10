@@ -276,6 +276,7 @@ export class MapService implements IMapService {
     service: 'none' | 'installing' | 'installed'
     regions: string[]
     missing: { id: string; title: string; size_mb: number }[]
+    extra: { id: string; title: string; size_mb: number }[]
   }> {
     const regions = await MapRouteService.installedRegions()
     const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
@@ -286,11 +287,37 @@ export class MapService implements IMapService {
       if (!res?.routes || regions.includes(res.id)) continue
       missing.push({ id: res.id, title: res.title, size_mb: res.routes.size_mb })
     }
-    return { service: await MapRouteService.serviceState(), regions, missing }
+    const extra = this.neighbourRoads(spec, installed.map((r) => r.resource_id), regions, missing.map((m) => m.id)).map(
+      (res) => ({ id: res.id, title: res.title, size_mb: res.routes!.size_mb })
+    )
+    return { service: await MapRouteService.serviceState(), regions, missing, extra }
+  }
+
+  /**
+   * Дороги регионов той же страны, карта которых не скачана: маршрут Москва → Екатеринбург идёт
+   * через Поволжье, и без его дорог не строится. Карта для дорог не нужна.
+   */
+  private neighbourRoads(spec: MapsSpec | null, installedIds: string[], have: string[], missing: string[]): SpecResource[] {
+    const out: SpecResource[] = []
+    for (const col of spec?.collections ?? []) {
+      const all = downloadableResources(col.resources)
+      // Только страны, где у человека уже есть хоть одна карта.
+      const touched = all.some((r) => installedIds.includes(r.id) || installedIds.includes(siblingVariantId(r.id)))
+      if (!touched) continue
+      for (const r of all) {
+        if (!r.routes || have.includes(r.id) || missing.includes(r.id)) continue
+        if (out.some((o) => o.id === r.id)) continue
+        out.push(r)
+      }
+    }
+    return out
   }
 
   /** Включить маршруты: поставить программу и скачать дороги для установленных карт. */
-  async enableRoutes(docker: DockerService): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
+  async enableRoutes(
+    docker: DockerService,
+    opts: { all?: boolean } = {}
+  ): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
     const service = await MapRouteService.installService(docker)
     const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
     const installed = await InstalledResource.query().where('resource_type', 'map')
@@ -298,6 +325,13 @@ export class MapService implements IMapService {
     for (const row of installed) {
       const res = findPackages(spec, [row.resource_id]).found[0]?.resource
       if (res && (await this.dispatchRoutesPack(res))) queued.push(res.id)
+    }
+    // «Дороги всей страны»: и регионы без скачанной карты — чтобы маршрут шёл через них.
+    if (opts.all) {
+      const have = await MapRouteService.installedRegions()
+      for (const res of this.neighbourRoads(spec, installed.map((r) => r.resource_id), have, queued)) {
+        if (await this.dispatchRoutesPack(res)) queued.push(res.id)
+      }
     }
     return { queued, service }
   }

@@ -115,9 +115,10 @@ export default class MapsController {
     return await this.mapService.routesStatus()
   }
 
-  async routesEnable({ response }: HttpContext) {
+  async routesEnable({ request, response }: HttpContext) {
     try {
-      return await this.mapService.enableRoutes(new DockerService())
+      const all = request.input('all') === true || request.input('all') === 'true'
+      return await this.mapService.enableRoutes(new DockerService(), { all })
     } catch (error) {
       logger.error({ err: error }, '[MapsController] enable routes failed')
       return response.status(502).send({ message: humanizeError(error) })

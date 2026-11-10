@@ -167,14 +167,14 @@ class API {
     from: { lat: number; lon: number },
     to: { lat: number; lon: number },
     mode: 'auto' | 'pedestrian' | 'bicycle'
-  ): Promise<{ route: RouteResult } | { message: string }> {
+  ): Promise<{ route: RouteResult } | { message: string; key?: string }> {
     try {
       const response = await this.client.get<RouteResult>('/maps/route', {
         params: { fromLat: from.lat, fromLon: from.lon, toLat: to.lat, toLon: to.lon, mode },
       })
       return { route: response.data }
     } catch (error: any) {
-      return { message: error?.response?.data?.message || t('routes.failed') }
+      return { message: error?.response?.data?.message || t('routes.failed'), key: error?.response?.data?.key }
     }
   }
 
@@ -182,6 +182,7 @@ class API {
     service: 'none' | 'installing' | 'installed'
     regions: string[]
     missing: { id: string; title: string; size_mb: number }[]
+    extra: { id: string; title: string; size_mb: number }[]
   } | null> {
     try {
       const response = await this.client.get('/maps/routes/status')
@@ -191,9 +192,9 @@ class API {
     }
   }
 
-  async enableMapRoutes(): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
+  async enableMapRoutes(all: boolean = false): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
     return catchInternal(async () => {
-      const response = await this.client.post('/maps/routes/enable')
+      const response = await this.client.post('/maps/routes/enable', { all })
       return response.data
     })()
   }

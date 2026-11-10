@@ -119,11 +119,16 @@ export function parseValhallaRoute(body: any, mode: RouteMode): RouteResult {
 }
 
 /** Код ошибки Valhalla → понятная причина (ключ перевода). */
-export function routeErrorKey(body: any): 'routes.noRoad' | 'routes.tooFar' | 'routes.noData' | 'routes.failed' {
+export function routeErrorKey(
+  body: any
+): 'routes.noRoad' | 'routes.tooFar' | 'routes.noData' | 'routes.gap' | 'routes.failed' {
   const code = Number(body?.error_code)
-  // 171: нет пути; 442: нет маршрута между точками; 170/171 — точки не на дорогах.
+  // 170 — точки в несвязанных кусках дорог: путь идёт через регион, дороги которого не скачаны.
+  if (code === 170) return 'routes.gap'
+  // 442/443 — дороги есть, но пути между точками нет.
   if (code === 442 || code === 443) return 'routes.noRoad'
   if (code === 154 || code === 155 || code === 156) return 'routes.tooFar'
-  if (code === 170 || code === 171 || code === 172) return 'routes.noData'
+  // 171/172 — рядом с точкой нет дорог в скачанных регионах.
+  if (code === 171 || code === 172) return 'routes.noData'
   return 'routes.failed'
 }
