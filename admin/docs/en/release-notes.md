@@ -4,7 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="11 November 2026" versions="0.1.17, 0.1.16" %}
 
-- **Map search is fast right after the computer starts:** the first suggestion in search and in the route fields used to wait 20–40 seconds while the indexes were read from disk. Kladez now reads them ahead in the background, and suggestions for letters you have already erased no longer hold up the one you need.
+- **Map search is dozens of times faster:** suggestions for the first letters (“Ka”, “Novo”) in search and in the route fields took seconds, and up to 40 seconds right after the computer started. Now they take a fraction of a second: Kladez reads the indexes ahead in the background and serves them from memory, and suggestions for letters you have already erased no longer hold up the one you need.
 
 - **House numbers on the map** — on every building where they are known, already at medium zoom.
 - **Useful places with their own icons:** pharmacies, hospitals, clinics, dentists, police, fire stations, rescue stations, shelters, metro entrances, tram stops, fuel stations, banks and ATMs, places of worship, hotels, kindergartens, markets and malls, parking. Zoomed out, only the most important ones show: hospitals, police, fire stations, metro and fuel.

@@ -184,6 +184,9 @@ export class MapSearchService {
       if (!o) {
         try {
           const db = new DatabaseSync(path, { readOnly: true })
+          // Читать файл через отображение в память: без него каждое обращение SQLite идёт
+          // отдельным чтением через мост WSL, и «ка» в одном округе считалось ~2 с вместо 30 мс.
+          db.exec('PRAGMA mmap_size = 1073741824')
           const schema = db.prepare(`SELECT value FROM meta WHERE key = 'schema'`).get() as { value?: string } | undefined
           if (Number(schema?.value) !== SUPPORTED_SCHEMA) {
             logger.warn(`[MapSearch] ${name}: неизвестная схема ${schema?.value}, пропускаю`)
