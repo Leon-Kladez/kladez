@@ -83,6 +83,8 @@ function searchRows(
   const add = (list: unknown[]) => {
     for (const r of list as Row[]) if (!rows.has(r.id)) rows.set(r.id, r)
   }
+  // Города отдельно: на «Каза» в округе сотни сёл, и bm25 оставляет Казань за первыми тридцатью.
+  add(db.prepare(sql(`AND i.cls = 'place' AND i.kind IN ('city', 'town')`, 30)).all(byName))
   add(db.prepare(sql(`AND i.cls = 'place'`, 30)).all(byName))
   // Рядом с открытым местом карты (~15 км): аптек в округе тысячи — ближние не должны теряться.
   if (near) {

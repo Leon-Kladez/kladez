@@ -118,6 +118,13 @@ function makeIndex(dir: string) {
     item.run(100 + k, 'poi', 'cafe', `Кафе ${k}`, null, 'Москва', null, null, 55.75, 37.6, 30)
     fts.run(100 + k, `Кафе ${k}`, '', 'кафе cafe', 'Москва')
   }
+  // Сотни сёл на «Каза…» с короткими записями и Казань с длинным списком имён — bm25 любит короткие.
+  for (let k = 0; k < 400; k++) {
+    item.run(3000 + k, 'place', 'locality', 'Казанка', null, null, null, null, 54 + k / 1000, 48, 20)
+    fts.run(3000 + k, 'Казанка', '', '', '')
+  }
+  item.run(3900, 'place', 'city', 'Казань', 'Kazan', null, null, null, 55.7963, 49.1088, 100)
+  fts.run(3900, 'Казань Qazan Kasan Kazań Kazán Kazaň Kazanj', 'Kazan', 'город city', '')
   const house = db.prepare('INSERT INTO houses VALUES (?,?,?,?)')
   house.run(2, '7', 55.7441, 37.6277)
   house.run(2, '7 с2', 55.7440, 37.6276)
@@ -170,6 +177,10 @@ test('поиск по указателю: улица с домом, места, 
     assert.equal(m[0].cls, 'place')
     assert.equal(m[0].name, 'Москва')
     assert.equal(m.filter((x) => x.cls === 'place' && x.name === 'Москва').length, 1)
+
+    // «Каза» из Москвы: Казань не теряется среди сотни сёл и идёт первой.
+    const kz = await MapSearchService.search('Каза', { lat: 55.75, lon: 37.62 })
+    assert.equal(kz[0].name, 'Казань')
 
     // Английский интерфейс — английское название, где есть.
     const e = await MapSearchService.search('moscow', { english: true })
