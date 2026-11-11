@@ -74,6 +74,10 @@ export default class MapsController {
 
   async search({ request, response }: HttpContext) {
     const { q, lat, lon, limit } = await searchQueryValidator.validate(searchQueryString(request.qs()))
+    // Браузер уже отменил запрос (человек допечатал слово) — не искать зря: поиск занимает
+    // сервер целиком, и брошенные запросы задерживали бы нужный.
+    const raw = request.request
+    if (raw.destroyed || raw.socket?.destroyed) return { results: [] }
     try {
       const results = await MapSearchService.search(q, { lat, lon, limit, english: getLocale() === 'en' })
       return { results }

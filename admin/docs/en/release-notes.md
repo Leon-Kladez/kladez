@@ -2,7 +2,9 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="11 November 2026" versions="0.1.16" %}
+{% release date="11 November 2026" versions="0.1.17, 0.1.16" %}
+
+- **Map search is fast right after the computer starts:** the first suggestion in search and in the route fields used to wait 20–40 seconds while the indexes were read from disk. Kladez now reads them ahead in the background, and suggestions for letters you have already erased no longer hold up the one you need.
 
 - **House numbers on the map** — on every building where they are known, already at medium zoom.
 - **Useful places with their own icons:** pharmacies, hospitals, clinics, dentists, police, fire stations, rescue stations, shelters, metro entrances, tram stops, fuel stations, banks and ATMs, places of worship, hotels, kindergartens, markets and malls, parking. Zoomed out, only the most important ones show: hospitals, police, fire stations, metro and fuel.
@@ -13,7 +15,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Detailed maps of the Volga and North-West districts** — in parts (west / centre / east; St Petersburg and west / north). The parts share one search index and one roads file.
 - **Route “From” and “To” fields search:** start typing a town and pick the suggestion, then add a comma and the street (“Kazan, Baum”) — only that town’s streets are suggested. A place or coordinates work too; the map flies there.
 - **Map sets with a choice:** clicking “Russia”, “Europe” and other sets opens the country and district picker — only what you tick is downloaded. A region counts as downloaded when its detailed or overview map is there: a set no longer pulls overview maps over detailed ones, and “Downloaded” and the size count regions.
-- **Find a town by its first letters:** “Kaza” is Kazan even when the map is open on Moscow.
+- **Find a town by its first letters:** “Kaza” is Kazan even when the map is open on Moscow. Since 0.1.17 towns are no longer lost among hundreds of villages with a similar start.
 - **Update check without false alarms:** when there is no newer release, the app says “no updates” instead of “error 404”.
 - **Map menu on the right**, like openstreetmap.org: “What is here?” (on by default), “Route”, “Add markers”, “Where am I”, “Coordinates”. A tap on a building or place opens “What is here?” on the left: address, nearby places with distances, district, settlement, region and “Route from / to here”, “Add a marker”.
 - **Routes across the whole country:** “Download roads of the whole country” adds roads of regions whose maps you do not have (e.g. the Volga district) so long routes pass through them.

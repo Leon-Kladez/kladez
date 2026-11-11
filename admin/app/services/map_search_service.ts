@@ -1,6 +1,7 @@
 // Кладезъ: поиск по карте без интернета — по указателям search-<регион>_<версия>.sqlite
 // (собираются в kladez-maps, скачиваются вместе с картой). SQLite встроен в Node (node:sqlite).
 import { DatabaseSync } from 'node:sqlite'
+import { createReadStream } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
@@ -38,6 +39,7 @@ type OpenDb = { db: DatabaseSync; mtimeMs: number; region: string }
 // Журнал — через console: сервис работает и без запущенного AdonisJS (тесты, команды).
 const logger = {
   warn: (a: unknown, b?: string) => console.warn('[MapSearch]', b ?? a, b ? a : ''),
+  info: (a: string) => console.info(a),
 }
 
 /** Самый новый файл на регион: старые версии не открываем (их убирает ensure). */
@@ -190,6 +192,8 @@ export class MapSearchService {
           }
           o = { db, mtimeMs, region }
           this.open.set(name, o)
+          // Новый или обновлённый указатель — прочитать заранее в фоне.
+          void this.warmUp()
         } catch (err) {
           logger.warn({ err }, `[MapSearch] не открылся ${name}`)
           continue
@@ -198,6 +202,36 @@ export class MapSearchService {
       out.push(o)
     }
     return out
+  }
+
+  private static warmed = new Set<string>()
+
+  /**
+   * Прочитать указатели целиком один раз, подряд и не блокируя сервер. Поиск читает файл
+   * вразнобой мелкими кусками, а у Windows-установки файлы лежат на диске D: за мостом WSL:
+   * сразу после включения компьютера первая подсказка ждала 20–40 секунд. После сплошного
+   * чтения (~120 МБ/с) файлы в памяти системы, и подсказки идут за доли секунды.
+   */
+  static async warmUp(): Promise<void> {
+    const started = Date.now()
+    let bytes = 0
+    for (const name of (await this.files()).values()) {
+      const path = join(this.dir(), name)
+      try {
+        const { mtimeMs, size } = await stat(path)
+        const key = `${name}:${mtimeMs}`
+        if (this.warmed.has(key)) continue
+        this.warmed.add(key)
+        await new Promise<void>((resolve) => {
+          const s = createReadStream(path, { highWaterMark: 4 * 1024 * 1024 })
+          s.on('data', () => {})
+          s.on('error', () => resolve())
+          s.on('end', () => resolve())
+        })
+        bytes += size
+      } catch {}
+    }
+    if (bytes) logger.info(`[MapSearch] указатели прочитаны заранее: ${Math.round(bytes / 1e6)} МБ за ${Date.now() - started} мс`)
   }
 
   /** Есть ли хоть один указатель (для подсказки «скачайте поиск»). */
