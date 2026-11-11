@@ -23,6 +23,7 @@ import ViewMapMarkerPopup from './ViewMapMarkerPopup'
 import MapMarkerFormPopup from './MapMarkerFormPopup'
 import ScaleUnitToggle from './ScaleUnitSelector'
 import PlaceInfoPopup from './PlaceInfoPopup'
+import SatelliteLayer from './SatelliteLayer'
 import { registerPlaceIcons } from './place_icons_draw'
 import { shortPlaceLabel, type PlaceInfo } from '~/lib/map_place_info'
 export type { PlaceInfo }
@@ -65,6 +66,10 @@ type MapComponentProps = {
   onHere?: (lat: number, lon: number, place: PlaceInfo | null) => void
   /** «Где я»: синяя точка. */
   myPosition?: { lat: number; lon: number; accuracy?: number } | null
+  /** Кладезъ: спутник поверх схемы (нужен интернет); null — только схема. */
+  satellite?: { labels: boolean } | null
+  /** Снимки со спутника не загрузились (нет интернета). */
+  onSatelliteError?: () => void
 }
 
 type MapLocationParams = {
@@ -176,6 +181,8 @@ export default function MapComponent({
                                        tool = 'info',
                                        onHere,
                                        myPosition = null,
+                                       satellite = null,
+                                       onSatelliteError,
                                      }: MapComponentProps) {
   const mapRef = useRef<MapRef>(null)
   const animationFrameRef = useRef<number | null>(null)
@@ -615,6 +622,8 @@ export default function MapComponent({
               showCoords={showCoordinatesEnabled}
             />
           )}
+
+          {satellite && <SatelliteLayer labels={satellite.labels} onError={onSatelliteError} />}
 
           {route && (
             <Source

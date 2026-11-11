@@ -7,7 +7,7 @@ import StyledButton from '~/components/StyledButton'
 import { IconArrowLeft } from '@tabler/icons-react'
 import RoutePanel, { type RouteEnd, type RouteEnds } from '~/components/maps/RoutePanel'
 import HerePanel, { type HerePoint } from '~/components/maps/HerePanel'
-import MapToolbar, { type MapTool } from '~/components/maps/MapToolbar'
+import MapToolbar, { type MapLayerKind, type MapTool } from '~/components/maps/MapToolbar'
 import type { RouteResult } from '../../app/utils/map_route'
 import MapSearchBox, { type MapSearchPick } from '~/components/maps/MapSearchBox'
 import { FileEntry } from '../../types/files'
@@ -16,6 +16,9 @@ import { t } from '../../constants/i18n'
 import { useDevice } from '~/hooks/useDevice'
 import { useNotifications } from '~/context/NotificationContext'
 import type { PlaceInfo } from '~/lib/map_place_info'
+
+const MAP_LAYER_KEY = 'kladez:map-layer'
+const MAP_LABELS_KEY = 'kladez:map-satellite-labels'
 
 type MapCommand = {
   id: number
@@ -54,6 +57,37 @@ export default function Maps(props: {
   const [routeEnds, setRouteEnds] = useState<RouteEnds>({ from: null, to: null })
   const [routePickMode, setRoutePickMode] = useState<'from' | 'to' | null>(null)
   const [route, setRoute] = useState<RouteResult | null>(null)
+
+  // Вид карты: схема или спутник (с подписями или без) — запоминается в этом браузере.
+  const [mapLayer, setMapLayer] = useState<MapLayerKind>(() => {
+    try {
+      return localStorage.getItem(MAP_LAYER_KEY) === 'satellite' ? 'satellite' : 'map'
+    } catch {
+      return 'map'
+    }
+  })
+  const [satLabels, setSatLabels] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(MAP_LABELS_KEY) !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const chooseLayer = (layer: MapLayerKind) => {
+    setMapLayer(layer)
+    try {
+      localStorage.setItem(MAP_LAYER_KEY, layer)
+    } catch {}
+    if (layer === 'satellite' && typeof navigator !== 'undefined' && navigator.onLine === false) {
+      addNotification({ type: 'info', message: t('mapsUi.layer.offline'), duration: 8000 })
+    }
+  }
+  const chooseLabels = (on: boolean) => {
+    setSatLabels(on)
+    try {
+      localStorage.setItem(MAP_LABELS_KEY, on ? 'on' : 'off')
+    } catch {}
+  }
 
   // «Где я».
   const [myPosition, setMyPosition] = useState<{ lat: number; lon: number; accuracy?: number } | null>(null)
@@ -187,6 +221,10 @@ export default function Maps(props: {
             showCoords={showCoordinatesEnabled}
             onCoords={() => setShowCoordinatesEnabled((v) => !v)}
             canChange={canChange}
+            layer={mapLayer}
+            onLayer={chooseLayer}
+            labels={satLabels}
+            onLabels={chooseLabels}
             onMouseEnter={() => setIsHoveringUI(true)}
             onMouseLeave={() => setIsHoveringUI(false)}
           />
@@ -250,6 +288,8 @@ export default function Maps(props: {
             mapCommand={mapCommand}
             isHoveringUI={isHoveringUI}
             showCoordinatesEnabled={showCoordinatesEnabled}
+            satellite={mapLayer === 'satellite' ? { labels: satLabels } : null}
+            onSatelliteError={() => addNotification({ type: 'info', message: t('mapsUi.layer.offline'), duration: 8000 })}
           />
         </div>
       </div>
