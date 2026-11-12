@@ -75,15 +75,33 @@ export function mapSetItems(
   jobs: DownloadJobWithProgress[]
 ): SetItem[] {
   const installed = new Set(installedIds)
-  return oneVariantPerRegion(resources ?? [], installed, (r) => !!jobForUrl(jobs, r.url))
-    .map((r): SetItem => {
-      const sizeBytes = Math.round((r.size_mb ?? 0) * MB)
-      const job = jobForUrl(jobs, r.url)
-      if (job?.status === 'failed') return { sizeBytes, state: 'failed' }
-      if (job) return { sizeBytes, state: 'downloading', percent: clampPercent(job.progress), job }
-      if (installed.has(r.id)) return { sizeBytes, state: 'installed' }
-      return { sizeBytes, state: 'available' }
-    })
+  const chosen = oneVariantPerRegion(resources ?? [], installed, (r) => !!jobForUrl(jobs, r.url))
+  const items = chosen.map((r): SetItem => {
+    const sizeBytes = Math.round((r.size_mb ?? 0) * MB)
+    const job = jobForUrl(jobs, r.url)
+    if (job?.status === 'failed') return { sizeBytes, state: 'failed' }
+    if (job) return { sizeBytes, state: 'downloading', percent: clampPercent(job.progress), job }
+    if (installed.has(r.id)) return { sizeBytes, state: 'installed' }
+    return { sizeBytes, state: 'available' }
+  })
+  // Кладезъ: вместе с картой качаются указатель поиска и дороги — пока набор качается, они
+  // тоже входят в процент (иначе карточка стоит на 0 %, пока идут дороги). Один файл на
+  // несколько частей округа — один раз. Сорвавшиеся не делают весь набор «не удалось».
+  const aux: SetItem[] = []
+  const seen = new Set<string>()
+  for (const r of chosen) {
+    for (const f of [r.search, r.routes]) {
+      if (!f?.url || seen.has(f.url)) continue
+      seen.add(f.url)
+      const sizeBytes = Math.round((f.size_mb ?? 0) * MB)
+      const job = jobForUrl(jobs, f.url)
+      if (job?.status === 'failed') continue
+      if (job) aux.push({ sizeBytes, state: 'downloading', percent: clampPercent(job.progress), job })
+      else if (installed.has(r.id)) aux.push({ sizeBytes, state: 'installed' })
+    }
+  }
+  const active = [...items, ...aux].some((i) => i.state === 'downloading')
+  return active ? [...items, ...aux] : items
 }
 
 /** Все файлы уровня темы вместе с уровнями, которые он включает (includesTier). */

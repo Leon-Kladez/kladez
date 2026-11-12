@@ -45,5 +45,9 @@ export const routesRu: Record<keyof typeof routesEn, string> = {
   'routes.allText': 'Дороги регионов без скачанной карты ({regions}) — {size} МБ. С ними маршруты идут по всей стране.',
   'routes.allButton': 'Скачать дороги всей страны',
   'routes.allQueued': 'Дороги скачиваются. Ход — в «Управлении картами».',
+  'routes.updateTitle': 'Вышли новые дороги',
+  'routes.updateText': 'Новая сборка дорог: {regions} — {size} МБ. Старые и новые наборы плохо стыкуются на границах регионов, поэтому обновляются все сразу.',
+  'routes.updateButton': 'Обновить дороги',
+  'routes.updateQueued': 'Новые дороги скачиваются. Ход — в «Управлении картами». Пока они качаются, работают старые.',
   'routes.computerOnly': 'Маршруты включаются на самом компьютере.',
 }

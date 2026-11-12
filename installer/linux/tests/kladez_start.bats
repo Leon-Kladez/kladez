@@ -6,6 +6,7 @@ setup() {
   export PATH="$BATS_TEST_DIRNAME/stubs:$PATH"
   export STUB_LOG="$BATS_TEST_TMPDIR/calls.log" STUB_STATE="$BATS_TEST_TMPDIR/state"
   export KZ_ROOT="$BATS_TEST_TMPDIR/root" KZ_SLEEP_CMD=true KZ_DOCKERD_TIMEOUT=3 KZ_HEALTH_TIMEOUT=3
+  export KZ_DNS_WATCH=0 KZ_DNS_SETTLE=0
   mkdir -p "$STUB_STATE" "$KZ_ROOT/opt/project-nomad"
   : > "$STUB_LOG"
   cp "$LINUX_DIR/compose.template.yaml" "$LINUX_DIR/images.lock" "$KZ_ROOT/opt/project-nomad/"
@@ -178,6 +179,31 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   grep -q 'mount --make-rshared /' "$STUB_LOG"
   grep -q 'docker compose .* up -d' "$STUB_LOG"
   [[ "$output" == *slept* ]]
+}
+
+@test "dns: works → no forwarder; behind a UDP-dropping VPN → forwarder on the bridge, apps restarted" {
+  mkdir -p "$KZ_ROOT/etc"; echo "nameserver 172.29.160.1" > "$KZ_ROOT/etc/resolv.conf"
+  run first_run
+  [ "$status" -eq 0 ]
+  run grep 'kladez_dns' "$STUB_LOG"
+  [ "$status" -eq 1 ]
+
+  touch "$STUB_STATE/dns-broken"; : > "$STUB_LOG"
+  run bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_ensure_dns"
+  [ "$status" -eq 0 ]
+  grep -q 'docker run -d --name kladez_dns --network host' "$STUB_LOG"
+  [ "$(cat "$KZ_ROOT/etc/resolv.conf")" = "nameserver 10.213.0.1" ]
+  [ "$(cat "$KZ_ROOT/etc/resolv.conf.wsl")" = "nameserver 172.29.160.1" ]
+}
+
+@test "dns: no internet at all → resolv.conf stays as it was, forwarder removed" {
+  mkdir -p "$KZ_ROOT/etc"; echo "nameserver 172.29.160.1" > "$KZ_ROOT/etc/resolv.conf"
+  run first_run
+  touch "$STUB_STATE/dns-broken" "$STUB_STATE/dns-dead"; : > "$STUB_LOG"
+  run bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_ensure_dns"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$KZ_ROOT/etc/resolv.conf")" = "nameserver 172.29.160.1" ]
+  grep -q 'docker rm -f kladez_dns' "$STUB_LOG"
 }
 
 @test "unknown option prints usage and fails" {

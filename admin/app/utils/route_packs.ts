@@ -2,6 +2,8 @@
 // Все наборы — из одной сборки на всю страну, поэтому распаковываются в одну папку tiles;
 // список файлов каждого набора хранится в packs/<регион>.files.json, чтобы при удалении
 // карты убрать только те кусочки, которые не нужны другим регионам.
+import { createHash } from 'node:crypto'
+import { createReadStream } from 'node:fs'
 import { mkdir, readdir, readFile, rm, unlink, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { extract, list } from 'tar'
@@ -21,7 +23,60 @@ export async function installedRegions(packsDir: string): Promise<string[]> {
   }
 }
 
-/** Распаковать набор в tilesDir, записать список его кусочков, удалить сам .tar. */
+/** Установленный набор: регион, версия и отпечаток архива (sha256; у наборов до 0.1.18 его нет). */
+export type InstalledPack = { region: string; version: string; sha256: string | null }
+
+export async function installedPacks(packsDir: string): Promise<InstalledPack[]> {
+  const out: InstalledPack[] = []
+  for (const region of await installedRegions(packsDir)) {
+    try {
+      const j = JSON.parse(await readFile(join(packsDir, `${region}.files.json`), 'utf8'))
+      out.push({ region, version: String(j.version ?? ''), sha256: typeof j.sha256 === 'string' ? j.sha256 : null })
+    } catch {
+      out.push({ region, version: '', sha256: null })
+    }
+  }
+  return out
+}
+
+/**
+ * Наборы, для которых в списке карт лежит другой файл (новая сборка дорог). Наборы разных сборок
+ * плохо стыкуются на границах регионов, поэтому обновлять нужно все сразу.
+ * available — отпечаток файла дорог из списка карт по региону набора.
+ */
+export function outdatedPacks(installed: InstalledPack[], available: Map<string, string | undefined>): string[] {
+  return installed
+    .filter((p) => {
+      const sha = available.get(p.region)
+      return sha !== undefined && p.sha256 !== sha
+    })
+    .map((p) => p.region)
+}
+
+function sha256File(path: string): Promise<string> {
+  return new Promise((ok, fail) => {
+    const h = createHash('sha256')
+    createReadStream(path)
+      .on('data', (c) => h.update(c))
+      .on('error', fail)
+      .on('end', () => ok(h.digest('hex')))
+  })
+}
+
+async function packFiles(packsDir: string, region: string): Promise<string[]> {
+  try {
+    return JSON.parse(await readFile(join(packsDir, `${region}.files.json`), 'utf8')).files ?? []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Распаковать набор в tilesDir, записать список его кусочков и отпечаток, удалить сам .tar.
+ * Набор может быть сжат gzip (имя всё равно .tar) — библиотека tar распознаёт сжатие сама.
+ * Если этот регион уже стоял (обновление), его кусочки, которых нет в новом наборе и нет у
+ * других регионов, удаляются — чтобы не смешивались кусочки старой и новой сборки.
+ */
 export async function installPack(
   tarPath: string,
   tilesDir: string,
@@ -32,6 +87,8 @@ export async function installPack(
   if (!m) return null
   await mkdir(tilesDir, { recursive: true })
   await mkdir(packsDir, { recursive: true })
+  const sha256 = await sha256File(tarPath)
+  const previous = await packFiles(packsDir, m[1])
   const entries: string[] = []
   await list({
     file: tarPath,
@@ -42,7 +99,15 @@ export async function installPack(
   const safe = new Set(entries.filter((p) => PACK_ENTRY_RE.test(p)))
   await extract({ file: tarPath, cwd: tilesDir, filter: (p) => safe.has(p.replace(/^\.\//, '')) })
   const tiles = [...safe].filter((p) => p.endsWith('.gph')).sort()
-  await writeFile(join(packsDir, `${m[1]}.files.json`), JSON.stringify({ region: m[1], version: m[2], files: tiles }))
+  if (previous.length > 0) {
+    const keep = new Set(tiles)
+    for (const other of await installedRegions(packsDir)) {
+      if (other === m[1]) continue
+      for (const f of await packFiles(packsDir, other)) keep.add(f)
+    }
+    await removeFiles(tilesDir, previous.filter((f) => !keep.has(f)))
+  }
+  await writeFile(join(packsDir, `${m[1]}.files.json`), JSON.stringify({ region: m[1], version: m[2], sha256, files: tiles }))
   await unlink(tarPath).catch(() => {})
   return { region: m[1], version: m[2], files: tiles.length }
 }
@@ -59,14 +124,19 @@ export async function removePack(region: string, tilesDir: string, packsDir: str
   const shared = new Set<string>()
   for (const other of await installedRegions(packsDir)) {
     if (other === region) continue
-    try {
-      for (const f of JSON.parse(await readFile(join(packsDir, `${other}.files.json`), 'utf8')).files ?? []) shared.add(f)
-    } catch {}
+    for (const f of await packFiles(packsDir, other)) shared.add(f)
   }
+  const removed = await removeFiles(tilesDir, mine.filter((f) => !shared.has(f)))
+  await rm(listPath, { force: true })
+  return removed
+}
+
+/** Удалить кусочки графа из tilesDir (только .gph/служебные базы и только внутри папки). */
+async function removeFiles(tilesDir: string, files: string[]): Promise<number> {
   const root = resolve(tilesDir)
   let removed = 0
-  for (const f of mine) {
-    if (shared.has(f) || !PACK_ENTRY_RE.test(f)) continue
+  for (const f of files) {
+    if (!PACK_ENTRY_RE.test(f)) continue
     const p = resolve(root, f)
     if (!p.startsWith(root + sep)) continue
     await unlink(p).then(
@@ -74,6 +144,5 @@ export async function removePack(region: string, tilesDir: string, packsDir: str
       () => {}
     )
   }
-  await rm(listPath, { force: true })
   return removed
 }

@@ -149,16 +149,24 @@ export default function MapsManager(props: {
     }
   }
 
-  async function deleteFile(file: FileEntry) {
-    if (file.type !== 'file') return
+  // Кладезъ: второе нажатие «Удалить», пока первое ещё идёт, не отправляет второй запрос
+  // (раньше выходило два сообщения сразу: «удалён» и «не найден»).
+  const deletingRef = useRef(false)
 
+  async function deleteFile(file: FileEntry) {
+    if (file.type !== 'file' || deletingRef.current) return
+
+    deletingRef.current = true
     try {
       setDeletingFileKey(file.key)
-      await api.deleteMapRegionFile(file.name)
-      addNotification({
-        type: 'success',
-        message: t('mapsManager.deleted', { name: file.name }),
-      })
+      // При ошибке api уже показал её текст и вернул undefined — «удалён» тогда не пишем.
+      const res = await api.deleteMapRegionFile(file.name)
+      if (res) {
+        addNotification({
+          type: 'success',
+          message: t('mapsManager.deleted', { name: file.name }),
+        })
+      }
       closeAllModals()
       router.reload({ only: ['maps'] })
     } catch (error) {
@@ -168,6 +176,7 @@ export default function MapsManager(props: {
         message: t('mapsManager.deleteFailed', { name: file.name }),
       })
     } finally {
+      deletingRef.current = false
       setDeletingFileKey(null)
     }
   }

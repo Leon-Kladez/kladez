@@ -168,3 +168,19 @@ test('общие книги: соседний набор не «скачивае
   const all = zimSetItems([a, b], [], [job(a.url, 40), job(b.url, 0)])
   assert.equal(setProgress(all, { wholeSet: true }).state, 'downloading')
 })
+
+test('дороги и поиск, которые качаются вместе с картой, входят в процент набора', () => {
+  const routes = { url: 'https://example.org/r/routes-x_2026-11.tar', size_mb: 100, version: '2026-11' }
+  const search = { url: 'https://example.org/s/search-x_2026-11.sqlite', size_mb: 100, version: '2026-11' }
+  // Две части округа делят дороги и поиск: считаются один раз.
+  const resources = [res('a', 100, { routes, search }), res('b', 100, { routes, search })]
+  // Карты ещё ждут, дороги скачаны наполовину: 50 из 300 МБ (две карты + дороги; поиск
+  // ещё не поставлен в очередь — не считается) → 16 %, а не 0.
+  const p = setProgress(mapSetItems(resources, [], [job(routes.url, 50)]))
+  assert.deepEqual(p, { state: 'downloading', percent: 16, phase: 'running' })
+  // Ничего не качается — дороги и поиск не меняют счёт «скачано N из M».
+  assert.deepEqual(setProgress(mapSetItems(resources, ['a'], [])), { state: 'idle', installed: 1, total: 2 })
+  // Сорвавшаяся загрузка дорог не делает весь набор «не удалось».
+  const f = setProgress(mapSetItems(resources, [], [job(routes.url, 0, { status: 'failed' }), job(resources[0].url, 10)]))
+  assert.equal(f.state, 'downloading')
+})

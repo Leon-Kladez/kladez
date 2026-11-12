@@ -43,5 +43,9 @@ export const routesEn = {
   'routes.allText': 'Roads of regions without a downloaded map ({regions}) — {size} MB. With them, routes go across the whole country.',
   'routes.allButton': 'Download roads of the whole country',
   'routes.allQueued': 'Downloading roads. Progress is shown in Map Management.',
+  'routes.updateTitle': 'New roads are available',
+  'routes.updateText': 'New road build: {regions} — {size} MB. Old and new sets do not join well at region borders, so they are all updated at once.',
+  'routes.updateButton': 'Update roads',
+  'routes.updateQueued': 'New roads are downloading. Progress is shown in Map Management. The old roads keep working meanwhile.',
   'routes.computerOnly': 'Routes are enabled on the computer itself.',
 } as const

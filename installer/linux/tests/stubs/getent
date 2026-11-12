@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Test stub: DNS works unless $STUB_STATE/dns-broken exists; with it, only through the
+# TCP forwarder (resolv.conf pointing at the Docker bridge) — like behind a UDP-dropping VPN.
+echo "getent $*" >> "$STUB_LOG"
+[ -f "$STUB_STATE/dns-broken" ] || exit 0
+[ -f "$STUB_STATE/dns-dead" ] && exit 2
+grep -q '^nameserver 10.213.0.1$' "$KZ_ROOT/etc/resolv.conf" 2>/dev/null

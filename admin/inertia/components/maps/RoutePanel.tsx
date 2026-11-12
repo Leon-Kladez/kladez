@@ -60,6 +60,7 @@ export default function RoutePanel(props: Props) {
   const [status, setStatus] = useState<Awaited<ReturnType<typeof api.mapRoutesStatus>>>(null)
   const [enableMessage, setEnableMessage] = useState<string | null>(null)
   const [allMessage, setAllMessage] = useState<string | null>(null)
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null)
   const [errorKey, setErrorKey] = useState<string | null>(null)
 
   useEffect(() => {
@@ -187,6 +188,41 @@ export default function RoutePanel(props: Props) {
               </>
             ) : (
               <p className="mt-1">{t('routes.enableNoData')}</p>
+            )}
+          </div>
+        )}
+
+        {/* Вышла новая сборка дорог: старые наборы с новыми соседями не стыкуются — обновить все. */}
+        {ready && status && (status.outdated?.length ?? 0) > 0 && (
+          <div className="rounded border border-desert-green bg-surface-secondary p-2 text-sm text-text-secondary">
+            <div className="font-medium text-text-primary">{t('routes.updateTitle')}</div>
+            <p className="mt-1">
+              {t('routes.updateText', {
+                regions: status.outdated.map((r) => r.title.replace(/ федеральный округ/i, '')).join(', '),
+                size: status.outdated.reduce((n, r) => n + r.size_mb, 0),
+              })}
+            </p>
+            {props.canChange ? (
+              updateMessage ? (
+                <p className="mt-2 text-text-primary">{updateMessage}</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api.enableMapRoutes(false, true)
+                      setUpdateMessage(t('routes.updateQueued'))
+                    } catch {
+                      setUpdateMessage(t('routes.failed'))
+                    }
+                  }}
+                  className="mt-2 rounded bg-desert-green px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                >
+                  {t('routes.updateButton')}
+                </button>
+              )
+            ) : (
+              <p className="mt-1">{t('routes.computerOnly')}</p>
             )}
           </div>
         )}

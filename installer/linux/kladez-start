@@ -55,6 +55,7 @@ case "$mode" in
         [ -f "$KZ_FIRST_RUN_MARKER" ] || kz_load_images "$bundle"
         render_and_up
         kz_wait_health "$ADMIN_PORT"
+        kz_ensure_dns
         touch "$KZ_FIRST_RUN_MARKER"
         kz_log "first run complete"
         ;;
@@ -73,6 +74,7 @@ case "$mode" in
         kz_read_conf
         start_stack
         [ -f "$KZ_COMPOSE" ] && kz_up
+        kz_dns_watch
         kz_log "keepalive: running"
         exec ${KZ_SLEEP_CMD:-sleep infinity}
         ;;

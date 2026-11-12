@@ -2,6 +2,17 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="13 November 2026" versions="0.1.18" %}
+
+- **Routes across Europe, the CIS and the Middle East:** every detailed map of Europe, Belarus, Ukraine, Kazakhstan, Central Asia, the Caucasus, Turkey, Israel, Arabia, Iran, Egypt and their neighbours now has roads. All roads come from one build together with Russia, so routes cross borders: St Petersburg → Helsinki, Pskov → Riga, Madrid → Paris — when the maps of the countries on the way are downloaded.
+- **“New roads are available”:** when the map list gets a new road build, the Route panel shows an “Update roads” button. All installed sets are updated at once — old and new ones do not join well at borders. The old roads keep working while the new ones download. If you had Russian roads from 0.1.17, press this button.
+- **Satellite map view:** the “Layers” button in the menu on the right — “Map” (as before, offline) or “Satellite” with imagery down to single buildings, with or without labels. Imagery loads only with internet; without it the map view works.
+- **Downloads work with a VPN turned on:** many VPNs drop ordinary address lookups, and map downloads sat at 0% (“cannot find the server”). Kladez now notices this by itself and looks addresses up another way that passes through the VPN. It checks at start and every five minutes.
+- **The set card percentage includes roads and search:** “Downloading: 0%” no longer hangs while roads and search indexes download first.
+- **Deleting a map shows one message:** deleting no longer shows “deleted” and “not found” at the same time, and a second click does not send a second request.
+
+{% /release %}
+
 {% release date="11 November 2026" versions="0.1.17, 0.1.16" %}
 
 - **Map search is dozens of times faster:** suggestions for the first letters (“Ka”, “Novo”) in search and in the route fields took seconds, and up to 40 seconds right after the computer started. Now they take a fraction of a second: Kladez reads the indexes ahead in the background and serves them from memory, and suggestions for letters you have already erased no longer hold up the one you need.

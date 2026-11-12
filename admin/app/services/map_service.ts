@@ -64,6 +64,7 @@ import { promisify } from 'util'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { MapSearchService, SEARCH_FILE_RE } from './map_search_service.js'
 import { MapRouteService, ROUTES_FILE_RE } from './map_route_service.js'
+import { outdatedPacks } from '../utils/route_packs.js'
 import { DockerService } from './docker_service.js'
 import { readdir } from 'fs/promises'
 
@@ -264,8 +265,8 @@ export class MapService implements IMapService {
 
   // ---- Кладезъ: дороги для маршрутов ----
 
-  /** Поставить в очередь файл дорог пакета, если его дорог ещё нет. */
-  private async dispatchRoutesPack(resource: SpecResource): Promise<boolean> {
+  /** Поставить в очередь файл дорог пакета, если его дорог ещё нет (update — и если есть, но старые). */
+  private async dispatchRoutesPack(resource: SpecResource, update = false): Promise<boolean> {
     if (!resource.routes) return false
     const filename = routesFilename(resource.routes.url)
     if (!filename) return false
@@ -275,7 +276,7 @@ export class MapService implements IMapService {
       return false
     }
     const packRegion = dataRegion(resource.routes.url) ?? resource.id
-    if ((await MapRouteService.installedRegions()).includes(packRegion)) return false
+    if (!update && (await MapRouteService.installedRegions()).includes(packRegion)) return false
     if (await RunDownloadJob.getActiveByUrl(resource.routes.url)) return false
     await MapRouteService.prepare()
     const params = buildRoutesDownloadParams(
@@ -294,6 +295,7 @@ export class MapService implements IMapService {
     regions: string[]
     missing: { id: string; title: string; size_mb: number }[]
     extra: { id: string; title: string; size_mb: number }[]
+    outdated: { id: string; title: string; size_mb: number }[]
   }> {
     const regions = await MapRouteService.installedRegions()
     const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
@@ -310,7 +312,28 @@ export class MapService implements IMapService {
     const extra = this.neighbourRoads(spec, installed.map((r) => r.resource_id), regions, missing.map((m) => m.id)).map(
       (res) => ({ id: dataRegion(res.routes!.url) ?? res.id, title: res.title, size_mb: res.routes!.size_mb })
     )
-    return { service: await MapRouteService.serviceState(), regions, missing, extra }
+    const outdated = (await this.outdatedRoads(spec)).map((res) => ({
+      id: dataRegion(res.routes!.url) ?? res.id,
+      title: res.title,
+      size_mb: res.routes!.size_mb,
+    }))
+    return { service: await MapRouteService.serviceState(), regions, missing, extra, outdated }
+  }
+
+  /**
+   * Установленные дороги, для которых в списке карт лежит другой файл — вышла новая сборка.
+   * Пакет на каждый такой регион (один раз, даже если на него ссылаются части карты).
+   */
+  private async outdatedRoads(spec: MapsSpec | null): Promise<SpecResource[]> {
+    const byRegion = new Map<string, SpecResource>()
+    for (const col of spec?.collections ?? []) {
+      for (const r of col.resources) {
+        const packRegion = dataRegion(r.routes?.url)
+        if (r.routes && packRegion && !byRegion.has(packRegion)) byRegion.set(packRegion, r)
+      }
+    }
+    const available = new Map([...byRegion].map(([region, r]) => [region, r.routes!.sha256]))
+    return outdatedPacks(await MapRouteService.installedPacks(), available).map((region) => byRegion.get(region)!)
   }
 
   /**
@@ -339,10 +362,18 @@ export class MapService implements IMapService {
   /** Включить маршруты: поставить программу и скачать дороги для установленных карт. */
   async enableRoutes(
     docker: DockerService,
-    opts: { all?: boolean } = {}
+    opts: { all?: boolean; update?: boolean } = {}
   ): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
     const service = await MapRouteService.installService(docker)
     const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    // «Обновить дороги»: заново скачать все наборы, у которых вышла новая сборка.
+    if (opts.update) {
+      const queued: string[] = []
+      for (const res of await this.outdatedRoads(spec)) {
+        if (await this.dispatchRoutesPack(res, true)) queued.push(res.id)
+      }
+      return { queued, service }
+    }
     const installed = await InstalledResource.query().where('resource_type', 'map')
     const queued: string[] = []
     for (const row of installed) {

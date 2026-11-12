@@ -4,7 +4,7 @@
 // кусочки на границах одинаковые — регионы складываются в одну папку без порчи.
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { installedRegions, installPack, removePack, ROUTES_FILE_RE } from '../utils/route_packs.js'
+import { installedPacks, installedRegions, installPack, removePack, ROUTES_FILE_RE } from '../utils/route_packs.js'
 import Service from '#models/service'
 import { DockerService } from '#services/docker_service'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
@@ -72,6 +72,11 @@ export class MapRouteService {
   /** Регионы, дороги которых распакованы (по спискам файлов в packs/). */
   static async installedRegions(): Promise<string[]> {
     return installedRegions(this.packsDir())
+  }
+
+  /** Установленные наборы с версией и отпечатком — чтобы узнать, вышли ли новые дороги. */
+  static async installedPacks() {
+    return installedPacks(this.packsDir())
   }
 
   static async serviceState(): Promise<'none' | 'installing' | 'installed'> {

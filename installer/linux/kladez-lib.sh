@@ -208,3 +208,51 @@ kz_wait_health() {
 kz_status() {
     [ "$(docker inspect -f '{{.State.Running}}' nomad_admin 2>/dev/null)" = true ]
 }
+
+# DNS за VPN (0.1.18). Многие VPN (Happ и другие) пропускают TCP, но теряют обычные запросы адресов
+# по UDP — тогда Кладезъ не скачивает ни карты, ни обновления (getaddrinfo EAI_AGAIN). Если адреса
+# не находятся, на мосту Docker (bip из daemon.json) поднимается пересыльщик dns-tcp.js: он
+# принимает запросы по UDP и задаёт их публичным DNS по TCP. Без интернета вообще — всё как было.
+KZ_DNS_IP="${KZ_DNS_IP:-10.213.0.1}"
+KZ_RESOLV="$KZ_ROOT/etc/resolv.conf"
+KZ_DNS_JS="${KZ_DNS_JS:-$KZ_ROOT/usr/local/lib/kladez/dns-tcp.js}"
+
+kz_dns_ok() { timeout "${KZ_DNS_TIMEOUT:-5}" getent hosts "${KZ_DNS_PROBE:-github.com}" >/dev/null 2>&1; }
+
+kz_ensure_dns() {
+    kz_dns_ok && return 0
+    kz_log "dns: адреса не находятся — включаю пересылку DNS по TCP"
+    docker rm -f kladez_dns >/dev/null 2>&1 || true
+    if ! docker run -d --name kladez_dns --network host --restart unless-stopped \
+        -e LISTEN="$KZ_DNS_IP" -v "$(dirname "$KZ_DNS_JS"):/dns:ro" --entrypoint node \
+        "$(kz_image admin)" "/dns/$(basename "$KZ_DNS_JS")" >> "$KZ_LOG_DIR/kladez-start.log" 2>&1; then
+        kz_log "dns: пересыльщик не запустился"
+        return 0
+    fi
+    grep -q "^nameserver $KZ_DNS_IP\$" "$KZ_RESOLV" 2>/dev/null || cp "$KZ_RESOLV" "$KZ_RESOLV.wsl" 2>/dev/null || true
+    printf 'nameserver %s\n' "$KZ_DNS_IP" > "$KZ_RESOLV"
+    sleep "${KZ_DNS_SETTLE:-2}"
+    if kz_dns_ok; then
+        kz_log "dns: пересылка по TCP работает"
+        # Уже запущенные программы Кладезя запомнили старый DNS — перезапустить их.
+        local running
+        running=$(docker ps -q --filter "label=com.docker.compose.project=$KZ_PROJECT")
+        # shellcheck disable=SC2086
+        [ -z "$running" ] || docker restart $running >/dev/null 2>&1 || true
+    else
+        kz_log "dns: не отвечает и по TCP (нет интернета?) — оставляю как было"
+        [ -f "$KZ_RESOLV.wsl" ] && cp "$KZ_RESOLV.wsl" "$KZ_RESOLV"
+        docker rm -f kladez_dns >/dev/null 2>&1 || true
+    fi
+}
+
+# Раз в несколько минут: VPN могут включить и после запуска Кладезя.
+kz_dns_watch() {
+    [ "${KZ_DNS_WATCH:-1}" = 1 ] || return 0
+    (
+        while true; do
+            kz_ensure_dns || true
+            sleep "${KZ_DNS_INTERVAL:-300}"
+        done
+    ) < /dev/null > /dev/null 2>&1 &
+}

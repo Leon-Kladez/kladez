@@ -200,6 +200,7 @@ class API {
     regions: string[]
     missing: { id: string; title: string; size_mb: number }[]
     extra: { id: string; title: string; size_mb: number }[]
+    outdated: { id: string; title: string; size_mb: number }[]
   } | null> {
     try {
       const response = await this.client.get('/maps/routes/status')
@@ -209,9 +210,12 @@ class API {
     }
   }
 
-  async enableMapRoutes(all: boolean = false): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
+  async enableMapRoutes(
+    all: boolean = false,
+    update: boolean = false
+  ): Promise<{ queued: string[]; service: { success: boolean; message: string } }> {
     return catchInternal(async () => {
-      const response = await this.client.post('/maps/routes/enable', { all })
+      const response = await this.client.post('/maps/routes/enable', { all, update })
       return response.data
     })()
   }
