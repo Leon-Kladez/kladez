@@ -369,6 +369,8 @@ export default function SystemUpdatePage(props: { system: Props }) {
                         : window.open(KLADEZ_DOWNLOAD_URL, '_blank', 'noopener,noreferrer')
                     }
                     disabled={!versionInfo.updateAvailable || (!KLADEZ_FEATURES.inAppUpdate && !KLADEZ_DOWNLOAD_URL)}
+                    // Кладезъ: установщики копятся в «Загрузках» — по 1,2 ГБ каждый.
+                    title={!KLADEZ_FEATURES.inAppUpdate && versionInfo.updateAvailable ? t('update.downloadHint') : undefined}
                   >
                     {versionInfo.updateAvailable
                       ? KLADEZ_FEATURES.inAppUpdate

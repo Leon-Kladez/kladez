@@ -2,8 +2,9 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="13 November 2026" versions="0.1.18" %}
+{% release date="13 November 2026" versions="0.1.19, 0.1.18" %}
 
+- **A hint on “Download the new version”:** on hover it reminds that the installer (about 1.2 GB) goes to Downloads and that older installers there can be deleted after the update — they are not removed automatically.
 - **Routes across Europe, the CIS and the Middle East:** every detailed map of Europe, Belarus, Ukraine, Kazakhstan, Central Asia, the Caucasus, Turkey, Israel, Arabia, Iran, Egypt and their neighbours now has roads. All roads come from one build together with Russia, so routes cross borders: St Petersburg → Helsinki, Pskov → Riga, Madrid → Paris — when the maps of the countries on the way are downloaded.
 - **“New roads are available”:** when the map list gets a new road build, the Route panel shows an “Update roads” button. All installed sets are updated at once — old and new ones do not join well at borders. The old roads keep working while the new ones download. If you had Russian roads from 0.1.17, press this button.
 - **Satellite map view:** the “Layers” button in the menu on the right — “Map” (as before, offline) or “Satellite” with imagery down to single buildings, with or without labels. Imagery loads only with internet; without it the map view works.
