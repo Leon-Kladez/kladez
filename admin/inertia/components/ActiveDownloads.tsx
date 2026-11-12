@@ -15,7 +15,7 @@ function formatSpeed(bytesPerSec: number): string {
   return t('download.speed', { size: formatBytes(Math.max(0, bytesPerSec)) })
 }
 
-type DownloadStatus = 'queued' | 'retrying' | 'active' | 'stalled' | 'failed'
+type DownloadStatus = 'queued' | 'retrying' | 'active' | 'finishing' | 'stalled' | 'failed'
 
 function getDownloadStatus(download: {
   progress: number
@@ -32,6 +32,9 @@ function getDownloadStatus(download: {
   if (download.status === 'waiting' || download.status === 'delayed') return 'queued'
   // Fallback heuristic for model jobs and in-flight jobs from before this deploy
   if (download.progress === 0 && !download.lastProgressTime) return 'queued'
+  // Kladez: файл скачан целиком — идёт проверка отпечатка и распаковка (дороги, карты);
+  // данных из сети уже нет, и это не «зависло».
+  if (download.progress >= 100) return 'finishing'
   if (download.lastProgressTime) {
     const elapsed = Date.now() - download.lastProgressTime
     if (elapsed > 60_000) return 'stalled'
@@ -296,6 +299,12 @@ const ActiveDownloads = ({ filetype, withHeader = false }: ActiveDownloadProps) 
                           <span className="text-xs text-text-muted">
                             {t('download.downloading')}{speed > 0 ? ` ${formatSpeed(speed)}` : ''}
                           </span>
+                        </>
+                      )}
+                      {status === 'finishing' && (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-xs text-text-muted">{t('download.finishing')}</span>
                         </>
                       )}
                       {status === 'stalled' && download.lastProgressTime && (

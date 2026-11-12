@@ -16,6 +16,7 @@ export const downloadEn = {
   'download.waiting': 'Waiting...',
   'download.retryingAfterError': 'Did not work, will try again shortly: {reason}',
   'download.downloading': 'Downloading...',
+  'download.finishing': 'Downloaded, checking and unpacking…',
   'download.noDataFor': 'No data received for {n}m...',
   'download.noneActive': 'No active downloads',
 } as const
