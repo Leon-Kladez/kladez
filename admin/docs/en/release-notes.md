@@ -8,6 +8,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **“New roads are available”:** when the map list gets a new road build, the Route panel shows an “Update roads” button. All installed sets are updated at once — old and new ones do not join well at borders. The old roads keep working while the new ones download. If you had Russian roads from 0.1.17, press this button.
 - **Satellite map view:** the “Layers” button in the menu on the right — “Map” (as before, offline) or “Satellite” with imagery down to single buildings, with or without labels. Imagery loads only with internet; without it the map view works.
 - **Downloads work with a VPN turned on:** many VPNs drop ordinary address lookups, and map downloads sat at 0% (“cannot find the server”). Kladez now notices this by itself and looks addresses up another way that passes through the VPN. It checks at start and every five minutes.
+- **No download loop after a map update:** when a file does not match the checksum from an old map list, Kladez re-reads the list and accepts the file if it matches the new one — instead of an endless “Checksum mismatch”.
 - **The set card percentage includes roads and search:** “Downloading: 0%” no longer hangs while roads and search indexes download first.
 - **Deleting a map shows one message:** deleting no longer shows “deleted” and “not found” at the same time, and a second click does not send a second request.
 

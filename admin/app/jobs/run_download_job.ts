@@ -13,7 +13,7 @@ import { basename, join, resolve, sep } from 'node:path'
 import { ZIM_STORAGE_PATH } from '../utils/fs.js'
 import { mirrorCandidates, pickDownloadUrl } from '../utils/mirrors.js'
 import { resolveExpectedSha256, sha256File } from '../utils/meta4.js'
-import type { MirrorsSpec } from '../../types/collections.js'
+import type { MapsSpec, MirrorsSpec } from '../../types/collections.js'
 import { t } from '../../constants/i18n/index.js'
 
 /** Maps live under `<cwd>/storage/maps/pmtiles`; no shared constant exists. */
@@ -54,6 +54,31 @@ async function fetchText(url: string): Promise<string> {
  * so it holds even when a mirror served the bytes. Throws on mismatch; the
  * downloader then deletes the `.tmp` and the attempt fails (BullMQ retries).
  */
+/**
+ * Kladez (0.1.18): файл карты, дорог или поиска не сошёлся с отпечатком, запомненным при
+ * постановке в очередь. Так бывает, когда список карт был старый (не успел обновиться), а на
+ * сервере уже новая сборка: тогда каждая попытка снова скачивает правильный файл и снова его
+ * выбрасывает. Перечитываем список карт и принимаем файл, если он совпал с отпечатком оттуда.
+ */
+async function matchesFreshMapsList(url: string, actual: string): Promise<boolean> {
+  try {
+    const { CollectionManifestService } = await import('#services/collection_manifest_service')
+    const svc = new CollectionManifestService()
+    await svc.fetchSpecStatus('maps', { manual: true })
+    const spec = await svc.getSpecWithFallback<MapsSpec>('maps')
+    for (const col of spec?.collections ?? []) {
+      for (const r of col.resources) {
+        for (const f of [r, r.search, r.routes]) {
+          if (f?.url === url) return f.sha256 === actual
+        }
+      }
+    }
+  } catch {
+    // нет списка карт — решает прежний отпечаток
+  }
+  return false
+}
+
 function makeTmpVerifier(params: { url: string; filetype: string; expectedSha256?: string }) {
   return async (tmpPath: string) => {
     const expected = await resolveExpectedSha256(params, fetchText)
@@ -62,6 +87,10 @@ function makeTmpVerifier(params: { url: string; filetype: string; expectedSha256
       return
     }
     const actual = await sha256File(tmpPath)
+    if (actual !== expected && params.filetype === 'map' && (await matchesFreshMapsList(params.url, actual))) {
+      console.warn(`[RunDownloadJob] ${basename(tmpPath)}: checksum from the refreshed maps list accepted`)
+      return
+    }
     if (actual !== expected) {
       throw new Error(
         `Checksum mismatch, file deleted and will be downloaded again: ${basename(tmpPath)} expected ${expected}, got ${actual}`
