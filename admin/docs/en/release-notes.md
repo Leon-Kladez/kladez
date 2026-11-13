@@ -2,8 +2,9 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="13 November 2026" versions="0.1.22, 0.1.21, 0.1.20, 0.1.19, 0.1.18" %}
+{% release date="13 November 2026" versions="0.1.23, 0.1.22, 0.1.21, 0.1.20, 0.1.19, 0.1.18" %}
 
+- **“Roads of the whole country” means your country only:** with the Belarus map, Kladez no longer offers the roads of Ukraine, Kazakhstan and the whole “CIS and neighbours” set — only regions of the same country.
 - **The installer shows it is working right away:** from the first second, a “Kladez is preparing the installation…” window with a moving bar and the music, while the computer is checked; before, nothing was visible for several seconds.
 - **The country in every map name:** Russian districts are named “Russia: Central Federal District” in Downloaded maps and in downloads.
 - **A downloaded map cannot be chosen again:** in “Choose a region” a map already downloaded in this form cannot be ticked and is not offered for download; an overview map can still be replaced by the detailed one and vice versa.

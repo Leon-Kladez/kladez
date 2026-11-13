@@ -378,10 +378,13 @@ export class MapService implements IMapService {
     for (const col of spec?.collections ?? []) {
       // Все пакеты, в том числе «карта ещё не выложена» (planned): дороги у них уже могут быть.
       const all = col.resources
-      // Только страны, где у человека уже есть хоть одна карта.
-      const touched = all.some((r) => installedIds.includes(r.id) || installedIds.includes(siblingVariantId(r.id)))
-      if (!touched) continue
+      // Только страны, где у человека уже есть хоть одна карта. Набор «СНГ и соседи» — это много
+      // стран: дороги предлагаем только той же страны (Беларусь не тянет за собой Казахстан).
+      const isInstalled = (r: SpecResource) => installedIds.includes(r.id) || installedIds.includes(siblingVariantId(r.id))
+      const countries = new Set(all.filter(isInstalled).map((r) => r.country ?? col.slug))
+      if (countries.size === 0) continue
       for (const r of all) {
+        if (!countries.has(r.country ?? col.slug)) continue
         const packRegion = dataRegion(r.routes?.url)
         if (!r.routes || !packRegion || have.includes(packRegion) || missing.includes(packRegion)) continue
         // Один файл дорог на несколько частей — один раз.
