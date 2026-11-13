@@ -117,8 +117,21 @@ export class MapService implements IMapService {
         item.name !== WORLD_BASEMAP_FILENAME
     )
 
+    // Кладезъ: в «Скачанных картах» — понятное название («Беларусь», «Приволжский федеральный
+    // округ: запад (обзорно)») из списка карт, а не имя файла. Свои вырезки — по имени файла.
+    const titles = new Map<string, string>()
+    try {
+      const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+      for (const col of spec?.collections ?? []) for (const r of col.resources) titles.set(r.id, r.title)
+    } catch {}
+    const named = files.map((f) => {
+      const id = CollectionManifestService.parseMapFilename(f.name)?.resource_id
+      return { ...f, title: (id && titles.get(id)) || f.name }
+    })
+    named.sort((a, b) => a.title.localeCompare(b.title, 'ru'))
+
     return {
-      files,
+      files: named,
     }
   }
 

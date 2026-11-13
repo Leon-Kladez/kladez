@@ -29,7 +29,7 @@ const GLOBAL_MAP_INFO_KEY = 'global-map-info'
 
 export default function MapsManager(props: {
   libraryPath?: string
-  maps: { baseAssetsExist: boolean; worldBasemapExists: boolean; regionFiles: FileEntry[] }
+  maps: { baseAssetsExist: boolean; worldBasemapExists: boolean; regionFiles: (FileEntry & { title?: string })[] }
 }) {
   const queryClient = useQueryClient()
   const { openModal, closeAllModals } = useModals()
@@ -153,7 +153,7 @@ export default function MapsManager(props: {
   // (раньше выходило два сообщения сразу: «удалён» и «не найден»).
   const deletingRef = useRef(false)
 
-  async function deleteFile(file: FileEntry) {
+  async function deleteFile(file: FileEntry & { title?: string }) {
     if (file.type !== 'file' || deletingRef.current) return
 
     deletingRef.current = true
@@ -164,7 +164,7 @@ export default function MapsManager(props: {
       if (res) {
         addNotification({
           type: 'success',
-          message: t('mapsManager.deleted', { name: file.name }),
+          message: t('mapsManager.deleted', { name: ('title' in file && file.title) || file.name }),
         })
       }
       closeAllModals()
@@ -173,7 +173,7 @@ export default function MapsManager(props: {
       console.error('Error deleting map file:', error)
       addNotification({
         type: 'error',
-        message: t('mapsManager.deleteFailed', { name: file.name }),
+        message: t('mapsManager.deleteFailed', { name: ('title' in file && file.title) || file.name }),
       })
     } finally {
       deletingRef.current = false
@@ -181,7 +181,7 @@ export default function MapsManager(props: {
     }
   }
 
-  async function confirmDeleteFile(file: FileEntry) {
+  async function confirmDeleteFile(file: FileEntry & { title?: string }) {
     openModal(
       <StyledModal
         title={t('zimManager.confirmDelete')}
@@ -194,7 +194,7 @@ export default function MapsManager(props: {
         confirmLoading={file.type === 'file' && deletingFileKey === file.key}
       >
         <p className="text-text-secondary">
-          {t('zimManager.deleteQuestion', { name: file.name })}
+          {t('zimManager.deleteQuestion', { name: ('title' in file && file.title) || file.name })}
         </p>
       </StyledModal>,
       'confirm-delete-file-modal'
@@ -386,13 +386,25 @@ export default function MapsManager(props: {
               {t('mapsManager.downloadCustom')}
             </StyledButton>
           </div>
-          <StyledTable<FileEntry & { actions?: any; version?: string }>
+          <StyledTable<FileEntry & { actions?: any; version?: string; title?: string }>
             className="font-semibold mt-4"
             rowLines={true}
             loading={false}
             compact
             columns={[
-              { accessor: 'name', title: t('apps.col.name') },
+              {
+                accessor: 'name',
+                title: t('apps.col.name'),
+                // Кладезъ: название по-русски, имя файла — мелко под ним.
+                render: (record) => (
+                  <div>
+                    <div>{record.title || record.name}</div>
+                    {record.title && record.title !== record.name && (
+                      <div className="text-xs font-normal text-text-muted">{record.name}</div>
+                    )}
+                  </div>
+                ),
+              },
               {
                 accessor: 'version',
                 title: t('mapRegions.versionColumn'),

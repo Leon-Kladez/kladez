@@ -2,8 +2,9 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="13 November 2026" versions="0.1.20, 0.1.19, 0.1.18" %}
+{% release date="13 November 2026" versions="0.1.21, 0.1.20, 0.1.19, 0.1.18" %}
 
+- **Downloaded maps by name:** Map Management shows “Belarus”, “Volga Federal District: west (overview)” instead of file names (“by_2026-11.pmtiles”); the file name is shown small below. The same in the delete question and messages.
 - **Downloads no longer “hang” at 100%:** while Kladez checks and unpacks a downloaded file (roads take a minute or two), it shows “Downloaded, checking and unpacking…” instead of “No data for…”.
 - **The map list refreshes through a VPN too:** Kladez waits up to 15 seconds for it instead of 5 — with a stale list, downloads failed.
 - **Roads update by themselves:** when a new road build comes out, Kladez downloads the new sets on its own once there is internet — nothing to press. Roads installed before 0.1.18 but already from the new build are recognised and not downloaded again.
