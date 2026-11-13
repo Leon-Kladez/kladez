@@ -4,7 +4,7 @@
 // карты убрать только те кусочки, которые не нужны другим регионам.
 import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { mkdir, readdir, readFile, rm, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { extract, list } from 'tar'
 
@@ -51,6 +51,35 @@ export function outdatedPacks(installed: InstalledPack[], available: Map<string,
       return sha !== undefined && p.sha256 !== sha
     })
     .map((p) => p.region)
+}
+
+/**
+ * Наборы без отпечатка поставлены версией до 0.1.18. В выпуске maps-2026-11 наборы дорог заменены
+ * новой сборкой 12 ноября 2026 к 22:00 UTC; старых файлов после этого на сервере нет, так что
+ * набор, поставленный позже, — точно новый. Таким дописываем отпечаток из списка карт, чтобы
+ * Кладезъ не качал их заново; поставленные раньше остаются без отпечатка — они устарели.
+ */
+export const ROUTES_2026_11_REBUILT_AT = Date.parse('2026-11-12T22:00:00Z')
+
+export async function adoptLegacyPacks(
+  packsDir: string,
+  available: Map<string, string | undefined>,
+  since = ROUTES_2026_11_REBUILT_AT
+): Promise<string[]> {
+  const adopted: string[] = []
+  for (const p of await installedPacks(packsDir)) {
+    const sha = available.get(p.region)
+    if (p.sha256 || !sha || p.version !== '2026-11') continue
+    const path = join(packsDir, `${p.region}.files.json`)
+    try {
+      const { mtimeMs } = await stat(path)
+      if (mtimeMs < since) continue
+      const j = JSON.parse(await readFile(path, 'utf8'))
+      await writeFile(path, JSON.stringify({ ...j, sha256: sha }))
+      adopted.push(p.region)
+    } catch {}
+  }
+  return adopted
 }
 
 function sha256File(path: string): Promise<string> {

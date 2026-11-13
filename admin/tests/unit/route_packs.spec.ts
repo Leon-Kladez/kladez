@@ -1,12 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { create } from 'tar'
 
 import {
+  adoptLegacyPacks,
   installedPacks,
   installedRegions,
   installPack,
@@ -132,6 +133,29 @@ test('новая сборка дорог: отпечаток, «устарели
     assert.ok(existsSync(join(tiles, shared)))
     assert.ok(existsSync(join(tiles, '2/000/800/002.gph')))
     assert.deepEqual(outdatedPacks(await installedPacks(packs), newer), [])
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('наборы без отпечатка (до 0.1.18): поставленные после новой сборки — новые, раньше — устарели', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kz-routes-'))
+  try {
+    const packs = join(dir, 'packs')
+    mkdirSync(packs)
+    const write = (region: string, at: string) => {
+      const p = join(packs, `${region}.files.json`)
+      writeFileSync(p, JSON.stringify({ region, version: '2026-11', files: ['2/000/1.gph'] }))
+      const t = new Date(at)
+      utimesSync(p, t, t)
+    }
+    write('ru-central', '2026-11-12T23:27:00Z') // поставлен ночью 13 ноября — уже новая сборка
+    write('ru-volga', '2026-11-10T12:00:00Z') // поставлен 10 ноября — старая сборка
+    const available = new Map([['ru-central', 'aaa'], ['ru-volga', 'bbb']])
+    assert.deepEqual(await adoptLegacyPacks(packs, available), ['ru-central'])
+    assert.deepEqual(outdatedPacks(await installedPacks(packs), available), ['ru-volga'])
+    // Повторно ничего не меняет.
+    assert.deepEqual(await adoptLegacyPacks(packs, available), [])
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

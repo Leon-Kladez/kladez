@@ -63,6 +63,13 @@ export class ResumeDownloadsJob {
         logger.warn(`[ResumeDownloadsJob] Could not resume ${job.id}: ${error?.message}`)
       }
     }
+    // Кладезъ: вышла новая сборка дорог — обновить установленные наборы самим.
+    try {
+      const { MapService } = await import('#services/map_service')
+      await new MapService().autoUpdateRoads()
+    } catch (error: any) {
+      logger.warn(`[ResumeDownloadsJob] Road update check failed: ${error?.message}`)
+    }
     return { resumed, reason: 'online' }
   }
 

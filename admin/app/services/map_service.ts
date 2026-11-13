@@ -64,7 +64,7 @@ import { promisify } from 'util'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { MapSearchService, SEARCH_FILE_RE } from './map_search_service.js'
 import { MapRouteService, ROUTES_FILE_RE } from './map_route_service.js'
-import { outdatedPacks } from '../utils/route_packs.js'
+import { adoptLegacyPacks, outdatedPacks } from '../utils/route_packs.js'
 import { DockerService } from './docker_service.js'
 import { readdir } from 'fs/promises'
 
@@ -333,7 +333,26 @@ export class MapService implements IMapService {
       }
     }
     const available = new Map([...byRegion].map(([region, r]) => [region, r.routes!.sha256]))
+    // Наборы, поставленные до 0.1.18 уже из новой сборки, — запомнить их отпечаток, а не качать заново.
+    const adopted = await adoptLegacyPacks(MapRouteService.packsDir(), available)
+    if (adopted.length) logger.info(`[MapService] Roads already current, fingerprint recorded: ${adopted.join(', ')}`)
     return outdatedPacks(await MapRouteService.installedPacks(), available).map((region) => byRegion.get(region)!)
+  }
+
+  /**
+   * Кладезъ сам обновляет устаревшие дороги (раз в 10 минут, когда есть интернет — из
+   * ResumeDownloadsJob): человеку не нужно знать про сборки дорог и нажимать кнопку. Пока новые
+   * качаются, работают старые; уже идущие загрузки не дублируются.
+   */
+  async autoUpdateRoads(): Promise<string[]> {
+    if ((await MapRouteService.serviceState()) !== 'installed') return []
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    const queued: string[] = []
+    for (const res of await this.outdatedRoads(spec)) {
+      if (await this.dispatchRoutesPack(res, true)) queued.push(res.id)
+    }
+    if (queued.length) logger.info(`[MapService] New road build: updating ${queued.join(', ')}`)
+    return queued
   }
 
   /**

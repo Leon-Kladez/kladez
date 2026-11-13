@@ -6,6 +6,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 - **Downloads no longer “hang” at 100%:** while Kladez checks and unpacks a downloaded file (roads take a minute or two), it shows “Downloaded, checking and unpacking…” instead of “No data for…”.
 - **The map list refreshes through a VPN too:** Kladez waits up to 15 seconds for it instead of 5 — with a stale list, downloads failed.
+- **Roads update by themselves:** when a new road build comes out, Kladez downloads the new sets on its own once there is internet — nothing to press. Roads installed before 0.1.18 but already from the new build are recognised and not downloaded again.
 - **The DNS workaround behind a VPN also works after an update:** in 0.1.19 an update over an older version did not copy one helper file, so the workaround never turned on. It is now built into the startup itself.
 - **A hint on “Download the new version”:** on hover it reminds that the installer (about 1.2 GB) goes to Downloads and that older installers there can be deleted after the update — they are not removed automatically.
 - **Routes across Europe, the CIS and the Middle East:** every detailed map of Europe, Belarus, Ukraine, Kazakhstan, Central Asia, the Caucasus, Turkey, Israel, Arabia, Iran, Egypt and their neighbours now has roads. All roads come from one build together with Russia, so routes cross borders: St Petersburg → Helsinki, Pskov → Riga, Madrid → Paris — when the maps of the countries on the way are downloaded.
