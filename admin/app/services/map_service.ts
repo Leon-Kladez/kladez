@@ -43,6 +43,7 @@ import {
   buildSearchDownloadParams,
   buildRoutesDownloadParams,
   dataRegion,
+  fullMapTitle,
   routesFilename,
   searchFilename,
   downloadableResources,
@@ -122,7 +123,7 @@ export class MapService implements IMapService {
     const titles = new Map<string, string>()
     try {
       const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
-      for (const col of spec?.collections ?? []) for (const r of col.resources) titles.set(r.id, r.title)
+      for (const col of spec?.collections ?? []) for (const r of col.resources) titles.set(r.id, fullMapTitle(r))
     } catch {}
     const named = files.map((f) => {
       const id = CollectionManifestService.parseMapFilename(f.name)?.resource_id
@@ -259,7 +260,7 @@ export class MapService implements IMapService {
     const params = buildSearchDownloadParams(
       resource,
       this.searchDir(),
-      t('mapsUi.searchIndexTitle', { title: resource.title })
+      t('mapsUi.searchIndexTitle', { title: fullMapTitle(resource) })
     )
     if (!params) return false
     await RunDownloadJob.dispatch(params)
@@ -295,7 +296,7 @@ export class MapService implements IMapService {
     const params = buildRoutesDownloadParams(
       resource,
       MapRouteService.packsDir(),
-      t('routes.packTitle', { title: resource.title })
+      t('routes.packTitle', { title: fullMapTitle(resource) })
     )
     if (!params) return false
     await RunDownloadJob.dispatch(params)

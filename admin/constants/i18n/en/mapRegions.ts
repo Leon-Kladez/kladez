@@ -31,6 +31,8 @@ export const mapRegionsEn = {
   'mapRegions.loadFailed': 'Could not load the list of countries.',
   'mapRegions.selectedCount': '{count} region selected|{count} regions selected',
   'mapRegions.installed': 'Already downloaded',
+  'mapRegions.installedOverviewOnly': 'The overview map is downloaded — you can download the detailed one instead',
+  'mapRegions.installedFullOnly': 'The detailed map is downloaded — you can download the overview instead (takes less space)',
   'mapRegions.detailLabel': 'Map detail',
   'mapRegions.versionColumn': 'Map date',
   'mapRegions.noOverview': 'Some regions have no overview version yet — the detailed map will be downloaded for them.',

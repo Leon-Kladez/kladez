@@ -15,3 +15,12 @@ test('явный адрес — скачивание по нему', () => {
 test('нет ни адреса, ни встроенного архива — понятная ошибка', () => {
   assert.throws(() => pickBaseAssetsSource(undefined, false, '/a'), /Базовые материалы карт не найдены/)
 })
+
+test('полное название карты: округам России — «Россия: …», у остальных страна уже в названии', async () => {
+  const { fullMapTitle } = await import('../../app/utils/map_packages.js')
+  assert.equal(fullMapTitle({ title: 'Центральный федеральный округ', country: 'RU' }), 'Россия: Центральный федеральный округ')
+  assert.equal(fullMapTitle({ title: 'Приволжский федеральный округ: запад (обзорно)', country: 'RU' }), 'Россия: Приволжский федеральный округ: запад (обзорно)')
+  assert.equal(fullMapTitle({ title: 'Беларусь', country: 'BY' }), 'Беларусь')
+  assert.equal(fullMapTitle({ title: 'США: Айова', country: 'US' }), 'США: Айова')
+  assert.equal(fullMapTitle({ title: 'Своя карта' }), 'Своя карта')
+})

@@ -71,9 +71,16 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
   const packages = country ? packagesForCountry(spec, country) : []
   const published = packages.filter((p) => !p.planned)
   const installed = new Set(data?.installed ?? [])
+  // Кладезъ: карта уже скачана в выбранном виде (подробно / обзорно) — выбирать её нечего;
+  // в другом виде — можно (заменить обзорную подробной и наоборот).
+  const installedAs = (id: string) => installed.has(detail === 'overview' ? `${id}-overview` : id)
+  const installedOther = (id: string) => !installedAs(id) && (installed.has(id) || installed.has(`${id}-overview`))
+  const selectable = published.filter((p) => !installedAs(p.id))
   // Выбор считается по всем опубликованным пакетам, а не только по открытой стране:
   // так восстановленный выбор (первая настройка) виден и до открытия страны.
-  const chosen = resources.filter((r) => !r.planned && (r.detail ?? 'full') === 'full' && selected.has(r.id))
+  const chosen = resources.filter(
+    (r) => !r.planned && (r.detail ?? 'full') === 'full' && selected.has(r.id) && !installedAs(r.id)
+  )
   const summary = selectionSummary(chosen, detail, resources, data?.freeBytes ?? null)
 
   // При возврате к шагу открываем страну уже выбранных пакетов.
@@ -235,15 +242,15 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
                   selected={selected}
                   onToggle={toggle}
                   titles={Object.fromEntries(packages.map((p) => [p.id, p.title]))}
-                  enabled={new Set(published.map((p) => p.id))}
+                  enabled={new Set(selectable.map((p) => p.id))}
                 />
               )}
-              {published.length > 1 && (
+              {selectable.length > 1 && (
                 <label className="flex items-center gap-2 font-medium">
                   <input
                     type="checkbox"
-                    checked={published.every((p) => selected.has(p.id))}
-                    onChange={(e) => setSelected(e.target.checked ? new Set(published.map((p) => p.id)) : new Set())}
+                    checked={selectable.every((p) => selected.has(p.id))}
+                    onChange={(e) => setSelected(e.target.checked ? new Set(selectable.map((p) => p.id)) : new Set())}
                   />
                   {t('mapRegions.wholeCountry')}
                 </label>
@@ -255,8 +262,9 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
                     pkg={p}
                     detail={detail}
                     resources={resources}
-                    checked={selected.has(p.id)}
-                    installed={installed.has(p.id) || installed.has(`${p.id}-overview`)}
+                    checked={selected.has(p.id) && !installedAs(p.id)}
+                    installed={installedAs(p.id)}
+                    installedOther={installedOther(p.id)}
                     onToggle={() => toggle(p.id)}
                   />
                 ))}
@@ -360,11 +368,13 @@ function PackageRow(props: {
   resources: SpecResource[]
   checked: boolean
   installed: boolean
+  installedOther?: boolean
   onToggle: () => void
 }) {
-  const { pkg, detail, resources, checked, installed, onToggle } = props
+  const { pkg, detail, resources, checked, installed, installedOther, onToggle } = props
   const shown = selectionSummary([pkg], detail, resources, null)
-  const disabled = !!pkg.planned
+  // Уже скачанную в этом виде карту не выбрать: скачивать нечего.
+  const disabled = !!pkg.planned || installed
   return (
     <li>
       <label
@@ -381,10 +391,15 @@ function PackageRow(props: {
             <span className="text-sm text-text-muted whitespace-nowrap">{formatBytes(shown.bytes)}</span>
           </span>
           {pkg.contents && <span className="block text-xs text-text-muted">{pkg.contents}</span>}
-          {disabled && <span className="block text-xs text-desert-orange-dark">{t('mapRegions.notPublished')}</span>}
+          {pkg.planned && <span className="block text-xs text-desert-orange-dark">{t('mapRegions.notPublished')}</span>}
           {installed && (
             <span className="mt-1 inline-flex items-center gap-1 text-xs text-desert-green">
               <IconCheck size={14} /> {t('mapRegions.installed')}
+            </span>
+          )}
+          {installedOther && (
+            <span className="mt-1 block text-xs text-text-muted">
+              {t(detail === 'full' ? 'mapRegions.installedOverviewOnly' : 'mapRegions.installedFullOnly')}
             </span>
           )}
         </span>

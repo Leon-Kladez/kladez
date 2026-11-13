@@ -2,8 +2,11 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="13 November 2026" versions="0.1.21, 0.1.20, 0.1.19, 0.1.18" %}
+{% release date="13 November 2026" versions="0.1.22, 0.1.21, 0.1.20, 0.1.19, 0.1.18" %}
 
+- **The installer shows it is working right away:** from the first second, a “Kladez is preparing the installation…” window with a moving bar and the music, while the computer is checked; before, nothing was visible for several seconds.
+- **The country in every map name:** Russian districts are named “Russia: Central Federal District” in Downloaded maps and in downloads.
+- **A downloaded map cannot be chosen again:** in “Choose a region” a map already downloaded in this form cannot be ticked and is not offered for download; an overview map can still be replaced by the detailed one and vice versa.
 - **Downloaded maps by name:** Map Management shows “Belarus”, “Volga Federal District: west (overview)” instead of file names (“by_2026-11.pmtiles”); the file name is shown small below. The same in the delete question and messages.
 - **Downloads no longer “hang” at 100%:** while Kladez checks and unpacks a downloaded file (roads take a minute or two), it shows “Downloaded, checking and unpacking…” instead of “No data for…”.
 - **The map list refreshes through a VPN too:** Kladez waits up to 15 seconds for it instead of 5 — with a stale list, downloads failed.

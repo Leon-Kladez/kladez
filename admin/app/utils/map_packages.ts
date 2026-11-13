@@ -63,7 +63,7 @@ export function buildPackageDownloadParams(
     allowedMimeTypes: PMTILES_MIME_TYPES,
     forceNew: false,
     filetype: 'map',
-    title: resource.title || undefined,
+    title: fullMapTitle(resource) || undefined,
     resourceMetadata: { resource_id: resource.id, version: resource.version, collection_ref: collectionSlug },
   }
 }
@@ -171,4 +171,15 @@ export function unionBounds(list: Bounds[]): Bounds | null {
 /** Подходят ли базовые материалы на диске (по метке версии из архива). */
 export function baseAssetsUpToDate(marker: string | null): boolean {
   return marker !== null && marker.trim() === KLADEZ_BASE_ASSETS_VERSION
+}
+
+/**
+ * Кладезъ: полное название карты — со страной в начале, чтобы в «Скачанных картах» и загрузках
+ * было ясно, что это за край. В списке карт у частей других стран страна уже в названии
+ * («Франция: юг», «США: Калифорния»); округам России её дописываем: «Россия: Центральный федеральный округ».
+ */
+export function fullMapTitle(resource: { title: string; country?: string }): string {
+  const title = resource.title ?? ''
+  if (resource.country === 'RU' && !title.startsWith('Россия')) return `Россия: ${title}`
+  return title
 }

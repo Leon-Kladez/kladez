@@ -250,6 +250,16 @@ Describe 'kladez.iss: оформление «Кладезъ», мелодия и
         $iss | Should -Match 'if WizardSilent then'
         $iss | Should -Match "'close kzmusic'"
     }
+    It 'starts the melody and a «готовит установку» window the moment Setup starts, before the computer check' {
+        $iss | Should -Match '(?s)function InitializeSetup: Boolean;.*?StartMusic;.*?ShowSplash;.*?KzPrepareSetup'
+        $iss | Should -Match "Кладезъ готовит установку…"
+        $iss | Should -Match 'npbstMarquee'
+        # the check runs in the background so the window keeps responding (no «Не отвечает»)
+        $iss | Should -Match 'RunChecksPumped\(ExpandConstant\(''\{tmp\}.scripts.checks\.ps1''\)'
+        $iss | Should -Match "external 'PeekMessageW@user32\.dll stdcall'"
+        # the wizard does not start the melody a second time
+        $iss | Should -Match '(?s)procedure InitializeWizard;.*?if not MusicReady then'
+    }
     It 'has a visible «Звук» button and remembers the choice (also after the reboot)' {
         $iss | Should -Match "'♪ Звук: вкл'"
         $iss | Should -Match "'♪ Звук: выкл'"

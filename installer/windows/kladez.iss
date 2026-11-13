@@ -116,6 +116,10 @@ type
     nTrackPos: Integer;
   end;
 
+  TKzMsg = record
+    M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12: LongWord;
+  end;
+
 const
   RunOnceKey = 'Software\Microsoft\Windows\CurrentVersion\RunOnce';
   KZ_SB_VERT = 1;
@@ -145,6 +149,7 @@ var
   Tips: TArrayOfString;
   TipIndex: Integer;
   TipTimer: LongWord;
+  SplashForm: TSetupForm;
 
 function KzGetScrollInfo(Wnd: HWND; BarFlag: Integer; var ScrollInfo: TKladezScrollInfo): BOOL;
   external 'GetScrollInfo@user32.dll stdcall';
@@ -156,6 +161,14 @@ function KzGetTickCount: LongWord;
   external 'GetTickCount@kernel32.dll stdcall';
 function KzMciSendString(Command: String; ReturnString: String; ReturnLength: LongWord; Callback: LongWord): LongWord;
   external 'mciSendStringW@winmm.dll stdcall';
+{ Window messages for the start splash: MSG is 28 bytes in this 32-bit process; 48 reserved so a
+  wider layout can never overrun it. We only pass it back to Windows, never read its fields. }
+function KzPeekMessage(var Msg: TKzMsg; Wnd, MsgFilterMin, MsgFilterMax, RemoveMsg: LongWord): BOOL;
+  external 'PeekMessageW@user32.dll stdcall';
+function KzTranslateMessage(var Msg: TKzMsg): BOOL;
+  external 'TranslateMessage@user32.dll stdcall';
+function KzDispatchMessage(var Msg: TKzMsg): LongWord;
+  external 'DispatchMessageW@user32.dll stdcall';
 
 { ── Small helpers ─────────────────────────────────────────────────────────── }
 
@@ -217,6 +230,45 @@ begin
     Result := Code
   else
     Result := 1;
+end;
+
+{ Keep our windows alive (start splash, its moving bar) while we wait for something. }
+procedure PumpMessages;
+var
+  M: TKzMsg;
+begin
+  while KzPeekMessage(M, 0, 0, 0, 1) do
+  begin
+    KzTranslateMessage(M);
+    KzDispatchMessage(M);
+  end;
+end;
+
+{ checks.ps1 in the background while the start splash stays responsive (plain Exec would freeze it:
+  Windows then shows «Не отвечает»). The script's exit code comes back through a small .done file. }
+function RunChecksPumped(const Script, OutFile: String): Integer;
+var
+  Done, Cmd: String;
+  Lines: TArrayOfString;
+  Code: Integer;
+  T0: LongWord;
+begin
+  Result := 1;
+  Done := OutFile + '.done';
+  DeleteFile(Done);
+  Cmd := '-NoProfile -ExecutionPolicy Bypass -Command "try { & ''' + Script + ''' -OutFile ''' + OutFile +
+    '''; $c = $LASTEXITCODE } catch { $c = 1 }; if ($null -eq $c) { $c = 0 }; Set-Content -LiteralPath ''' + Done + ''' -Value $c"';
+  if not Exec(PowerShellExe, Cmd, '', SW_HIDE, ewNoWait, Code) then
+    Exit;
+  T0 := KzGetTickCount;
+  while not FileExists(Done) and (KzGetTickCount - T0 < 300000) do
+  begin
+    PumpMessages;
+    Sleep(50);
+  end;
+  Sleep(100);
+  if LoadStringsFromFile(Done, Lines) and (GetArrayLength(Lines) > 0) then
+    Result := StrToIntDef(Trim(Lines[0]), 1);
 end;
 
 function LogDir: String;
@@ -353,7 +405,7 @@ end;
 
 { ── Setup start: checks ───────────────────────────────────────────────────── }
 
-function InitializeSetup: Boolean;
+function KzPrepareSetup: Boolean;
 var
   Lines: TArrayOfString;
   I, Code, N: Integer;
@@ -379,8 +431,7 @@ begin
 #endif
 
   ExtractTemporaryFiles('{tmp}\scripts\*');
-  Code := RunScript(ExpandConstant('{tmp}\scripts\checks.ps1'),
-    '-OutFile "' + ExpandConstant('{tmp}\kladez-checks.txt') + '"', False);
+  Code := RunChecksPumped(ExpandConstant('{tmp}\scripts\checks.ps1'), ExpandConstant('{tmp}\kladez-checks.txt'));
   if (Code <> 0) or not LoadStringsFromFile(ExpandConstant('{tmp}\kladez-checks.txt'), Lines) then
   begin
     MsgBox('Не удалось проверить компьютер перед установкой. Перезагрузите компьютер и запустите установку ещё раз.', mbError, MB_OK);
@@ -742,12 +793,81 @@ end;
 
 { ── Wizard pages ──────────────────────────────────────────────────────────── }
 
+{ ── Start splash: shown the moment Setup starts, so the person sees (and hears) that it is working
+     while the computer is being checked; the wizard window follows. ── }
+
+procedure ShowSplash;
+var
+  Title, Hint: TNewStaticText;
+  Bar: TNewProgressBar;
+begin
+  if WizardSilent then
+    Exit;
+  SplashForm := CreateCustomForm(ScaleX(460), ScaleY(150), False, False);
+  SplashForm.Caption := 'Установка «Кладезъ»';
+  SplashForm.Position := poScreenCenter;
+  SplashForm.BorderIcons := [];
+  Title := TNewStaticText.Create(SplashForm);
+  Title.Parent := SplashForm;
+  Title.Left := ScaleX(24);
+  Title.Top := ScaleY(22);
+  Title.Font.Size := 12;
+  Title.Font.Style := [fsBold];
+  Title.Caption := 'Кладезъ готовит установку…';
+  Hint := TNewStaticText.Create(SplashForm);
+  Hint.Parent := SplashForm;
+  Hint.AutoSize := False;
+  Hint.WordWrap := True;
+  Hint.Left := ScaleX(24);
+  Hint.Top := ScaleY(56);
+  Hint.Width := ScaleX(412);
+  Hint.Height := ScaleY(40);
+  Hint.Caption := 'Проверяю компьютер: версию Windows, память и место на дисках. Это займёт несколько секунд — окно установки откроется само.';
+  Bar := TNewProgressBar.Create(SplashForm);
+  Bar.Parent := SplashForm;
+  Bar.Left := ScaleX(24);
+  Bar.Top := ScaleY(108);
+  Bar.Width := ScaleX(412);
+  Bar.Height := ScaleY(14);
+  Bar.Style := npbstMarquee;
+  SplashForm.Show;
+  PumpMessages;
+end;
+
+procedure HideSplash;
+begin
+  if SplashForm <> nil then
+  begin
+    SplashForm.Hide;
+    SplashForm.Free;
+    SplashForm := nil;
+  end;
+end;
+
+function InitializeSetup: Boolean;
+begin
+  { Music and the splash first: before this the installer was silent for the whole check. }
+  MusicMuted := MuteRemembered;
+  StartMusic;
+  ShowSplash;
+  try
+    Result := KzPrepareSetup;
+  finally
+    HideSplash;
+  end;
+  if not Result then
+    StopMusic;
+end;
+
 procedure InitializeWizard;
 begin
   WizardForm.LicenseLabel1.Caption := 'Прочитайте соглашение. Прокрутите текст до конца — ' +
     'тогда станет доступно «Я принимаю условия соглашения».';
-  MusicMuted := MuteRemembered;
-  StartMusic;
+  if not MusicReady then
+  begin
+    MusicMuted := MuteRemembered;
+    StartMusic;
+  end;
   CreateSoundButton;
   InitTips;
   if IsUpgrade then
