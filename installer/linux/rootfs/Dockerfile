@@ -22,7 +22,7 @@ RUN set -eux; \
 
 COPY rootfs/wsl.conf /etc/wsl.conf
 COPY rootfs/daemon.json /etc/docker/daemon.json
-COPY kladez-lib.sh dns-tcp.js /usr/local/lib/kladez/
+COPY kladez-lib.sh /usr/local/lib/kladez/kladez-lib.sh
 COPY kladez-start /usr/local/bin/kladez-start
 COPY compose.template.yaml images.lock /opt/project-nomad/
 RUN chmod 0755 /usr/local/bin/kladez-start && mkdir -p /opt/project-nomad/mysql /opt/project-nomad/redis

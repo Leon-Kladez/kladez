@@ -192,6 +192,9 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   run bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_ensure_dns"
   [ "$status" -eq 0 ]
   grep -q 'docker run -d --name kladez_dns --network host' "$STUB_LOG"
+  # Пересыльщик пишется из kladez-lib.sh: установщик копирует только kladez-start и kladez-lib.sh.
+  grep -q "createSocket('udp4')" "$KZ_ROOT/opt/project-nomad/dns/dns-tcp.js"
+  grep -q -- "-v $KZ_ROOT/opt/project-nomad/dns:/dns:ro" "$STUB_LOG"
   [ "$(cat "$KZ_ROOT/etc/resolv.conf")" = "nameserver 10.213.0.1" ]
   [ "$(cat "$KZ_ROOT/etc/resolv.conf.wsl")" = "nameserver 172.29.160.1" ]
 }
