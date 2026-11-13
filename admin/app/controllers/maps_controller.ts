@@ -79,8 +79,12 @@ export default class MapsController {
     const raw = request.request
     if (raw.destroyed || raw.socket?.destroyed) return { results: [] }
     try {
-      const results = await MapSearchService.search(q, { lat, lon, limit, english: getLocale() === 'en' })
-      return { results }
+      const [regions, results] = await Promise.all([
+        // Кладезъ: скачанные страны и регионы по названию — первыми («Беларусь» → вся страна).
+        this.mapService.searchRegions(q).catch(() => []),
+        MapSearchService.search(q, { lat, lon, limit, english: getLocale() === 'en' }),
+      ])
+      return { results: [...regions, ...results] }
     } catch (error) {
       logger.error({ err: error }, '[MapsController] search failed')
       return response.status(500).send({ message: humanizeError(error) })

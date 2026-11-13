@@ -23,6 +23,8 @@ export const mapsPageRu: Record<keyof typeof mapsPageEn, string> = {
   'mapsUi.addMarkerHere': 'Поставить метку',
   'mapsUi.searchIndexTitle': 'Поиск по карте: {title}',
   'mapsUi.searchPlaceholder': 'Город, улица, дом, аптека…',
+  'mapsUi.resultCountry': 'Страна · карта скачана — показать целиком',
+  'mapsUi.resultRegion': 'Регион · карта скачана — показать целиком',
   'mapsUi.searchNothing': 'Ничего не нашлось. Попробуйте короче: «Пятницкая 7», «аптека», «Тула».',
   'mapsUi.searchFailed': 'Не удалось выполнить поиск.',
   'mapsUi.searchNoIndex': 'Поиск по названиям работает, когда для карты скачан указатель поиска. Координаты («55.75, 37.62») ищутся и без него.',

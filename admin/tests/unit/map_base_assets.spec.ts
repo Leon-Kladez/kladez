@@ -24,3 +24,15 @@ test('полное название карты: округам России — 
   assert.equal(fullMapTitle({ title: 'США: Айова', country: 'US' }), 'США: Айова')
   assert.equal(fullMapTitle({ title: 'Своя карта' }), 'Своя карта')
 })
+
+test('поиск страны по названию карты: с начала названия или слова, «Белорусь» = «Беларусь», от 3 букв', async () => {
+  const { matchesMapTitle } = await import('../../app/utils/map_packages.js')
+  assert.equal(matchesMapTitle('Беларусь', 'Беларусь'), true)
+  assert.equal(matchesMapTitle('белорусь', 'Беларусь'), true)
+  assert.equal(matchesMapTitle('бел', 'Беларусь'), true)
+  assert.equal(matchesMapTitle('сибир', 'Россия: Сибирский федеральный округ'), true)
+  assert.equal(matchesMapTitle('россия', 'Россия: Центральный федеральный округ'), true)
+  assert.equal(matchesMapTitle('китай', 'Китай: юг и Сычуань'), true)
+  assert.equal(matchesMapTitle('бе', 'Беларусь'), false)
+  assert.equal(matchesMapTitle('минск', 'Беларусь'), false)
+})

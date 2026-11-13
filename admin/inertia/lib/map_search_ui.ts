@@ -40,3 +40,9 @@ export function searchZoom(cls: string, kind: string | null): number {
   if (cls === 'street') return 16
   return 17.5
 }
+
+/** Кладезъ: масштаб, при котором страна или регион [запад, юг, восток, север] видны целиком. */
+export function zoomForBounds(b: [number, number, number, number]): number {
+  const span = Math.max(b[2] - b[0], (b[3] - b[1]) * 1.6, 0.01)
+  return Math.max(2, Math.min(12, Math.log2(360 / span) + 0.6))
+}

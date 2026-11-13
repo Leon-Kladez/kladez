@@ -21,6 +21,8 @@ export const mapsPageEn = {
   'mapsUi.addMarkerHere': 'Add a marker',
   'mapsUi.searchIndexTitle': 'Map search: {title}',
   'mapsUi.searchPlaceholder': 'Town, street, address, place…',
+  'mapsUi.resultCountry': 'Country · map downloaded — show all of it',
+  'mapsUi.resultRegion': 'Region · map downloaded — show all of it',
   'mapsUi.searchNothing': 'Nothing found. Try something shorter: a street and number, “pharmacy”, a town.',
   'mapsUi.searchFailed': 'Search failed.',
   'mapsUi.searchNoIndex': 'Search by name works once the search index for a map is downloaded. Coordinates (“55.75, 37.62”) work without it.',

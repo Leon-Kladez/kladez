@@ -5,6 +5,7 @@ import {
   IconLoader2,
   IconMapPin,
   IconMapPinFilled,
+  IconWorld,
   IconRoad,
   IconSearch,
   IconX,
@@ -14,7 +15,7 @@ import api from '~/lib/api'
 import type { MapSearchResult } from '../../../types/maps'
 import { getLocale, t } from '../../../constants/i18n'
 import { placeKindName } from '../../../constants/map_places'
-import { getLiveMapCenter, parseCoordinatesInput, searchZoom } from '~/lib/map_search_ui'
+import { getLiveMapCenter, parseCoordinatesInput, searchZoom, zoomForBounds } from '~/lib/map_search_ui'
 
 export type MapSearchPick = {
   lat: number
@@ -53,6 +54,7 @@ function formatDistance(km: number | null): string | null {
 
 function ResultIcon({ r }: { r: MapSearchResult }) {
   const cls = 'shrink-0 text-text-muted'
+  if (r.cls === 'region') return <IconWorld size={18} className={cls} />
   if (r.cls === 'place') return <IconMapPinFilled size={18} className={cls} />
   if (r.cls === 'street') return <IconRoad size={18} className={cls} />
   if (r.cls === 'house') return <IconHome size={18} className={cls} />
@@ -133,11 +135,11 @@ export default function MapSearchBox({ hasIndex, canChange, onPick, onFocusChang
   }, [])
 
   const pickResult = (r: MapSearchResult) => {
-    const kind = placeKindName(r.kind, locale)
+    const kind = r.cls === 'region' ? null : placeKindName(r.kind, locale)
     onPick({
       lat: r.lat,
       lng: r.lon,
-      zoom: searchZoom(r.cls, r.kind),
+      zoom: r.bounds ? zoomForBounds(r.bounds) : searchZoom(r.cls, r.kind),
       title: r.name || kind || '',
       kind: r.name ? kind : null,
       address: [r.address, r.city].filter(Boolean).join(', ') || null,
@@ -258,7 +260,10 @@ export default function MapSearchBox({ hasIndex, canChange, onPick, onFocusChang
             results.map((r, i) => {
               const kind = placeKindName(r.kind, locale)
               const title = r.name || kind || ''
-              const sub = [r.name ? kind : null, r.address, r.city, formatDistance(r.distanceKm)].filter(Boolean).join(' · ')
+              const sub =
+                r.cls === 'region'
+                  ? t(r.kind === 'country' ? 'mapsUi.resultCountry' : 'mapsUi.resultRegion')
+                  : [r.name ? kind : null, r.address, r.city, formatDistance(r.distanceKm)].filter(Boolean).join(' · ')
               return (
                 <button
                   key={r.id}

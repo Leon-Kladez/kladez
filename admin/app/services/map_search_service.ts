@@ -260,7 +260,7 @@ export class MapSearchService {
     const kept: MapSearchResult[] = []
     // Одно и то же бывает в данных дважды: город точкой и границей (середина границы — за
     // несколько км), больница точкой и зданием. Повтор рядом — не показываем.
-    const twinRadiusKm = { place: 15, street: 1.5, poi: 0.4, house: 0.05 } as const
+    const twinRadiusKm: Record<MapSearchResult['cls'], number> = { place: 15, street: 1.5, poi: 0.4, house: 0.05, region: 0 }
     const push = (r: MapSearchResult, score: number) => {
       if (seen.has(r.id)) return
       const radius = twinRadiusKm[r.cls] ?? 0.1

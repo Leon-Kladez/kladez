@@ -91,7 +91,8 @@ export type MapMarkerResponse = {
 export type MapSearchResult = {
   /** Уникально в выдаче: регион и запись. */
   id: string
-  cls: 'place' | 'street' | 'poi' | 'house'
+  /** region — скачанная карта страны или региона («Беларусь», «Россия: Сибирский федеральный округ»). */
+  cls: 'place' | 'street' | 'poi' | 'house' | 'region'
   kind: string | null
   name: string
   /** Город/посёлок. */
@@ -101,4 +102,6 @@ export type MapSearchResult = {
   lat: number
   lon: number
   distanceKm: number | null
+  /** У cls = 'region': границы карты [запад, юг, восток, север] — показать её целиком. */
+  bounds?: [number, number, number, number]
 }

@@ -52,7 +52,8 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPre
       const res = await api.searchMap(query, c?.lat, c?.lon, ctrl.signal)
       if (ctrl.signal.aborted) return
       setLoading(false)
-      setResults((res ?? []).slice(0, 8))
+      // Страна целиком — не точка маршрута: в «Откуда / Куда» только места.
+      setResults((res ?? []).filter((r) => r.cls !== 'region').slice(0, 8))
       setActive(0)
     }, 250)
     return () => {

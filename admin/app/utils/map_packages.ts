@@ -183,3 +183,19 @@ export function fullMapTitle(resource: { title: string; country?: string }): str
   if (resource.country === 'RU' && !title.startsWith('Россия')) return `Россия: ${title}`
   return title
 }
+
+/** Для поиска стран по названию: строчные, ё → е, безударные о/а не различаем («Белорусь» = «Беларусь»). */
+function looseRu(s: string): string {
+  return s.toLowerCase().replace(/ё/g, 'е').replace(/о/g, 'а')
+}
+
+/**
+ * Кладезъ: подходит ли запрос к названию карты — с начала названия или с начала любого слова
+ * («бела» → «Беларусь», «сибир» → «Россия: Сибирский федеральный округ»). От трёх букв.
+ */
+export function matchesMapTitle(query: string, title: string): boolean {
+  const q = looseRu(query.trim())
+  if (q.length < 3) return false
+  const t = looseRu(title)
+  return t.startsWith(q) || t.split(/[^a-zа-я0-9]+/).some((w) => w.length > 0 && w.startsWith(q))
+}

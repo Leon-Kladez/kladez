@@ -24,7 +24,7 @@ import InstalledResource from '#models/installed_resource'
 import { CollectionManifestService } from './collection_manifest_service.js'
 import { decideSupersededDeletion } from '../utils/superseded_resource.js'
 import type { CollectionWithStatus, MapsSpec, SpecResource } from '../../types/collections.js'
-import type { Country, CountryCode, CountryGroup, MapExtractPreflight } from '../../types/maps.js'
+import type { Country, CountryCode, CountryGroup, MapExtractPreflight, MapSearchResult } from '../../types/maps.js'
 import {
   EXTRACT_DEFAULT_MAX_ZOOM,
   EXTRACT_MAX_ZOOM,
@@ -44,6 +44,7 @@ import {
   buildRoutesDownloadParams,
   dataRegion,
   fullMapTitle,
+  matchesMapTitle,
   routesFilename,
   searchFilename,
   downloadableResources,
@@ -1075,6 +1076,55 @@ export class MapService implements IMapService {
    * Кладезъ: общие границы скачанных регионов (без карты мира) — по ним карта открывается
    * на своём регионе. Читается только заголовок файлов (127 байт).
    */
+  /**
+   * Кладезъ: скачанные карты, подходящие к запросу по названию, — «Беларусь» находит страну, а не
+   * одноимённую деревню. Подробная и обзорная карта одного региона — одна строка.
+   */
+  async searchRegions(query: string): Promise<MapSearchResult[]> {
+    const { files } = await this.listRegions()
+    const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
+    const byId = new Map<string, SpecResource>()
+    for (const col of spec?.collections ?? []) for (const r of col.resources) byId.set(r.id, r)
+    const out: MapSearchResult[] = []
+    const seen = new Set<string>()
+    for (const f of files) {
+      if (f.type !== 'file') continue
+      const id = CollectionManifestService.parseMapFilename(f.name)?.resource_id
+      const res = id ? byId.get(id) : undefined
+      if (!id || !res) continue
+      const base = id.replace(/-overview$/, '')
+      const baseRes = byId.get(base) ?? res
+      const title = fullMapTitle(baseRes)
+      if (seen.has(base) || !matchesMapTitle(query, title)) continue
+      seen.add(base)
+      let bounds: Bounds | null = null
+      try {
+        const handle = await openFile(join(this.baseDirPath, 'pmtiles', f.name), 'r')
+        try {
+          const buf = Buffer.alloc(127)
+          await handle.read(buf, 0, 127, 0)
+          bounds = readPmtilesBounds(buf)
+        } finally {
+          await handle.close()
+        }
+      } catch {}
+      if (!bounds) continue
+      out.push({
+        id: `region:${base}`,
+        cls: 'region',
+        kind: title.includes(':') ? 'region' : 'country',
+        name: title,
+        city: null,
+        address: null,
+        lat: (bounds[1] + bounds[3]) / 2,
+        lon: (bounds[0] + bounds[2]) / 2,
+        distanceKm: null,
+        bounds,
+      })
+    }
+    return out.slice(0, 5)
+  }
+
   async downloadedRegionsBounds(): Promise<Bounds | null> {
     const { files } = await this.listRegions()
     const bounds: Bounds[] = []
