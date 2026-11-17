@@ -1,7 +1,7 @@
 ﻿# «Кладезъ»: один шаг установки, вызывается из Inno Setup (план Задача 6).
 # Коды выхода: 0 — готово, 3010 — нужна перезагрузка, 1 — ошибка (текст по-русски в stdout и в журнале).
 param(
-    [Parameter(Mandatory)][ValidateSet('features', 'wsl', 'integrate', 'distro', 'firstrun', 'upgrade', 'activate')][string]$Step,
+    [Parameter(Mandatory)][ValidateSet('features', 'wsl', 'integrate', 'distro', 'firstrun', 'upgrade', 'activate', 'import', 'images')][string]$Step,
     [string]$LauncherPath,
     [string]$NetScriptPath,
     [string]$UserId,
@@ -14,6 +14,7 @@ param(
     [string]$BundlePath,
     [string]$LibraryDir,
     [string]$LinuxDir,          # payload\linux: new kladez-start, images.lock, compose template (upgrade)
+    [string]$SourceDir,         # import: папка «Кладезъ» на флешке («Копия на флешку»)
     [int]$AdminPort = 8080,
     [int]$KiwixPort = 8090,
     [string]$IniPath = (Join-Path $env:ProgramData 'Kladez\kladez.ini'),
@@ -75,6 +76,18 @@ try {
         'upgrade' {
             Update-KladezDistroFiles -LinuxDir $LinuxDir
             [void](Invoke-KladezUpgrade -BundlePath $BundlePath)
+            'ok'
+        }
+        'import' {
+            Import-Module (Join-Path $PSScriptRoot 'Kladez.Flash.psm1') -Force
+            Write-StepLog "from $SourceDir"
+            Write-StepLog (Copy-KladezFlashLibrary -SourceDir $SourceDir -LibraryDir $LibraryDir)
+            'ok'
+        }
+        'images' {
+            # Не удалось — не ломаем установку: маршруты и ИИ поставятся по кнопке, когда будет интернет.
+            Import-Module (Join-Path $PSScriptRoot 'Kladez.Flash.psm1') -Force
+            try { Write-StepLog (Import-KladezFlashImages -LibraryDir $LibraryDir) } catch { Write-StepLog "images: $($_.Exception.Message)" }
             'ok'
         }
         'activate' {

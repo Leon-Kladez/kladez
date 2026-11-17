@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Kladez.Launcher
 {
-    public enum LaunchMode { Interactive, Background, Stop, CollectLogs }
+    public enum LaunchMode { Interactive, Background, Stop, CollectLogs, CopyToUsb }
 
     public enum InteractivePlan { OpenNow, StartAndWait, WaitOnly }
 
@@ -118,6 +118,7 @@ namespace Kladez.Launcher
                 case "--background": return LaunchMode.Background;
                 case "--stop": return LaunchMode.Stop;
                 case "--collect-logs": return LaunchMode.CollectLogs;
+                case "--copy-to-usb": return LaunchMode.CopyToUsb;
                 default: return LaunchMode.Interactive;
             }
         }

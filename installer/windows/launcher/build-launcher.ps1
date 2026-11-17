@@ -15,7 +15,7 @@ $common = @('/nologo', '/codepage:65001', '/optimize+', '/warnaserror+', '/platf
 
 if ($Test) {
     $exe = Join-Path $OutDir 'LauncherTests.exe'
-    & $csc @common '/target:exe' "/out:$exe" (Join-Path $src 'LauncherCore.cs') (Join-Path $src 'LauncherTests.cs')
+    & $csc @common '/target:exe' "/out:$exe" (Join-Path $src 'LauncherCore.cs') (Join-Path $src 'CopyCore.cs') (Join-Path $src 'LauncherTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Тесты не скомпилировались.' }
     & $exe
     exit $LASTEXITCODE
@@ -24,6 +24,6 @@ if ($Test) {
 $exe = Join-Path $OutDir 'Kladez.exe'
 $refs = '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', '/reference:System.IO.Compression.dll', '/reference:System.IO.Compression.FileSystem.dll'
 & $csc @common '/target:winexe' "/win32icon:$(Join-Path $src 'kladez.ico')" @refs "/out:$exe" `
-    (Join-Path $src 'LauncherCore.cs') (Join-Path $src 'Program.cs')
+    (Join-Path $src 'LauncherCore.cs') (Join-Path $src 'CopyCore.cs') (Join-Path $src 'CopyForm.cs') (Join-Path $src 'Program.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Kladez.exe не собрался.' }
 Write-Output "built $exe"

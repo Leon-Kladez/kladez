@@ -93,6 +93,7 @@ Name: "{autoprograms}\Кладезъ\Сведения о программе"; Fi
 Name: "{autoprograms}\Кладезъ\Как пройти предупреждение Windows"; Filename: "{app}\docs\smartscreen\index.html"
 Name: "{autoprograms}\Кладезъ\Как включить виртуализацию в BIOS"; Filename: "{app}\docs\bios\index.html"
 Name: "{autoprograms}\Кладезъ\Собрать сведения для помощи"; Filename: "{app}\Kladez.exe"; Parameters: "--collect-logs"
+Name: "{autoprograms}\Кладезъ\Копия на флешку"; Filename: "{app}\Kladez.exe"; Parameters: "--copy-to-usb"
 
 [Run]
 Filename: "{app}\Kladez.exe"; Description: "Открыть «Кладезъ» сейчас"; Flags: postinstall nowait runasoriginaluser skipifsilent; Check: SetupFinished
@@ -134,6 +135,10 @@ var
   LibPage: TInputDirWizardPage;
   LibInfo: TNewStaticText;
   LibTouched: Boolean;
+  { «Копия на флешку»: установщик запущен с флешки, рядом — библиотека. }
+  FlashDir: String;
+  FlashMB: Integer;
+  FlashCheck: TNewCheckBox;
   DriveLetters, DriveFits, DriveFree: TArrayOfString;
   DriveDefault: Integer;
   WindowsPathKind, AdminPort, KiwixPort, ResumeLibDir, ExistingLibDir: String;
@@ -891,6 +896,26 @@ begin
   LibInfo.Caption := LibDriveInfo(LibPage.Values[0]);
   LibPage.Edits[0].OnChange := @LibDirChanged;
   LibTouched := False;
+  { Установщик с флешки, сделанной «Копией на флешку»: рядом лежит библиотека — перенести её. }
+  if FileExists(ExpandConstant('{src}\библиотека.ini')) and DirExists(ExpandConstant('{src}\библиотека')) then
+  begin
+    FlashDir := ExpandConstant('{src}');
+    FlashMB := StrToIntDef(GetIniString('Library', 'MB', '0', FlashDir + '\библиотека.ini'), 0);
+    FlashCheck := TNewCheckBox.Create(LibPage);
+    FlashCheck.Parent := LibPage.Surface;
+    FlashCheck.Left := 0;
+    FlashCheck.Top := LibInfo.Top + LibInfo.Height + ScaleY(4);
+    FlashCheck.Width := LibPage.SurfaceWidth;
+    FlashCheck.Height := ScaleY(34);
+    FlashCheck.Caption := 'Перенести библиотеку с флешки (' + IntToStr((FlashMB + 1023) div 1024) +
+      ' ГБ): книги, карты, поиск, дороги и модели ИИ-помощника — без интернета';
+    FlashCheck.Checked := True;
+  end;
+end;
+
+function FlashImport: Boolean;
+begin
+  Result := (FlashDir <> '') and ((FlashCheck = nil) or FlashCheck.Checked);
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
@@ -979,6 +1004,13 @@ begin
     else if DriveFits[I] = '' then
     begin
       MsgBox('На диске ' + DriveLetters[I] + ': не хватит места даже для «Аптечки». Выберите папку на другом диске.', mbError, MB_OK);
+      Result := False;
+    end
+    else if FlashImport and (StrToIntDef(DriveFree[I], 0) < (FlashMB div 1024) + 15) then
+    begin
+      MsgBox('Библиотека с флешки (' + IntToStr((FlashMB + 1023) div 1024) + ' ГБ) не поместится на диск ' + DriveLetters[I] +
+        ': — там свободно ' + DriveFree[I] + ' ГБ, а ещё около 15 ГБ нужно самой программе. ' +
+        'Выберите другой диск или снимите галочку «Перенести библиотеку с флешки».', mbError, MB_OK);
       Result := False;
     end;
   end;
@@ -1134,8 +1166,11 @@ end;
 procedure RunInstallSteps;
 var
   Payload, Lib, Sys: String;
-  Code: Integer;
+  Code, Total: Integer;
 begin
+  Total := 5;
+  if FlashImport then
+    Total := 6;
   Payload := ExpandConstant('{app}\payload');
 
   if IsUpgrade then
@@ -1157,13 +1192,13 @@ begin
   { The system part (WSL disk) lives on the library's drive. }
   Sys := PathDrive(Lib) + ':\Kladez\system';
 
-  BeginStep(1, 5, 0, 5, 30, 'Включаю компоненты Windows…', '');
+  BeginStep(1, Total, 0, 5, 30, 'Включаю компоненты Windows…', '');
   Code := Step('features', '', False);
   if Code = 3010 then begin ScheduleResume(Lib); Exit; end;
   if Code <> 0 then begin Fail('Не удалось включить компоненты Windows.', AdviceReboot); Exit; end;
   EndStep;
 
-  BeginStep(2, 5, 5, 15, 120, 'Устанавливаю WSL…', '');
+  BeginStep(2, Total, 5, 15, 120, 'Устанавливаю WSL…', '');
   Code := Step('wsl', '-WindowsPathKind ' + WindowsPathKind + ' -WslMsi "' + Payload + '\{#WslMsi}" -LegacyKernelMsi "' +
     Payload + '\{#LegacyMsi}"', False);
   if Code = 3010 then begin ScheduleResume(Lib); Exit; end;
@@ -1172,7 +1207,7 @@ begin
 
   WriteSettings(Lib, Sys);
 
-  BeginStep(3, 5, 20, 3, 15, 'Настраиваю автозапуск и доступ для телефонов…', '');
+  BeginStep(3, Total, 20, 3, 15, 'Настраиваю автозапуск и доступ для телефонов…', '');
   if Step('integrate', '-LauncherPath "' + ExpandConstant('{app}\Kladez.exe') + '" -NetScriptPath "' +
     ExpandConstant('{app}\scripts\kladez-net.ps1') + '" -UserId "' + OriginalUser + '" -FallbackUserId "' +
     ExpandConstant('{computername}\{username}') + '" -AdminPort ' + AdminPort + ' -KiwixPort ' + KiwixPort, False) <> 0 then
@@ -1182,7 +1217,7 @@ begin
   end;
   EndStep;
 
-  BeginStep(4, 5, 23, 12, 60, 'Устанавливаю системный модуль «Кладезъ»…', '');
+  BeginStep(4, Total, 23, 12, 60, 'Устанавливаю системный модуль «Кладезъ»…', '');
   if Step('distro', '-SystemDir "' + Sys + '" -RootfsPath "' + Payload + '\kladez-rootfs.tar.gz"', True) <> 0 then
   begin
     Fail('Не удалось установить системный модуль «Кладезъ».', AdviceRetry);
@@ -1190,13 +1225,33 @@ begin
   end;
   EndStep;
 
-  BeginStep(5, 5, 35, 65, 480, 'Распаковываю и запускаю программу…',
-    'Это займёт до 8 минут — компьютер не завис. ');
+  if FlashImport then
+  begin
+    { До первого запуска: панель при старте сама увидит книги и карты в библиотеке. USB — около 40 МБ/с. }
+    BeginStep(5, 6, 35, 30, 60 + FlashMB div 40, 'Переношу библиотеку с флешки…',
+      'Не вынимайте флешку. Это может занять долго — компьютер не завис. ');
+    if Step('import', '-SourceDir "' + FlashDir + '" -LibraryDir "' + Lib + '"', False) <> 0 then
+    begin
+      Fail('Не удалось перенести библиотеку с флешки.', AdviceRetry);
+      Exit;
+    end;
+    EndStep;
+    BeginStep(6, 6, 65, 35, 480, 'Распаковываю и запускаю программу…',
+      'Это займёт до 8 минут — компьютер не завис. ');
+  end
+  else
+    BeginStep(5, 5, 35, 65, 480, 'Распаковываю и запускаю программу…',
+      'Это займёт до 8 минут — компьютер не завис. ');
   if Step('firstrun', '-BundlePath "' + Payload + '\kladez-images.tar.zst" -LibraryDir "' + Lib + '" -AdminPort ' +
     AdminPort + ' -KiwixPort ' + KiwixPort, True) <> 0 then
   begin
     Fail('Не удалось запустить «Кладезъ» в первый раз.', AdviceRetry);
     Exit;
+  end;
+  if FlashImport then
+  begin
+    SetStatus('Ставлю программы маршрутов и ИИ с флешки…');
+    Step('images', '-LibraryDir "' + Lib + '"', True);
   end;
   EndStep;
   MarkInstalled;

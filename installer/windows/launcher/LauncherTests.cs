@@ -61,6 +61,32 @@ namespace Kladez.Launcher.Tests
             Check(LauncherCore.PlanInteractive(true, false) == InteractivePlan.StartAndWait, "not running → start and wait");
             Check(LauncherCore.PlanInteractive(false, false) == InteractivePlan.WaitOnly, "autostart still starting → wait, do not open a dead page");
 
+            Check(LauncherCore.ParseMode(new[] { "--copy-to-usb" }) == LaunchMode.CopyToUsb, "--copy-to-usb");
+
+            // «Копия на флешку».
+            Check(CopyCore.IsSkipped("ru-central_2026-11.pmtiles.part") && CopyCore.IsSkipped("x.TMP"), "copy: partial files skipped");
+            Check(!CopyCore.IsSkipped("wikipedia_ru_all_2026-10.zim"), "copy: zim kept");
+            Check(CopyCore.Category(@"библиотека\zim\a.zim") == "Книги и справочники", "copy: category books");
+            Check(CopyCore.Category(@"библиотека\maps\routes\tiles\2\000\1.gph") == "Дороги для маршрутов", "copy: category routes");
+            Check(CopyCore.Category(@"библиотека\maps\search\search-by_2026-11.sqlite") == "Поиск по карте", "copy: category search");
+            Check(CopyCore.Category(@"библиотека\maps\pmtiles\by_2026-11.pmtiles") == "Карты", "copy: category maps");
+            Check(CopyCore.Category(@"библиотека\ollama\models\blobs\x") == "Модели ИИ-помощника", "copy: category ai");
+            Check(CopyCore.Category(@"образы\valhalla.tar.zst") == "Программы маршрутов и ИИ", "copy: category images");
+            Check(CopyCore.Category("Kladez-Setup-0.1.26.exe") == "Установщик", "copy: category installer");
+            Check(CopyCore.CheckTarget(10, 100L * 1024 * 1024 * 1024, "FAT32", 5L * 1024 * 1024 * 1024).Contains("exFAT"), "copy: FAT32 with a 5 GB file refused");
+            Check(CopyCore.CheckTarget(10, 100L * 1024 * 1024 * 1024, "FAT32", 3L * 1024 * 1024 * 1024) == null, "copy: FAT32 with small files ok");
+            Check(CopyCore.CheckTarget(60L * 1024 * 1024 * 1024, 50L * 1024 * 1024 * 1024, "exFAT", 1).Contains("не хватает места"), "copy: no space");
+            Check(CopyCore.CheckTarget(1L * 1024 * 1024 * 1024, 50L * 1024 * 1024 * 1024, "NTFS", 1) == null, "copy: enough space");
+            Check(CopyCore.FormatSize(1610612736L) == "1,5 ГБ", "copy: FormatSize GB");
+            Check(CopyCore.InstallerUrl("0.1.26") == "https://github.com/Leon-Kladez/kladez/releases/download/installer-v0.1.26/Kladez-Setup-0.1.26.exe", "copy: installer url");
+            string sha = new string('a', 64);
+            Check(CopyCore.ShaFor(sha + "  Kladez-Setup-0.1.26.exe\n", "Kladez-Setup-0.1.26.exe") == sha, "copy: sha from SHA256SUMS");
+            Check(CopyCore.ShaFor(sha + "  other.exe\n", "Kladez-Setup-0.1.26.exe") == null, "copy: no sha for other file");
+            Check(CopyCore.ToWslPath(@"D:\Kladez\library") == "/mnt/d/Kladez/library", "copy: wsl path");
+            Check(CopyCore.ManifestText("0.1.26", 3145728L, 7, new DateTime(2026, 11, 17)).Contains("MB=3\r\n"), "copy: manifest MB");
+            Check(CopyCore.BytesToWrite(new[] { new CopyItem { Relative = "a", Size = 5 }, new CopyItem { Relative = "b", Size = 7 } },
+                r => r == "a" ? 5 : -1) == 7, "copy: files already on the drive are not counted again");
+
             Console.WriteLine(failures == 0 ? "ALL PASSED" : failures + " FAILED");
             return failures == 0 ? 0 : 1;
         }

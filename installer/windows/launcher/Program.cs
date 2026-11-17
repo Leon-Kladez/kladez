@@ -3,6 +3,7 @@
 //   Kladez.exe --background    autostart at logon: same, no windows, no browser
 //   Kladez.exe --stop          stop the programs inside Kladez
 //   Kladez.exe --collect-logs  save a zip with our logs to the desktop (for asking for help)
+//   Kladez.exe --copy-to-usb   «Копия на флешку»: installer + library + route/AI images to a USB drive
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -34,6 +35,10 @@ namespace Kladez.Launcher
                         return 0;
                     case LaunchMode.CollectLogs:
                         return CollectLogs();
+                    case LaunchMode.CopyToUsb:
+                        Application.EnableVisualStyles();
+                        Application.Run(new CopyForm(config));
+                        return 0;
                     case LaunchMode.Background:
                         if (!created) return 0;
                         return StartAndWait(config) ? 0 : 1;
