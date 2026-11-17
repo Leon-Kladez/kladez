@@ -136,3 +136,13 @@ Translates library articles into another language on this computer, without inte
 **The translation is machine-made and literal.** It conveys the meaning well, but for medical and safety wording check the original.
 
 Tables, the tab title and search results are not translated.
+
+## Speech to Text {% #speech-to-text %}
+
+Adds a **microphone** button to the [chat](/chat): talk instead of typing. Speech becomes text right on this computer with **whisper.cpp**, without internet; your voice goes nowhere.
+
+**Install:** about 600 MB (the program and the 60 MB Whisper “base” model), once, while you have internet. It understands Russian, English and dozens of other languages; the language is detected automatically.
+
+**Speed:** on an ordinary computer without a graphics card a phrase takes 5–10 seconds; on a powerful one, a second or two.
+
+If the box shows something other than what you said, speak closer to the microphone without background noise; you can always correct the text before sending.

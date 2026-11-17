@@ -21,4 +21,6 @@ export const SERVICE_NAMES = {
   VAULTWARDEN: 'nomad_vaultwarden',
   JELLYFIN: 'nomad_jellyfin',
   TRANSLATE: 'nomad_translate',
+  // Кладезъ: распознавание речи без интернета (whisper.cpp) — микрофон в чате.
+  SPEECH: 'nomad_whisper',
 }

@@ -1,4 +1,5 @@
 import { IconPhoto, IconSend, IconWand, IconX } from '@tabler/icons-react'
+import SpeechButton from './SpeechButton'
 import { useState, useRef, useEffect } from 'react'
 import classNames from '~/lib/classNames'
 import { ChatImageAttachment, ChatMessage } from '../../../types/chat'
@@ -342,6 +343,21 @@ export default function ChatInterface({
               style={{ maxHeight: '200px' }}
             />
           </div>
+          <SpeechButton
+            disabled={isLoading || noModels}
+            onText={(text) => {
+              setInput((prev) => (prev.trim() ? `${prev.trimEnd()} ${text}` : text))
+              // Высота поля — под новый текст, и курсор в конец: можно поправить и отправить.
+              window.setTimeout(() => {
+                const el = textareaRef.current
+                if (!el) return
+                el.style.height = 'auto'
+                el.style.height = `${Math.min(el.scrollHeight, 200)}px`
+                el.focus()
+                el.setSelectionRange(el.value.length, el.value.length)
+              }, 0)
+            }}
+          />
           <button
             type="submit"
             disabled={(!input.trim() && images.length === 0) || isLoading || noModels}

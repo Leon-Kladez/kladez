@@ -1,3 +1,4 @@
+import { WHISPER_IMAGE, WHISPER_START_SCRIPT, WHISPER_STORAGE_DIR } from '../../constants/speech.js'
 import Service from '#models/service'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import { ModelAttributes } from '@adonisjs/lucid/types/model'
@@ -614,6 +615,34 @@ export default class ServiceSeeder extends BaseSeeder {
       // Peak RSS measured at 729 MB with three language pairs resident; models
       // are about 45-140 MB per language on disk.
       metadata: JSON.stringify({ minMemoryMB: 1536, minDiskMB: 1024 }),
+    },
+    {
+      // «Кладезъ»: микрофон в чате — речь в текст на этом компьютере, без интернета.
+      service_name: SERVICE_NAMES.SPEECH,
+      friendly_name: 'Speech to Text',
+      powered_by: 'whisper.cpp',
+      display_order: 4,
+      description: 'Dictate instead of typing: speech becomes text right on this computer, no internet',
+      icon: 'IconMicrophone',
+      container_image: WHISPER_IMAGE,
+      source_repo: 'https://github.com/ggml-org/whisper.cpp',
+      // Одно слово: образ запускает команду через `bash -c`, а Кладезъ делит её по пробелам.
+      container_command: `/models/${WHISPER_START_SCRIPT}`,
+      container_config: JSON.stringify({
+        HostConfig: {
+          RestartPolicy: { Name: 'unless-stopped' },
+          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/${WHISPER_STORAGE_DIR}:/models`],
+        },
+        ExposedPorts: { '8080/tcp': {} },
+      }),
+      ui_location: null,
+      installed: false,
+      installation_status: 'idle',
+      is_dependency_service: false,
+      is_custom: false,
+      category: 'ai',
+      depends_on: null,
+      metadata: JSON.stringify({ minMemoryMB: 1024, minDiskMB: 800 }),
     },
   ]
 

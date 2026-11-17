@@ -22,6 +22,12 @@ Click the round chat button in the bottom-right corner of the home page, or open
 
 The assistant answers in the language of the question.
 
+### Speak instead of typing
+
+To the right of the input box there is a **microphone** button. Press it, speak, press it again: the text appears in the box, where you can fix it and send it. Speech is recognised right on this computer, without internet; your voice goes nowhere.
+
+Install the **Speech to Text** app once in the [App Store](/supply-depot) while you have internet (about 600 MB). A phrase takes a few seconds. The microphone works in Kladez on the computer itself; on a phone it will work once Kladez has a secure address.
+
 ## Your own documents
 
 The chat has a **Knowledge base** section: add your own files (PDF, text) and the assistant will answer from them too — for example, the manual for your boiler or family notes about medicines.

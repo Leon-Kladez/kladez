@@ -74,6 +74,7 @@ const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 const PHONE_WRITE_ALLOWLIST: ReadonlyArray<{ method: string; path: RegExp }> = [
   { method: 'POST', path: /^\/__transmit\/(subscribe|unsubscribe)$/ },
   { method: 'POST', path: /^\/api\/ollama\/chat$/ },
+  { method: 'POST', path: /^\/api\/speech\/transcribe$/ },
   { method: 'POST', path: /^\/api\/ollama\/unload-chat-models$/ },
   { method: 'POST', path: /^\/api\/chat\/sessions$/ },
   { method: 'PUT', path: /^\/api\/chat\/sessions\/[^/]+$/ },

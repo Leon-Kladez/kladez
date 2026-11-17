@@ -52,6 +52,7 @@ import {
   IconUpload,
   IconWand,
   IconWifi,
+  IconMicrophone,
   IconWorld,
   IconX,
   IconAlertTriangle,
@@ -131,6 +132,7 @@ export const icons = {
   IconUpload,
   IconWand,
   IconWifi,
+  IconMicrophone,
   IconWorld,
   IconX,
   IconXboxX

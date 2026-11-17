@@ -97,6 +97,8 @@ export const serverDockerServiceRu: Record<keyof typeof serverDockerServiceEn, s
   'server.dockerService.pullingImage': 'Скачиваем образ {runtimeImage}…',
   'server.dockerService.pullingImageProgress': 'Скачиваем образ {image}… скачано {mb} МБ',
   'server.dockerService.pullingImagePercent': 'Скачиваем образ {image}… {pct}% ({mb} из {totalMb} МБ)',
+  'server.dockerService.whisperModelProgress': 'Скачиваем модель распознавания речи… {pct}% ({mb} из {totalMb} МБ)',
+  'server.dockerService.whisperReady': 'Модель распознавания речи на месте',
   'server.dockerService.stoppingCurrentContainer': 'Останавливаем текущий контейнер…',
   'server.dockerService.creatingUpdatedContainer': 'Создаём обновлённый контейнер…',
   'server.dockerService.failedToCreateNewContainer': 'Не удалось создать новый контейнер: {error}. Возвращаем прежнюю версию…',

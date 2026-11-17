@@ -50,9 +50,12 @@ import { SERVICE_NAMES } from '../../constants/service_names'
 import { tx } from '~/lib/tx'
 import { t } from '../../constants/i18n'
 import { errorText } from '~/lib/error_text'
+import { WHISPER_IMAGE, WHISPER_IMAGE_VERSION } from '../../constants/speech'
 
 function extractTag(containerImage: string): string {
   if (!containerImage) return ''
+  // «Кладезъ»: у whisper.cpp образы помечены коммитом — показываем номер версии.
+  if (containerImage === WHISPER_IMAGE) return WHISPER_IMAGE_VERSION
   const parts = containerImage.split(':')
   return parts.length > 1 ? parts[parts.length - 1] : 'latest'
 }

@@ -4,6 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.31" %}
 
+- **Microphone in the chat: talk instead of typing.** Install the new Speech to Text app in the App Store (about 600 MB, once). A microphone button appears next to the input box: press, speak, press: the text is in the box. Speech is recognised on this computer, without internet; your voice goes nowhere; on an ordinary computer a phrase takes 5–10 seconds. Details: [AI assistant](/docs/ai).
 - **A long conversation no longer “thinks” for 5 minutes:** on a computer without a graphics card the model now stays in memory for an hour instead of 15 minutes, so while you read an answer it is not unloaded and does not re-read the whole conversation. Before answering it reads only the latest questions, not the entire long history; before, after a pause an answer could fail to arrive at all (the wait was cut off after 5 minutes).
 - **“⋮” menu for conversations:** each chat has three dots on the right: “Pin” (top of the list), “Mark as unread / read” (come back later: bold with a dot), “Rename” (right in the list) and “Delete”.
 - **Tables in assistant answers have borders:** columns no longer run together; a wide table scrolls sideways.

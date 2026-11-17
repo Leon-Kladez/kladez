@@ -1,3 +1,4 @@
+import { WHISPER_MODEL, WHISPER_START_SCRIPT, WHISPER_STORAGE_DIR, whisperStartScript } from '../../constants/speech.js'
 import Service from '#models/service'
 import { PullProgress, imageLayers } from '../utils/image_size.js'
 import Docker from 'dockerode'
@@ -97,6 +98,61 @@ export class DockerService {
         }
       )
     })
+  }
+
+  /**
+   * «Кладезъ»: распознавание речи — до запуска нужны скрипт запуска и модель Whisper (190 МБ).
+   * Модель уже лежит (копия с флешки, переустановка) и цела — не качаем. Качаем с Hugging Face,
+   * при неудаче — с зеркала; проверяем SHA-256, ход — в процентах на карточке программы.
+   */
+  private async _runPreinstallActions__Whisper(): Promise<void> {
+    const { mkdir, writeFile, chmod } = await import('node:fs/promises')
+    const { getFileStatsIfExists } = await import('../utils/fs.js')
+    const { sha256File } = await import('../utils/meta4.js')
+    const dir = join(process.cwd(), 'storage', WHISPER_STORAGE_DIR)
+    await mkdir(dir, { recursive: true })
+    const script = join(dir, WHISPER_START_SCRIPT)
+    await writeFile(script, whisperStartScript(), 'utf-8')
+    await chmod(script, 0o755)
+
+    const model = join(dir, WHISPER_MODEL.filename)
+    const existing = await getFileStatsIfExists(model)
+    if (existing && Number(existing.size) === WHISPER_MODEL.bytes && (await sha256File(model)) === WHISPER_MODEL.sha256) return
+
+    let lastError: unknown = null
+    for (const url of WHISPER_MODEL.urls) {
+      try {
+        let last = 0
+        await doResumableDownloadWithRetry({
+          url,
+          filepath: model,
+          timeout: 120000,
+          allowedMimeTypes: ['application/octet-stream', 'binary/octet-stream'],
+          // Битый файл до места не доходит: проверка до переименования из .tmp.
+          verifyTmp: async (tmpPath) => {
+            if ((await sha256File(tmpPath)) !== WHISPER_MODEL.sha256) throw new Error('whisper model checksum mismatch')
+          },
+          onProgress: (p) => {
+            const now = Date.now()
+            if (now - last < 2000) return
+            last = now
+            const total = p.totalBytes || WHISPER_MODEL.bytes
+            const pct = Math.min(99, Math.floor((p.downloadedBytes / total) * 100))
+            const mb = Math.round(p.downloadedBytes / 1024 / 1024)
+            this._broadcast(
+              SERVICE_NAMES.SPEECH,
+              'pulling',
+              t('server.dockerService.whisperModelProgress', { pct, mb, totalMb: Math.round(total / 1024 / 1024) })
+            )
+          },
+        })
+        return
+      } catch (error) {
+        lastError = error
+        logger.warn(`[DockerService] Whisper model from ${url} failed: ${(error as Error)?.message ?? error}`)
+      }
+    }
+    throw lastError ?? new Error('whisper model download failed')
   }
 
   /** Сообщать о ходе скачивания образа не чаще раза в 2 секунды — иначе сотни сообщений в минуту. */
@@ -756,6 +812,11 @@ export class DockerService {
           'preinstall-complete',
           t('server.dockerService.preInstallActionsForJellyfin')
         )
+      }
+
+      if (service.service_name === SERVICE_NAMES.SPEECH) {
+        await this._runPreinstallActions__Whisper()
+        this._broadcast(service.service_name, 'preinstall-complete', t('server.dockerService.whisperReady'))
       }
 
       if (service.service_name === SERVICE_NAMES.MESHCORE_WEB) {

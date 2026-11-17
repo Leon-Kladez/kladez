@@ -37,4 +37,6 @@ export const servicesEn = {
   'services.nomad_jellyfin.description': 'Open-source media server — stream your video, music, and photo libraries',
   'services.nomad_translate.title': 'Translated Library',
   'services.nomad_translate.description': 'Read the Information Library in another language. Machine translation that works offline, on CPU',
+  'services.nomad_whisper.title': 'Speech to Text',
+  'services.nomad_whisper.description': 'Talk instead of typing: a microphone appears in the chat. Speech becomes text right on this computer, no internet',
 } as const

@@ -19,6 +19,7 @@ import NomadMdController from '#controllers/nomad_md_controller'
 import OllamaController from '#controllers/ollama_controller'
 import OpenApiController from '#controllers/openapi_controller'
 import PhonesController from '#controllers/phones_controller'
+import SpeechController from '#controllers/speech_controller'
 import RagController from '#controllers/rag_controller'
 import SettingsController from '#controllers/settings_controller'
 import SupplyDepotController from '#controllers/supply_depot_controller'
@@ -375,6 +376,15 @@ documented(router.post('/api/phones/travel-maps/download', [PhonesController, 't
   tags: ['system'],
 })
 router.get('/phone-apps/organic-maps.apk', [PhonesController, 'travelMapsApk'])
+// «Кладезъ»: микрофон в чате — речь в текст на этом компьютере (whisper.cpp).
+documented(router.get('/api/speech/status', [SpeechController, 'status']), {
+  summary: 'Whether offline speech recognition (Speech to Text app) is installed',
+  tags: ['ollama'],
+})
+documented(router.post('/api/speech/transcribe', [SpeechController, 'transcribe']), {
+  summary: 'Turn a short voice recording (multipart field `audio`) into text, offline',
+  tags: ['ollama'],
+})
 documented(router.get('/api/phones/route-qr', [PhonesController, 'routeQr']), {
   summary: 'QR codes that open a built route on a phone in the home network (then in the Organic Maps navigator)',
   tags: ['system'],

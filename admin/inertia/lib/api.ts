@@ -1458,6 +1458,27 @@ class API {
   }
 
   /** «Кладезъ»: «Карты в дорогу» — готово ли приложение для телефонов и QR-коды. */
+  /** «Кладезъ»: стоит ли «Распознавание речи» (микрофон в чате). */
+  async getSpeechStatus() {
+    return catchInternal(async () => {
+      const response = await this.client.get<{ installed: boolean; installing: boolean }>('/speech/status')
+      return response.data
+    })()
+  }
+
+  /** «Кладезъ»: запись голоса → текст (на этом компьютере). Ошибку возвращает текстом, не бросает. */
+  async transcribeSpeech(audio: Blob): Promise<{ text: string } | { message: string }> {
+    try {
+      const form = new FormData()
+      const ext = audio.type.includes('ogg') ? 'ogg' : 'webm'
+      form.append('audio', audio, `speech.${ext}`)
+      const response = await this.client.post<{ text: string }>('/speech/transcribe', form, { timeout: 200_000 })
+      return { text: response.data.text ?? '' }
+    } catch (error: any) {
+      return { message: error?.response?.data?.message ?? t('speech.failed') }
+    }
+  }
+
   /** «Поехали» на компьютере: QR-коды страницы маршрута для телефона в домашней сети. */
   async getRouteQr(path: string) {
     return catchInternal(async () => {

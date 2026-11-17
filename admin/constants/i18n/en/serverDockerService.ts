@@ -95,6 +95,8 @@ export const serverDockerServiceEn = {
   'server.dockerService.pullingImage': 'Pulling image {runtimeImage}...',
   'server.dockerService.pullingImageProgress': 'Pulling image {image}… {mb} MB downloaded',
   'server.dockerService.pullingImagePercent': 'Pulling image {image}… {pct}% ({mb} of {totalMb} MB)',
+  'server.dockerService.whisperModelProgress': 'Downloading the speech recognition model… {pct}% ({mb} of {totalMb} MB)',
+  'server.dockerService.whisperReady': 'Speech recognition model is in place',
   'server.dockerService.stoppingCurrentContainer': 'Stopping current container...',
   'server.dockerService.creatingUpdatedContainer': 'Creating updated container...',
   'server.dockerService.failedToCreateNewContainer': 'Failed to create new container: {error}. Rolling back...',

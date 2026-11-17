@@ -39,4 +39,6 @@ export const servicesRu: Record<keyof typeof servicesEn, string> = {
   'services.nomad_jellyfin.description': 'Медиасервер — смотрите свои видео, слушайте музыку и листайте фото',
   'services.nomad_translate.title': 'Библиотека в переводе',
   'services.nomad_translate.description': 'Читайте Библиотеку на другом языке. Машинный перевод без интернета, на процессоре',
+  'services.nomad_whisper.title': 'Распознавание речи',
+  'services.nomad_whisper.description': 'Говорите вместо того, чтобы печатать: в чате появится микрофон. Речь превращается в текст прямо на этом компьютере, без интернета',
 }
