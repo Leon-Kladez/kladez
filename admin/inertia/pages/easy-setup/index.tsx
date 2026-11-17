@@ -110,6 +110,14 @@ const CURATED_MAP_COLLECTIONS_KEY = 'curated-map-collections'
 const CURATED_CATEGORIES_KEY = 'curated-categories'
 const WIKIPEDIA_STATE_KEY = 'wikipedia-state'
 
+/** «Кладезъ»: размер модели из каталога («4.7 GB», «986 MB») — по-русски («4,7 ГБ», «986 МБ»). */
+function modelSizeLabel(size: string): string {
+  const m = /^([\d.]+)\s*(GB|MB|KB)?$/i.exec(size.trim())
+  if (!m) return size
+  const mult = { GB: 1024 ** 3, MB: 1024 ** 2, KB: 1024 }[(m[2] || 'GB').toUpperCase() as 'GB' | 'MB' | 'KB']
+  return formatBytes(parseFloat(m[1]) * mult)
+}
+
 export default function EasySetupWizard(props: {
   system: { services: ServiceSlim[]; remoteOllamaUrl: string }
 }) {
@@ -1174,7 +1182,7 @@ export default function EasySetupWizard(props: {
                             : 'text-text-muted'
                         )}
                       >
-                        {t('easySetup.ai.size', { size: model.tags[0].size })}
+                        {t('easySetup.ai.size', { size: modelSizeLabel(model.tags[0].size) })}
                       </div>
                     )}
                     {model.tags?.[0]?.input.toLowerCase().includes('image') && (
@@ -1415,7 +1423,7 @@ export default function EasySetupWizard(props: {
                           <span className="text-text-primary">{modelName}</span>
                         </div>
                         {model?.tags?.[0]?.size && (
-                          <span className="text-text-muted text-sm">{model.tags[0].size}</span>
+                          <span className="text-text-muted text-sm">{modelSizeLabel(model.tags[0].size)}</span>
                         )}
                       </li>
                     )
