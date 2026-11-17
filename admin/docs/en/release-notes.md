@@ -2,6 +2,14 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="17 November 2026" versions="0.1.28" %}
+
+- **A new “Brief” video:** shows what Kladez can do now — world maps with search and routes, maps for the road on your phone, copy to a USB drive. Open it with the “Brief” button at the top right.
+- **An AI assistant for any computer:** Easy Setup now has three rows of models — for an ordinary computer, for a powerful one (up to the strongest, 47 GB) and the best in English. Kladez checks memory, processor and graphics card, marks the recommended model and warns when a model will not fit.
+- **A model waits for the AI assistant to install:** when a model is chosen together with the assistant itself, downloads show “waiting for the AI assistant to finish installing” instead of an error with a Retry button. It waits up to 4 hours, enough even on slow internet.
+
+{% /release %}
+
 {% release date="17 November 2026" versions="0.1.27" %}
 
 - **A clear choice of AI assistant:** Easy Setup now offers four hand-picked models that understand Russian, from “Fastest” to “Smartest”, instead of three random catalog models (two too heavy for an ordinary computer, the third not for chatting at all). Kladez checks the computer’s memory and processor, marks the recommended model and warns when a model will be slow or will not fit.
