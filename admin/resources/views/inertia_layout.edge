@@ -36,6 +36,13 @@
     #kz-splash img { width: min(260px, 60vw); height: auto; }
     #kz-splash .kz-dots::after { content: ''; animation: kz-dots 1.2s steps(4, end) infinite; }
     @keyframes kz-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+    /* Бегущая полоса — видно, что работа идёт; через 4 секунды — пояснение, почему долго. */
+    #kz-splash .kz-bar { width: min(260px, 60vw); height: 4px; border-radius: 2px; overflow: hidden; background: rgba(66,68,32,.15); }
+    #kz-splash .kz-bar::after { content: ''; display: block; width: 35%; height: 100%; background: #424420; animation: kz-run 1.4s ease-in-out infinite; }
+    [data-theme="dark"] #kz-splash .kz-bar::after { background: #e8e2d0; }
+    @keyframes kz-run { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
+    #kz-splash .kz-hint { max-width: min(420px, 85vw); text-align: center; font-size: 14px; opacity: 0; animation: kz-show .4s ease 4s forwards; }
+    @keyframes kz-show { to { opacity: .8; } }
   </style>
 
   @stack('dumper')
@@ -49,6 +56,8 @@
   <div id="kz-splash" aria-live="polite">
     <img src="/kladez-logo.svg" alt="Кладезъ">
     <div><span>{{ (page.props && page.props.locale) === 'en' ? 'Loading' : 'Загружаю' }}</span><span class="kz-dots"></span></div>
+    <div class="kz-bar"></div>
+    <div class="kz-hint">{{ (page.props && page.props.locale) === 'en' ? 'If Kladez has just started or updated, the first page takes up to a minute. No need to click anything.' : 'Если «Кладезъ» только что запустился или обновился, первая страница открывается до минуты. Ничего нажимать не нужно.' }}</div>
   </div>
 </body>
 
