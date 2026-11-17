@@ -6,122 +6,143 @@
  * Рисовать картинки и делать видео модели Ollama не умеют — «картинки» здесь значит «понимают
  * фото»: описать снимок, прочитать текст на нём, ответить на вопрос по картинке.
  */
-import { modelFit, recommendLimit, type ModelFit } from './model_picks.js'
+import { MODEL_PICKS, modelFit, recommendLimit, type ModelFit } from './model_picks.js'
 
 export type GuidePurpose = 'chat' | 'code' | 'images'
 
 type Entry = {
   name: string
   bytes: number
+  /** Сколько модель перебирает на каждое слово — по этому судим о скорости (см. model_picks.ts); по умолчанию bytes. */
+  speedBytes?: number
   label: string
   label_en: string
   description: string
   description_en: string
   /** Как понимает русский: 'good' — официально; 'fair' — понимает хуже. */
   ru?: 'good' | 'fair'
-  /** Смесь экспертов: думает быстрее, чем можно ждать по размеру. */
-  fastForSize?: boolean
+  /** Сначала рассуждает, потом отвечает — не рекомендуем по умолчанию. */
+  thinks?: boolean
 }
 
 const GB = 1e9
 
+// Замер на i3-6300 без видеокарты (17.11.2026): qwen3.5:4b — 4,0 слова/с (как qwen2.5:3b), qwen3.5:9b — 1,6.
+const Q35_2B = { name: 'qwen3.5:2b', bytes: 2.68 * GB, speedBytes: 1.5 * GB }
+const Q35_4B = { name: 'qwen3.5:4b', bytes: 3.32 * GB, speedBytes: 2.0 * GB }
+const Q35_9B = { name: 'qwen3.5:9b', bytes: 6.55 * GB, speedBytes: 5.2 * GB }
+const Q35_27B = { name: 'qwen3.5:27b', bytes: 17.48 * GB }
+const G4_E4B = { name: 'gemma4:e4b', bytes: 6.58 * GB }
+const G4_12B = { name: 'gemma4:12b', bytes: 8.02 * GB }
+const G4_31B = { name: 'gemma4:31b', bytes: 20.39 * GB }
+
 export const MODEL_GUIDE: Record<GuidePurpose, Entry[]> = {
   chat: [
-    { name: 'qwen2.5:0.5b', bytes: 0.4 * GB, label: 'Самая лёгкая', label_en: 'Lightest', ru: 'good',
+    { name: 'qwen3.5:0.8b', bytes: 1.32 * GB, speedBytes: 0.6 * GB, label: 'Самая лёгкая', label_en: 'Lightest', ru: 'good',
       description: 'Отвечает мгновенно на любом компьютере, но очень простая: короткие ответы, часто ошибается.',
       description_en: 'Answers instantly on any computer but is very simple: short answers, frequent mistakes.' },
-    { name: 'qwen2.5:1.5b', bytes: 0.99 * GB, label: 'Самая быстрая', label_en: 'Fastest', ru: 'good',
-      description: 'Быстрые ответы даже на слабом компьютере; для простых вопросов.',
-      description_en: 'Quick answers even on a weak computer; for simple questions.' },
-    { name: 'qwen2.5:3b', bytes: 1.93 * GB, label: 'Быстрая', label_en: 'Fast', ru: 'good',
-      description: 'Хороший выбор для обычного компьютера: понимает русский, отвечает быстро.',
-      description_en: 'A good choice for an ordinary computer: understands Russian, answers quickly.' },
-    { name: 'gemma3:4b', bytes: 3.35 * GB, label: 'Быстрая, с картинками', label_en: 'Fast, with pictures', ru: 'good',
-      description: 'Чуть умнее 3B и понимает фото. Хорошо пишет по-русски.',
-      description_en: 'A bit smarter than 3B and understands photos. Writes Russian well.' },
-    { name: 'qwen2.5:7b', bytes: 4.68 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'good',
-      description: 'Заметно лучше рассуждает и пишет. Без видеокарты — 10–30 секунд на ответ.',
-      description_en: 'Noticeably better at reasoning and writing. 10–30 seconds per answer without a graphics card.' },
-    { name: 'gemma3:12b', bytes: 8.1 * GB, label: 'Ещё умнее', label_en: 'Even smarter', ru: 'good',
+    { ...Q35_2B, label: 'Самая быстрая', label_en: 'Fastest', ru: 'good',
+      description: 'Быстрые ответы даже на слабом компьютере; для простых вопросов. Понимает фото.',
+      description_en: 'Quick answers even on a weak computer; for simple questions. Understands photos.' },
+    { ...Q35_4B, label: 'Быстрая и толковая', label_en: 'Fast and capable', ru: 'good',
+      description: 'Лучший выбор для обычного компьютера: так же быстра, как прежние лёгкие модели, но заметно умнее.',
+      description_en: 'The best choice for an ordinary computer: as fast as the old light models but noticeably smarter.' },
+    { ...G4_E4B, label: 'Быстрая, от Google', label_en: 'Fast, by Google', ru: 'good',
+      description: 'Gemma 4 для обычных компьютеров и ноутбуков: хорошо пишет по-русски, понимает фото.',
+      description_en: 'Gemma 4 for ordinary computers and laptops: writes Russian well, understands photos.' },
+    { ...Q35_9B, label: 'Умнее', label_en: 'Smarter', ru: 'good',
+      description: 'Подробнее и точнее. На слабом компьютере без видеокарты — 1–3 минуты на ответ.',
+      description_en: 'More detailed and accurate. 1–3 minutes per answer on a weak computer without a graphics card.' },
+    { ...G4_12B, label: 'Ещё умнее', label_en: 'Even smarter', ru: 'good',
       description: 'Подробные и точные ответы, понимает картинки. Нужно 16 ГБ памяти.',
       description_en: 'Detailed, accurate answers, understands pictures. Needs 16 GB of memory.' },
-    { name: 'qwen2.5:14b', bytes: 8.99 * GB, label: 'Сильная', label_en: 'Strong', ru: 'good',
-      description: 'Хорошо рассуждает и считает. Для компьютера с 32 ГБ памяти, лучше с видеокартой.',
-      description_en: 'Good at reasoning and maths. For a computer with 32 GB of memory, ideally a graphics card.' },
-    { name: 'gemma3:27b', bytes: 17.4 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'good',
-      description: 'Ответы почти как у больших онлайн-помощников, понимает картинки. 32–64 ГБ памяти, видеокарта.',
-      description_en: 'Answers close to large online assistants, understands pictures. 32–64 GB of memory, graphics card.' },
-    { name: 'qwen2.5:32b', bytes: 19.85 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'good',
-      description: 'Сильна в рассуждениях и длинных текстах. 32–64 ГБ памяти, видеокарта.',
-      description_en: 'Strong at reasoning and long texts. 32–64 GB of memory, graphics card.' },
-    { name: 'qwen2.5:72b', bytes: 47.4 * GB, label: 'Самая сильная', label_en: 'Strongest', ru: 'good',
-      description: 'Самая умная из тех, что работают без интернета. Рабочая станция: 64+ ГБ памяти и мощная видеокарта.',
-      description_en: 'The smartest that works offline. A workstation: 64+ GB of memory and a powerful graphics card.' },
+    { ...Q35_27B, label: 'Очень сильная', label_en: 'Very strong', ru: 'good',
+      description: 'Ответы почти как у больших онлайн-помощников. 32 ГБ памяти и видеокарта.',
+      description_en: 'Answers close to large online assistants. 32 GB of memory and a graphics card.' },
+    { name: 'deepseek-r1:32b', bytes: 19.85 * GB, label: 'DeepSeek: думает перед ответом', label_en: 'DeepSeek: thinks first', ru: 'fair', thinks: true,
+      description: 'Сначала рассуждает, потом отвечает: сильна в задачах и логике, но ответа ждать дольше. Рассуждает по-английски. 32 ГБ памяти и видеокарта.',
+      description_en: 'Reasons first, then answers: strong at puzzles and logic, but answers take longer. 32 GB of memory and a graphics card.' },
+    { ...G4_31B, label: 'Очень сильная, от Google', label_en: 'Very strong, by Google', ru: 'good',
+      description: 'Самая сильная Gemma 4: длинные тексты, документы, картинки. 32–64 ГБ памяти и видеокарта.',
+      description_en: 'The strongest Gemma 4: long texts, documents, pictures. 32–64 GB of memory and a graphics card.' },
+    { name: 'qwen3.5:35b-a3b', bytes: 22.07 * GB, speedBytes: 3.5 * GB, label: 'Умная и быстрая', label_en: 'Smart and fast', ru: 'good',
+      description: 'Устроена из «экспертов»: умная, как большая, а отвечает почти как маленькая — хорошо и без видеокарты. Нужно 32 ГБ памяти.',
+      description_en: 'Built from “experts”: as smart as a big model, nearly as fast as a small one, even without a graphics card. Needs 32 GB of memory.' },
   ],
   code: [
-    { name: 'qwen2.5-coder:0.5b', bytes: 0.4 * GB, label: 'Самая лёгкая', label_en: 'Lightest', ru: 'good',
-      description: 'Дописывает простые строки кода; для объяснений слабовата.',
-      description_en: 'Completes simple lines of code; weak at explanations.' },
     { name: 'qwen2.5-coder:1.5b', bytes: 0.99 * GB, label: 'Самая быстрая', label_en: 'Fastest', ru: 'good',
       description: 'Короткие функции и подсказки по коду на слабом компьютере.',
       description_en: 'Short functions and code hints on a weak computer.' },
     { name: 'qwen2.5-coder:3b', bytes: 1.93 * GB, label: 'Быстрая', label_en: 'Fast', ru: 'good',
-      description: 'Пишет и объясняет код на Python, JavaScript и других языках; для обычного компьютера.',
-      description_en: 'Writes and explains code in Python, JavaScript and more; for an ordinary computer.' },
+      description: 'Пишет и дописывает код на Python, JavaScript и других языках.',
+      description_en: 'Writes and completes code in Python, JavaScript and more.' },
+    { ...Q35_4B, label: 'Быстрая и толковая', label_en: 'Fast and capable', ru: 'good',
+      description: 'Не только для кода, но пишет и объясняет его лучше лёгких моделей для кода; объясняет по-русски.',
+      description_en: 'Not code-only, but writes and explains code better than the light code models.' },
     { name: 'qwen2.5-coder:7b', bytes: 4.68 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'good',
       description: 'Хороший помощник программиста: исправляет ошибки, пишет целые программы.',
       description_en: 'A good programming assistant: fixes bugs, writes whole programs.' },
-    { name: 'codegemma:7b', bytes: 5.01 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'fair',
-      description: 'Модель Google для кода. Объясняет лучше по-английски.',
-      description_en: 'Google’s model for code. Explains better in English.' },
+    { ...Q35_9B, label: 'Умнее', label_en: 'Smarter', ru: 'good',
+      description: 'Сильнее в рассуждениях: разберётся, почему программа не работает, и объяснит по-русски.',
+      description_en: 'Stronger at reasoning: works out why a program fails and explains it.' },
+    { name: 'deepseek-coder-v2:16b', bytes: 8.91 * GB, speedBytes: 2.0 * GB, label: 'Сильная и быстрая', label_en: 'Strong and fast', ru: 'fair',
+      description: 'Устроена из «экспертов», поэтому думает быстрее, чем можно ждать по размеру. Объясняет лучше по-английски.',
+      description_en: 'Built from “experts”, so it thinks faster than its size suggests. Explains better in English.' },
     { name: 'qwen2.5-coder:14b', bytes: 8.99 * GB, label: 'Сильная', label_en: 'Strong', ru: 'good',
       description: 'Сложные задачи и большие файлы. 32 ГБ памяти, лучше видеокарта.',
       description_en: 'Hard tasks and large files. 32 GB of memory, ideally a graphics card.' },
-    { name: 'deepseek-coder-v2:16b', bytes: 8.91 * GB, label: 'Сильная и быстрая', label_en: 'Strong and fast', ru: 'fair', fastForSize: true,
-      description: 'Устроена из «экспертов», поэтому думает быстрее, чем можно ждать по размеру. Объясняет лучше по-английски.',
-      description_en: 'Built from “experts”, so it thinks faster than its size suggests. Explains better in English.' },
-    { name: 'codestral:22b', bytes: 12.57 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'fair',
-      description: 'Модель Mistral для кода, 80+ языков программирования. 32 ГБ памяти, видеокарта.',
-      description_en: 'Mistral’s model for code, 80+ programming languages. 32 GB of memory, graphics card.' },
-    { name: 'devstral:24b', bytes: 14.33 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'fair',
-      description: 'Для больших проектов: разбирается в нескольких файлах сразу. 32–64 ГБ памяти, видеокарта.',
-      description_en: 'For large projects: understands several files at once. 32–64 GB of memory, graphics card.' },
+    { name: 'devstral-small-2:24b', bytes: 15.18 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'fair',
+      description: 'Модель Mistral для больших проектов: разбирается в нескольких файлах сразу. 32 ГБ памяти, видеокарта.',
+      description_en: 'Mistral’s model for large projects: understands several files at once. 32 GB of memory, graphics card.' },
+    { name: 'qwen3-coder:30b', bytes: 18.56 * GB, speedBytes: 3.5 * GB, label: 'Очень сильная и быстрая', label_en: 'Very strong and fast', ru: 'good',
+      description: 'Новое поколение Qwen для кода, из «экспертов»: быстрая и без видеокарты. Нужно 32 ГБ памяти.',
+      description_en: 'The new Qwen generation for code, built from “experts”: fast even without a graphics card. Needs 32 GB of memory.' },
     { name: 'qwen2.5-coder:32b', bytes: 19.85 * GB, label: 'Самая сильная', label_en: 'Strongest', ru: 'good',
-      description: 'Лучшая из открытых моделей для кода. Рабочая станция: 64 ГБ памяти и видеокарта.',
-      description_en: 'The best open model for code. A workstation: 64 GB of memory and a graphics card.' },
+      description: 'Одна из лучших открытых моделей для кода. Рабочая станция: 64 ГБ памяти и видеокарта.',
+      description_en: 'One of the best open models for code. A workstation: 64 GB of memory and a graphics card.' },
   ],
   images: [
-    { name: 'moondream:1.8b', bytes: 1.74 * GB, label: 'Самая лёгкая', label_en: 'Lightest', ru: 'fair',
-      description: 'Коротко описывает фото; отвечает по-английски.',
-      description_en: 'Briefly describes photos; answers in English.' },
-    { name: 'qwen2.5vl:3b', bytes: 3.2 * GB, label: 'Быстрая', label_en: 'Fast', ru: 'good',
-      description: 'Описывает фото и читает текст на снимках, документах, вывесках. Понимает русский.',
-      description_en: 'Describes photos and reads text in pictures, documents and signs. Understands Russian.' },
-    { name: 'gemma3:4b', bytes: 3.35 * GB, label: 'Быстрая', label_en: 'Fast', ru: 'good',
-      description: 'Понимает фото и хорошо отвечает по-русски; годится и для обычного разговора.',
-      description_en: 'Understands photos and answers Russian well; also fine for ordinary chat.' },
-    { name: 'minicpm-v:8b', bytes: 5.47 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'fair',
-      description: 'Хорошо читает мелкий текст и таблицы на снимках.',
-      description_en: 'Good at reading small text and tables in pictures.' },
-    { name: 'qwen2.5vl:7b', bytes: 5.97 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'good',
-      description: 'Точно описывает фото, читает документы и рукописный текст.',
-      description_en: 'Describes photos accurately, reads documents and handwriting.' },
-    { name: 'llama3.2-vision:11b', bytes: 7.82 * GB, label: 'Сильная', label_en: 'Strong', ru: 'fair',
-      description: 'Модель Meta для фото. Лучше всего по-английски. 16 ГБ памяти.',
-      description_en: 'Meta’s model for photos. Best in English. 16 GB of memory.' },
-    { name: 'gemma3:12b', bytes: 8.1 * GB, label: 'Сильная', label_en: 'Strong', ru: 'good',
+    { ...Q35_2B, label: 'Самая быстрая', label_en: 'Fastest', ru: 'good',
+      description: 'Описывает фото и читает текст на снимках даже на слабом компьютере.',
+      description_en: 'Describes photos and reads text in pictures even on a weak computer.' },
+    { ...Q35_4B, label: 'Быстрая и толковая', label_en: 'Fast and capable', ru: 'good',
+      description: 'Описывает фото, читает документы и вывески, отвечает по-русски. Для обычного компьютера.',
+      description_en: 'Describes photos, reads documents and signs. For an ordinary computer.' },
+    { ...G4_E4B, label: 'Быстрая, от Google', label_en: 'Fast, by Google', ru: 'good',
+      description: 'Gemma 4: понимает фото и хорошо отвечает по-русски.',
+      description_en: 'Gemma 4: understands photos and answers Russian well.' },
+    { name: 'qwen3-vl:8b', bytes: 6.19 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'good',
+      description: 'Модель Qwen специально для картинок: точно читает документы, таблицы и рукописный текст.',
+      description_en: 'Qwen’s model made for pictures: reads documents, tables and handwriting accurately.' },
+    { name: 'minicpm-v4.5:8b', bytes: 6.12 * GB, label: 'Умнее', label_en: 'Smarter', ru: 'fair',
+      description: 'Хорошо читает мелкий текст и разбирает несколько фото сразу. Объясняет лучше по-английски.',
+      description_en: 'Good at small text and several photos at once. Explains better in English.' },
+    { ...Q35_9B, label: 'Умнее', label_en: 'Smarter', ru: 'good',
+      description: 'Подробно разбирает фото и документы. На слабом компьютере — медленно.',
+      description_en: 'Analyses photos and documents in detail. Slow on a weak computer.' },
+    { ...G4_12B, label: 'Сильная', label_en: 'Strong', ru: 'good',
       description: 'Подробно разбирает фото и отвечает по-русски. 16 ГБ памяти.',
       description_en: 'Analyses photos in detail and answers in Russian. 16 GB of memory.' },
-    { name: 'gemma3:27b', bytes: 17.4 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'good',
-      description: 'Почти как большие онлайн-помощники. 32–64 ГБ памяти, видеокарта.',
-      description_en: 'Close to large online assistants. 32–64 GB of memory, graphics card.' },
-    { name: 'qwen2.5vl:32b', bytes: 21.16 * GB, label: 'Очень сильная', label_en: 'Very strong', ru: 'good',
-      description: 'Разбирает сложные документы, графики и схемы. 32–64 ГБ памяти, видеокарта.',
-      description_en: 'Handles complex documents, charts and diagrams. 32–64 GB of memory, graphics card.' },
-    { name: 'qwen2.5vl:72b', bytes: 48.71 * GB, label: 'Самая сильная', label_en: 'Strongest', ru: 'good',
-      description: 'Самая сильная из понимающих картинки. Рабочая станция: 64+ ГБ памяти, мощная видеокарта.',
-      description_en: 'The strongest of the picture-understanding models. A workstation: 64+ GB of memory, powerful graphics card.' },
+    { ...Q35_27B, label: 'Очень сильная', label_en: 'Very strong', ru: 'good',
+      description: 'Разбирает сложные документы, графики и схемы. 32 ГБ памяти, видеокарта.',
+      description_en: 'Handles complex documents, charts and diagrams. 32 GB of memory, graphics card.' },
+    { name: 'qwen3-vl:30b-a3b', bytes: 19.6 * GB, speedBytes: 3.5 * GB, label: 'Очень сильная и быстрая', label_en: 'Very strong and fast', ru: 'good',
+      description: 'Из «экспертов»: сильная, а отвечает быстро и без видеокарты. Нужно 32 ГБ памяти.',
+      description_en: 'Built from “experts”: strong yet fast, even without a graphics card. Needs 32 GB of memory.' },
+    { ...G4_31B, label: 'Самая сильная', label_en: 'Strongest', ru: 'good',
+      description: 'Самая сильная из понимающих картинки в этом списке. 32–64 ГБ памяти, видеокарта.',
+      description_en: 'The strongest picture-understanding model in this list. 32–64 GB of memory, graphics card.' },
   ],
+}
+
+/** Скорость известной модели: speedBytes из подборок, иначе размер файла. */
+export function speedBytesOf(name: string, bytes: number): number {
+  for (const list of Object.values(MODEL_GUIDE)) {
+    const hit = list.find((m) => m.name === name)
+    if (hit) return hit.speedBytes ?? bytes
+  }
+  const pick = MODEL_PICKS.find((p) => p.name === name)
+  return pick?.speedBytes ?? bytes
 }
 
 export type GuideItem = {
@@ -136,9 +157,15 @@ export type GuideItem = {
 }
 
 /** Оценка уже установленной модели по её размеру — та же, что у подборки (для подсказки в чате). */
-export function installedFit(bytes: number, memoryBytes: number | null, cpus: number | null, gpu: boolean): ModelFit {
+export function installedFit(
+  bytes: number,
+  memoryBytes: number | null,
+  cpus: number | null,
+  gpu: boolean,
+  name = ''
+): ModelFit {
   const fit = modelFit(bytes, memoryBytes)
-  if (fit === 'good' && !gpu && bytes > recommendLimit(cpus, gpu)) return 'slow'
+  if (fit === 'good' && !gpu && speedBytesOf(name, bytes) > recommendLimit(cpus, gpu)) return 'slow'
   return fit
 }
 
@@ -159,15 +186,15 @@ export function modelGuide(
   const fits = list.map((m) => {
     const fit = modelFit(m.bytes, memoryBytes)
     // Помещается в память, но без видеокарты процессор не успеет — честно «будет медленно».
-    if (fit === 'good' && !gpu && m.bytes > limit * (m.fastForSize ? 2 : 1)) return 'slow' as const
+    if (fit === 'good' && !gpu && (m.speedBytes ?? m.bytes) > limit) return 'slow' as const
     return fit
   })
   let best = -1
   list.forEach((m, i) => {
-    if (fits[i] === 'good' && m.bytes <= limit * (m.fastForSize ? 2 : 1) && m.ru !== 'fair') best = i
+    if (fits[i] === 'good' && (m.speedBytes ?? m.bytes) <= limit && m.ru !== 'fair' && !m.thinks) best = i
   })
   // Ни одна не «подходит»: рекомендуем самую лёгкую, что хотя бы запустится, — лучше с русским.
-  if (best < 0) best = list.findIndex((m, i) => fits[i] !== 'too-big' && m.ru !== 'fair')
+  if (best < 0) best = list.findIndex((m, i) => fits[i] !== 'too-big' && m.ru !== 'fair' && !m.thinks)
   if (best < 0) best = fits.findIndex((f) => f !== 'too-big')
   return list.map((m, i) => ({
     name: m.name,

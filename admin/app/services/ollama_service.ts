@@ -1310,7 +1310,7 @@ export class OllamaService {
     const installed: Record<string, ModelFit> = {}
     try {
       for (const m of await this.getModels()) {
-        installed[m.name] = installedFit(m.size, memory, cpus, gpu)
+        installed[m.name] = installedFit(m.size, memory, cpus, gpu, m.name)
       }
     } catch {}
     return { purpose, items, installed, compute: { memoryGb: Math.round(memory / 1024 ** 3), cpus, gpu } }
