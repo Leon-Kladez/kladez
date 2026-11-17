@@ -18,6 +18,7 @@ import { fromBuffer } from 'pdf2pic'
 import JSZip from 'jszip'
 import * as cheerio from 'cheerio'
 import mammoth from 'mammoth'
+import { xlsxToText } from '../utils/xlsx_text.js'
 import { OllamaService } from './ollama_service.js'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
 import { removeStopwords } from 'stopword'
@@ -901,6 +902,9 @@ export class RagService {
           break
         case 'docx':
           extractedText = await this.processDocxFile(fileBuffer!)
+          break
+        case 'xlsx':
+          extractedText = await xlsxToText(fileBuffer!)
           break
         case 'epub':
           extractedText = await this.processEPUBFile(fileBuffer!)

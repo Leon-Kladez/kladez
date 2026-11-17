@@ -60,6 +60,7 @@ export const kbEn = {
   'kb.startQdrant': 'Start Qdrant',
   'kb.collectionLabel': 'Collection:',
   'kb.upload': 'Upload',
+  'kb.formats': 'Supported: PDF, Word (.docx), Excel (.xlsx), CSV tables, text (.txt, .md), EPUB books, photos and scans, ZIM archives.',
   'kb.why.title': 'Why upload documents to your Knowledge Base?',
   'kb.why.integration': '{name} Knowledge Base Integration',
   'kb.why.integrationText': 'When you upload documents to your Knowledge Base, Kladez processes and embeds the content, making it directly accessible to {name}. This allows {name} to reference your specific documents during conversations, providing more accurate and personalized responses based on your uploaded data.',

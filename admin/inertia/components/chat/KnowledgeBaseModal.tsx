@@ -596,6 +596,7 @@ export default function KnowledgeBaseModal({
                   setFiles(Array.from(uploadedFiles))
                 }}
               />
+              <p className="mt-3 text-center text-sm text-text-secondary">{t('kb.formats')}</p>
               <div className="flex justify-center items-center gap-4 my-6">
                 <label className="flex items-center gap-2 text-sm text-text-secondary">
                   {t('kb.collectionLabel')}

@@ -11,6 +11,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **A simpler model catalog:** Models and settings now filters “For chatting”, “For code”, “Understand pictures”; each model shows its main sizes (3b, 7b…), with dozens of technical compression variants behind a button. After Install, download progress with percentages shows right in the row, and when the model is ready a “Go to chat” button appears.
 - **Faster chat on an ordinary computer:** the model starts loading as soon as the chat opens, not after the first question; on a weak processor two library passages are used instead of five and the conversation “memory” is smaller — the model writes about a quarter faster and no longer reloads mid-conversation (those were 15–20 second pauses). While the assistant thinks, the seconds are shown, and after 15 seconds a note explains why it takes a while.
 - **No model — a hint, not an error:** with no model installed, the chat does not let you send a message and explains what to do instead of “The model returned an error”.
+- **Save an answer as Word, Excel or PDF:** every answer has «Word» and «PDF» buttons, plus «Excel» when it contains a table. Headings, lists and tables are kept; in Excel numbers stay numbers and each table gets its own sheet. Everything happens on your computer, offline.
+- **The knowledge base reads Excel and CSV:** upload .xlsx workbooks (all sheets, dates as dates) and .csv files and the assistant answers from them. The upload area now lists the supported file types.
 
 {% /release %}
 

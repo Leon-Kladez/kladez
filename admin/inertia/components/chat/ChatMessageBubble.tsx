@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ChatMessage } from '../../../types/chat'
 import { t } from '../../../constants/i18n'
+import AnswerExport from './AnswerExport'
 
 export interface ChatMessageBubbleProps {
   message: ChatMessage
@@ -143,6 +144,9 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
             ))}
           </ul>
         </div>
+      )}
+      {message.role === 'assistant' && !message.isStreaming && message.content.trim().length > 0 && (
+        <AnswerExport content={message.content} />
       )}
       <div
         className={classNames(

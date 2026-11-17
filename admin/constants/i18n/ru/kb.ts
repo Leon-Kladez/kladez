@@ -62,6 +62,7 @@ export const kbRu: Record<keyof typeof kbEn, string> = {
   'kb.startQdrant': 'Запустить Qdrant',
   'kb.collectionLabel': 'Раздел:',
   'kb.upload': 'Загрузить',
+  'kb.formats': 'Подходят: PDF, Word (.docx), Excel (.xlsx), таблицы CSV, текст (.txt, .md), книги EPUB, фото и сканы, архивы ZIM.',
   'kb.why.title': 'Зачем загружать документы в базу знаний?',
   'kb.why.integration': '{name} и база знаний',
   'kb.why.integrationText': 'Загруженные документы Кладезъ обрабатывает и делает доступными для {name}. Тогда {name} может опираться на ваши документы в разговоре и отвечать точнее — по вашим собственным данным.',
