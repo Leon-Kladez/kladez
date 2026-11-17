@@ -192,3 +192,19 @@ Describe 'Get-KladezStartLogTail (why firstrun/upgrade failed, into setup.log)' 
         { Get-KladezStartLogTail } | Should -Not -Throw
     }
 }
+
+Describe 'Remove-KladezWslStartMenuFolder' {
+    It 'removes the empty «Kladez» folder WSL made, keeps a non-empty one and others' {
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("kladez-sm-" + [guid]::NewGuid())
+        New-Item -ItemType Directory -Force -Path (Join-Path $root 'Kladez'), (Join-Path $root 'Кладезъ') | Out-Null
+        try {
+            Remove-KladezWslStartMenuFolder -ProgramsDir $root | Should -Be 'removed'
+            Test-Path (Join-Path $root 'Kladez') | Should -BeFalse
+            Test-Path (Join-Path $root 'Кладезъ') | Should -BeTrue
+            New-Item -ItemType Directory -Force -Path (Join-Path $root 'Kladez') | Out-Null
+            Set-Content -LiteralPath (Join-Path $root 'Kladez\app.lnk') -Value 'x'
+            Remove-KladezWslStartMenuFolder -ProgramsDir $root | Should -Be 'kept'
+            Remove-KladezWslStartMenuFolder -ProgramsDir (Join-Path $root 'нет') | Should -Be 'kept'
+        } finally { Remove-Item -Recurse -Force $root }
+    }
+}

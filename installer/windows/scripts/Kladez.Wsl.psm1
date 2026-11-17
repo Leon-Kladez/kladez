@@ -207,8 +207,22 @@ function Set-KladezWslOobeDone {
     } catch { }
 }
 
+# WSL creates an empty Start menu folder named after every distro (for Linux GUI app shortcuts) —
+# «Kladez» next to our «Кладезъ» only confuses people. Remove it, and only while it is empty.
+function Remove-KladezWslStartMenuFolder {
+    param([string]$ProgramsDir = (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))
+    $dir = Join-Path $ProgramsDir 'Kladez'
+    try {
+        if ((Test-Path -LiteralPath $dir -PathType Container) -and -not @(Get-ChildItem -LiteralPath $dir -Force).Count) {
+            Remove-Item -LiteralPath $dir -Force
+            return 'removed'
+        }
+    } catch { }
+    'kept'
+}
+
 Export-ModuleMember -Function ConvertFrom-WslOutput, Get-KladezWslVersion, Get-KladezInstallAction,
     Test-KladezDistroExists, ConvertTo-KladezArgumentString, Invoke-KladezNative, Invoke-KladezWsl,
     Install-KladezDistro, Invoke-KladezFirstRun, Invoke-KladezUpgrade, Enable-KladezFeatures,
     Install-KladezWslPackage, Get-KladezWslState, Update-KladezDistroFiles, Set-KladezWslOobeDone,
-    Get-KladezStartLogTail
+    Get-KladezStartLogTail, Remove-KladezWslStartMenuFolder

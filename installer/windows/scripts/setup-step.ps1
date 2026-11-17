@@ -71,11 +71,13 @@ try {
         'firstrun' {
             New-Item -ItemType Directory -Force -Path $LibraryDir | Out-Null
             [void](Invoke-KladezFirstRun -BundlePath $BundlePath -LibraryDir $LibraryDir -AdminPort $AdminPort -KiwixPort $KiwixPort)
+            Write-StepLog "start menu: $(Remove-KladezWslStartMenuFolder)"
             'ok'
         }
         'upgrade' {
             Update-KladezDistroFiles -LinuxDir $LinuxDir
             [void](Invoke-KladezUpgrade -BundlePath $BundlePath)
+            Write-StepLog "start menu: $(Remove-KladezWslStartMenuFolder)"
             'ok'
         }
         'import' {
