@@ -2,6 +2,12 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.30" %}
+
+- **“Go” sends the route to the navigator:** after building a route, press “Go”. On a phone it opens right away in the Organic Maps navigator (GPS guidance without internet, voice prompts, re-routing); on the computer a QR code for the phone appears. Details: [Maps on your phone for the road](/docs/travel-maps).
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.29" %}
 
 - **Route suggestions are fully visible:** in the “From” and “To” fields the list of cities and streets is no longer cut off by the edge of the Route window; it now appears over the map, under the field.

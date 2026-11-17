@@ -31,6 +31,17 @@ Maps take from tens of megabytes (a small country) to several gigabytes (all of 
 - The navigator guides you with voice prompts and re-routes if you turn off.
 - Bookmark important places (home, hospital, fuel) — they are stored on the phone.
 
+## A route from Kladez to the navigator (“Go”)
+
+Build a route on the Kladez map and hand it to the navigator with one button:
+
+1. Open **Maps → Route**, choose “From” and “To” and press **“Show route”**.
+2. Press **“Go”**.
+   - **On a phone**, Organic Maps opens with this route right away; tap “Start”.
+   - **On the computer**, a QR code appears. Point the phone camera at it (the phone on the same Wi-Fi), open the link and tap **“Open in the navigator”**.
+
+The country maps along the way must be downloaded in Organic Maps in advance (see “Prepare for the trip”). A phone cannot guide you inside the Kladez map itself: the browser gives a page no GPS without a secure address and turns it off when the screen goes dark; the navigator does not.
+
 ## If it does not install
 
 - **"Installation blocked"** — in the phone settings, allow installing apps from unknown sources for the browser you downloaded with.

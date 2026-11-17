@@ -51,6 +51,22 @@ export default class PhonesController {
     return { started: PhoneAppsService.start() }
   }
 
+  /**
+   * «Поехали» на компьютере: QR-код со ссылкой на страницу маршрута (/go?…) по адресу компьютера
+   * в домашней сети. Телефон открывает её и одной кнопкой передаёт маршрут навигатору.
+   */
+  async routeQr({ request, response }: HttpContext) {
+    const path = String(request.qs().path ?? '')
+    if (!path.startsWith('/go?') || path.length > 1500) return response.badRequest()
+    const { addresses, port } = await readLanAddresses()
+    return {
+      addresses: addresses.map((a) => {
+        const url = phoneUrl(a.ip, port) + path
+        return { ...a, url, qr: qrPath(url) }
+      }),
+    }
+  }
+
   /** Сам файл .apk — телефону в домашней сети. */
   async travelMapsApk({ response }: HttpContext) {
     if (!(await PhoneAppsService.meta())) return response.notFound('Приложение ещё не подготовлено на компьютере.')

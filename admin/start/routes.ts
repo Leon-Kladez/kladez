@@ -103,6 +103,8 @@ router.get('/library', [HomeController, 'library'])
 // Старый адрес «Скачать знания» — теперь часть «Библиотеки».
 router.get('/knowledge', ({ response }) => response.redirect().toPath('/library#add'))
 router.on('/about').renderInertia('about')
+// «Кладезъ»: «Поехали» — страница на телефоне с кнопкой «Открыть в навигаторе» (Organic Maps).
+router.on('/go').renderInertia('go')
 router.get('/chat', [ChatsController, 'inertia'])
 router.get('/maps', [MapsController, 'index'])
 router.get('/supply-depot', [SupplyDepotController, 'index'])
@@ -373,6 +375,10 @@ documented(router.post('/api/phones/travel-maps/download', [PhonesController, 't
   tags: ['system'],
 })
 router.get('/phone-apps/organic-maps.apk', [PhonesController, 'travelMapsApk'])
+documented(router.get('/api/phones/route-qr', [PhonesController, 'routeQr']), {
+  summary: 'QR codes that open a built route on a phone in the home network (then in the Organic Maps navigator)',
+  tags: ['system'],
+})
 router.get('/api/openapi.json', [OpenApiController, 'spec'])
 router.get('/reference', [OpenApiController, 'reference'])
 router.get('/reference/assets/standalone.js', [OpenApiController, 'standalone'])

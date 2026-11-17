@@ -1453,6 +1453,16 @@ class API {
   }
 
   /** «Кладезъ»: «Карты в дорогу» — готово ли приложение для телефонов и QR-коды. */
+  /** «Поехали» на компьютере: QR-коды страницы маршрута для телефона в домашней сети. */
+  async getRouteQr(path: string) {
+    return catchInternal(async () => {
+      const response = await this.client.get<{ addresses: PhonesInfo['addresses'] }>('/phones/route-qr', {
+        params: { path },
+      })
+      return response.data
+    })()
+  }
+
   async getTravelMaps() {
     return catchInternal(async () => {
       const response = await this.client.get<TravelMapsInfo>('/phones/travel-maps')

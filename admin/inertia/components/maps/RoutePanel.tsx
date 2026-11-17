@@ -5,12 +5,15 @@ import {
   IconCar,
   IconLoader2,
   IconMapPin,
+  IconNavigation,
   IconRoute,
   IconWalk,
   IconX,
 } from '@tabler/icons-react'
 
-import api from '~/lib/api'
+import api, { type PhonesInfo } from '~/lib/api'
+import { useDevice } from '~/hooks/useDevice'
+import { goPath, organicMapsRouteUrl } from '~/lib/organic_route'
 import PlaceInput from './PlaceInput'
 import { useMapMarkers } from '~/hooks/useMapMarkers'
 import type { RouteMode, RouteResult } from '../../../app/utils/map_route'
@@ -56,6 +59,9 @@ export default function RoutePanel(props: Props) {
   const { markers } = useMapMarkers()
   const [mode, setMode] = useState<RouteMode>('auto')
   const [loading, setLoading] = useState(false)
+  const { isComputer } = useDevice()
+  // «Поехали» на компьютере: QR-код для телефона (undefined — не открыт, null — адреса нет).
+  const [goQr, setGoQr] = useState<PhonesInfo['addresses'][number] | null | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<Awaited<ReturnType<typeof api.mapRoutesStatus>>>(null)
   const [enableMessage, setEnableMessage] = useState<string | null>(null)
@@ -336,6 +342,14 @@ export default function RoutePanel(props: Props) {
               {t('routes.summary', { km: formatKm(route.distanceKm), time: formatDuration(route.timeMin) })}
             </div>
             {route.mode === 'auto' && <p className="text-xs text-text-muted">{t('routes.noTraffic')}</p>}
+            {ends.from && ends.to && (
+              <GoButton
+                trip={{ from: ends.from, to: ends.to, mode: route.mode }}
+                isComputer={isComputer}
+                qr={goQr}
+                onQr={setGoQr}
+              />
+            )}
             <div className="mt-1 text-xs font-medium text-text-secondary">{t('routes.steps')}</div>
             <ol className="flex flex-col">
               {route.steps.map((s, i) => {
@@ -364,6 +378,82 @@ export default function RoutePanel(props: Props) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * «Поехали»: на телефоне — сразу в навигатор Organic Maps (ведёт по GPS без интернета);
+ * на компьютере — QR-код: телефон открывает страницу Кладезя и оттуда — навигатор.
+ */
+function GoButton({
+  trip,
+  isComputer,
+  qr,
+  onQr,
+}: {
+  trip: { from: RouteEnd; to: RouteEnd; mode: RouteMode }
+  isComputer: boolean
+  qr: PhonesInfo['addresses'][number] | null | undefined
+  onQr: (qr: PhonesInfo['addresses'][number] | null | undefined) => void
+}) {
+  const path = goPath(trip)
+  // Маршрут поменялся — старый QR-код больше не про него.
+  useEffect(() => {
+    onQr(undefined)
+  }, [path])
+
+  const button =
+    'mt-2 flex w-full items-center justify-center gap-2 rounded bg-desert-green px-3 py-2 text-base font-semibold text-white hover:opacity-90'
+
+  if (!isComputer) {
+    return (
+      <div className="flex flex-col gap-1">
+        <a href={organicMapsRouteUrl(trip)} className={button}>
+          <IconNavigation size={18} /> {t('routes.go.button')}
+        </a>
+        <p className="text-xs text-text-muted">
+          {t('routes.go.phoneNote')}{' '}
+          <a href="/docs/travel-maps" className="text-desert-green underline">
+            {t('routes.go.help')}
+          </a>
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        className={button}
+        onClick={async () => {
+          if (qr !== undefined) return onQr(undefined)
+          const res = await api.getRouteQr(path)
+          onQr(res?.addresses?.[0] ?? null)
+        }}
+      >
+        <IconNavigation size={18} /> {t('routes.go.button')}
+      </button>
+      {qr === null && <p className="text-xs text-text-secondary">{t('routes.go.noAddress')}</p>}
+      {qr && (
+        <div className="mt-1 flex flex-col items-center gap-2 rounded border border-border-default p-2">
+          <svg
+            role="img"
+            aria-label={qr.url}
+            viewBox={`-2 -2 ${qr.qr.size + 4} ${qr.qr.size + 4}`}
+            className="h-44 w-44 rounded bg-white p-1"
+            shapeRendering="crispEdges"
+          >
+            <rect x={-2} y={-2} width={qr.qr.size + 4} height={qr.qr.size + 4} fill="#fff" />
+            <path d={qr.qr.path} fill="#000" />
+          </svg>
+          <p className="text-xs text-text-secondary">{t('routes.go.scan')}</p>
+          <a href="/docs/travel-maps" className="text-xs text-desert-green underline">
+            {t('routes.go.help')}
+          </a>
+        </div>
+      )}
     </div>
   )
 }
