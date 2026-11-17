@@ -38,6 +38,25 @@ export type PhonesInfo = {
   }>
 }
 
+export type ModelFitValue = 'good' | 'slow' | 'too-big'
+
+/** «Кладезъ»: подборка моделей по надобностям. */
+export type ModelGuideInfo = {
+  purpose: 'chat' | 'code' | 'images'
+  items: Array<{
+    name: string
+    size: string
+    bytes: number
+    label: string
+    description: string
+    ru?: 'good' | 'fair'
+    fit: ModelFitValue
+    recommended: boolean
+  }>
+  installed: Record<string, ModelFitValue>
+  compute: { memoryGb: number; cpus: number; gpu: boolean }
+}
+
 /** «Кладезъ»: «Карты в дорогу» — Organic Maps для телефонов с этого компьютера. */
 export type TravelMapsInfo = {
   app: { version: string; size: number; sha256: string; downloadedAt: string } | null
@@ -1418,6 +1437,14 @@ class API {
   }
 
   /** «Кладезъ»: адреса компьютера в домашней сети с QR-кодами. */
+  /** «Кладезъ»: подборка моделей раздела с оценкой «потянет ли этот компьютер». */
+  async getModelGuide(purpose: 'chat' | 'code' | 'images') {
+    return catchInternal(async () => {
+      const response = await this.client.get<ModelGuideInfo>('/ollama/model-guide', { params: { purpose } })
+      return response.data
+    })()
+  }
+
   async getPhonesInfo() {
     return catchInternal(async () => {
       const response = await this.client.get<PhonesInfo>('/phones/info')

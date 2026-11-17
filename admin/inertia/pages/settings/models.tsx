@@ -30,6 +30,7 @@ import { t } from '../../../constants/i18n'
 import { errorText } from '~/lib/error_text'
 import { relativeTimeRu } from '~/lib/relative_time'
 import useOllamaModelDownloads from '~/hooks/useOllamaModelDownloads'
+import ModelGuide from '~/components/ModelGuide'
 import { mainTags, modelPurpose, type ModelPurpose } from '../../../constants/model_purpose'
 import { useEffect } from 'react'
 
@@ -451,6 +452,11 @@ export default function ModelsPage(props: {
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Кладезъ: «Какую модель выбрать» — по надобностям, с оценкой для этого компьютера. */}
+          <div className="mt-12">
+            <ModelGuide />
           </div>
 
           <StyledSectionHeader title={t('models.installed')} className="mt-12 mb-4" />

@@ -17,6 +17,17 @@ export const modelsEn = {
   'models.goToChat': 'Go to chat',
   'models.allVariants': 'All compression variants ({count})',
   'models.mainSizesOnly': 'Main sizes only',
+  'models.guide.title': 'Which model to choose',
+  'models.guide.intro':
+    'Choose what you need the model for. Each section has 10 models, from light and fast to strong. Kladez looks at this computer and suggests which one fits and which will be slow. One is enough.',
+  'models.guide.computeCpu': 'This computer: {memory} GB of memory for AI, {cpus} processor threads, no graphics card for AI.',
+  'models.guide.computeGpu': 'This computer: {memory} GB of memory for AI, {cpus} processor threads, a graphics card.',
+  'models.guide.imagesNote':
+    'These models understand photos: describe a picture, read the text in it, answer a question about it. Offline models on an ordinary computer cannot draw pictures or make videos.',
+  'models.guide.more': 'Need another model? The full Ollama catalog is below, under “Models”.',
+  'models.fit.good': 'Fits this computer',
+  'models.fit.slow': 'Will answer slowly',
+  'models.fit.too-big': 'Too big for this computer',
   'models.installFailed': 'There was an error installing the model: {name}. Please try again.',
   'models.deleted': 'Model deleted: {name}.',
   'models.deleteFailed': 'There was an error deleting the model: {name}. Please try again.',

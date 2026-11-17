@@ -133,6 +133,14 @@ export default function Chat({
     select: (data) => data || [],
   })
 
+  // Кладезъ: потянет ли этот компьютер каждую установленную модель — для подписи в списке моделей.
+  const { data: modelGuide } = useQuery({
+    queryKey: ['model-guide', 'chat'],
+    queryFn: () => api.getModelGuide('chat'),
+    enabled,
+    staleTime: 5 * 60_000,
+  })
+
   const { data: knownCollections = [] } = useQuery({
     queryKey: ['kbCollections'],
     queryFn: () => api.getKnowledgeCollections(),
@@ -683,12 +691,17 @@ export default function Chat({
                     onChange={(e) => handleUserSelectedModel(e.target.value)}
                     className="min-w-0 max-w-44 sm:max-w-none px-2 sm:px-3 py-1.5 border border-border-default rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent bg-surface-primary"
                   >
-                    {installedModels.map((model) => (
-                      <option key={model.name} value={model.name}>
-                        {model.name}
-                        {model.size > 0 ? ` (${formatBytes(model.size)})` : ''}
-                      </option>
-                    ))}
+                    {installedModels.map((model) => {
+                      // Кладезъ: сразу в списке видно, какая модель на этом компьютере будет тормозить.
+                      const fit = modelGuide?.installed[model.name]
+                      return (
+                        <option key={model.name} value={model.name}>
+                          {model.name}
+                          {model.size > 0 ? ` (${formatBytes(model.size)})` : ''}
+                          {fit === 'slow' ? ` — ${t('chat.modelSlow')}` : fit === 'too-big' ? ` — ${t('chat.modelTooBig')}` : ''}
+                        </option>
+                      )
+                    })}
                   </select>
                 )}
               </div>

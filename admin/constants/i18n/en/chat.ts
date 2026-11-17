@@ -46,6 +46,8 @@ export const chatEn = {
   'chat.model': 'Model:',
   'chat.loadingModels': 'Loading models...',
   'chat.noModels': 'No models installed',
+  'chat.modelSlow': 'will be slow',
+  'chat.modelTooBig': 'too big for this computer',
   'chat.noModelsNotice':
     'The assistant needs at least one model to answer. If a model is already downloading, wait for it to finish (see downloads); otherwise choose one:',
   'chat.noModelsLink': 'Models and settings',

@@ -28,7 +28,8 @@ import {
   resolveModelCapabilities,
 } from '../utils/model_capabilities.js'
 import { getLocale, t } from '../../constants/i18n/index.js'
-import { modelPicks } from '../utils/model_picks.js'
+import { modelPicks, type ModelFit } from '../utils/model_picks.js'
+import { installedFit, modelGuide, type GuidePurpose } from '../utils/model_guide.js'
 import { matchesPurpose, type ModelPurpose } from '../../constants/model_purpose.js'
 import os from 'node:os'
 import { humanizeError } from '../utils/user_errors.js'
@@ -1287,6 +1288,32 @@ export class OllamaService {
     const results = await Promise.allSettled(jobs)
     const failed = results.filter((r) => r.status === 'rejected').length
     logger.info(`[OllamaService] Прогрев для чата: ${model}${withEmbeddings ? ' и модель поиска' : ''}${failed ? `, не вышло: ${failed}` : ''}`)
+  }
+
+  /** Kladez: память, процессор и видеокарта, которые видит ИИ-помощник (для оценки «потянет ли»). */
+  public async hostCompute(): Promise<{ memory: number; cpus: number; gpu: boolean }> {
+    let gpu = false
+    try {
+      gpu = /nvidia|amd/i.test(await fs.readFile('/app/storage/.nomad-gpu-type', 'utf8'))
+    } catch {}
+    return { memory: os.totalmem(), cpus: os.cpus().length, gpu }
+  }
+
+  /**
+   * Kladez: подобранные модели раздела (общение, код, картинки) с оценкой для этого компьютера и
+   * оценка уже установленных — чтобы в чате подсказать «будет медленно».
+   */
+  public async modelGuide(purpose: GuidePurpose) {
+    const { memory, cpus, gpu } = await this.hostCompute()
+    const en = getLocale() === 'en'
+    const items = modelGuide(purpose, memory, cpus, gpu, en)
+    const installed: Record<string, ModelFit> = {}
+    try {
+      for (const m of await this.getModels()) {
+        installed[m.name] = installedFit(m.size, memory, cpus, gpu)
+      }
+    } catch {}
+    return { purpose, items, installed, compute: { memoryGb: Math.round(memory / 1024 ** 3), cpus, gpu } }
   }
 
   public async getModels(includeEmbeddings = false): Promise<NomadInstalledModel[]> {

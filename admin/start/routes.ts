@@ -403,6 +403,11 @@ router
       summary: 'List installed models',
       tags: ['ollama'],
     })
+    // Kladez: подборка моделей по надобностям с оценкой «потянет ли этот компьютер».
+    documented(router.get('/model-guide', [OllamaController, 'modelGuide']), {
+      summary: 'Hand-picked models per purpose (chat, code, images) rated for this computer',
+      tags: ['ollama'],
+    })
     documented(router.post('/unload-chat-models', [OllamaController, 'unloadChatModels']), {
       summary: 'Unload chat models from memory',
       tags: ['ollama'],

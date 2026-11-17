@@ -60,6 +60,13 @@ export default class OllamaController {
    * on model-switch, session-switch, and page-load. Best-effort: a failure
    * here should not block the calling flow.
    */
+  /** Kladez: подборка моделей раздела (?purpose=chat|code|images) с оценкой для этого компьютера. */
+  async modelGuide({ request }: HttpContext) {
+    const raw = String(request.input('purpose') ?? 'chat')
+    const purpose = raw === 'code' || raw === 'images' ? raw : 'chat'
+    return await this.ollamaService.modelGuide(purpose)
+  }
+
   async unloadChatModels({ request, response }: HttpContext) {
     const { targetModel } = await request.validateUsing(unloadChatModelsSchema)
     const unloaded = await this.ollamaService.unloadAllChatModelsExcept(targetModel ?? null)

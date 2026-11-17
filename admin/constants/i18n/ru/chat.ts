@@ -48,6 +48,8 @@ export const chatRu: Record<keyof typeof chatEn, string> = {
   'chat.model': 'Модель:',
   'chat.loadingModels': 'Загружаем модели…',
   'chat.noModels': 'Модели не установлены',
+  'chat.modelSlow': 'будет медленно',
+  'chat.modelTooBig': 'не потянет компьютер',
   'chat.noModelsNotice':
     'Чтобы помощник отвечал, нужна хотя бы одна модель. Если модель уже скачивается — дождитесь конца (ход видно в загрузках), иначе выберите её:',
   'chat.noModelsLink': 'Модели и настройки',
