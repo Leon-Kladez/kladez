@@ -49,6 +49,7 @@ export const chatEn = {
   'chat.knowledgeBase': 'Knowledge Base',
   'chat.clearHistory': 'Clear History',
   'chat.streamError': 'The model encountered an error. Please try again.',
+  'chat.tooSlow': 'The model did not answer in time: the conversation is too long for this computer. Start a “New chat” or pick a lighter model.',
   'chat.describeImage': 'Describe the attached image.',
   'chat.maxImages': 'You can attach up to {count} images.',
   'chat.imageType': '{name} is not supported. Use JPEG, PNG, or WebP.',

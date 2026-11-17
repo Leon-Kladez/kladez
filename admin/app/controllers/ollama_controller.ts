@@ -90,6 +90,7 @@ export default class OllamaController {
   }
 
   async chat({ request, response }: HttpContext) {
+    const startedAt = Date.now()
     const uploadedImages = request.files('images', {
       size: '8mb',
       extnames: ['jpg', 'jpeg', 'png', 'webp'],
@@ -349,6 +350,15 @@ export default class OllamaController {
 
       return { ...result, sources }
     } catch (error) {
+      // «Кладезъ»: раньше ошибка ответа не попадала в журнал, а человек видел безликое
+      // «Произошла внутренняя ошибка». Теперь — запись в журнал и понятная причина.
+      const elapsedS = Math.round((Date.now() - startedAt) / 1000)
+      logger.warn(
+        `[OllamaController] chat with ${reqData.model} failed after ${elapsedS} s: ${error instanceof Error ? error.message : String(error)}`
+      )
+      // Ollama обрывает ответ, который не начался за 5 минут: модель не успела прочитать
+      // длинный разговор на медленном компьютере.
+      const tooSlow = elapsedS >= 240
       if (reqData.stream) {
         const streamError =
           unknownVisionUpstreamRejected
@@ -356,7 +366,9 @@ export default class OllamaController {
                 error: true,
                 message: unknownVisionCompatibilityMessage(reqData.model),
               }
-            : { error: true }
+            : tooSlow
+              ? { error: true, message: t('chat.tooSlow') }
+              : { error: true }
         response.response.write(`data: ${JSON.stringify(streamError)}\n\n`)
         response.response.end()
         return

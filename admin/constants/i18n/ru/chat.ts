@@ -51,6 +51,7 @@ export const chatRu: Record<keyof typeof chatEn, string> = {
   'chat.knowledgeBase': 'База знаний',
   'chat.clearHistory': 'Очистить историю',
   'chat.streamError': 'Модель выдала ошибку. Попробуйте ещё раз.',
+  'chat.tooSlow': 'Модель не успела ответить: разговор слишком длинный для этого компьютера. Начните «Новый разговор» или выберите модель полегче.',
   'chat.describeImage': 'Опиши прикреплённую картинку.',
   'chat.maxImages': 'Можно прикрепить не больше {count} картинки.|Можно прикрепить не больше {count} картинок.|Можно прикрепить не больше {count} картинок.',
   'chat.imageType': 'Файл {name} не подходит. Нужен JPEG, PNG или WebP.',
