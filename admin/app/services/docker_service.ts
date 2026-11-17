@@ -1,4 +1,5 @@
 import Service from '#models/service'
+import { PullProgress, imageLayers } from '../utils/image_size.js'
 import Docker from 'dockerode'
 import logger from '@adonisjs/core/services/logger'
 import { inject } from '@adonisjs/core'
@@ -78,14 +79,42 @@ export class DockerService {
    * from a missing or partial image, surfacing a confusing downstream error.
    * Rejecting on that error here lets callers fail fast with the real cause (#790).
    */
-  async pullImage(imageName: string): Promise<void> {
+  async pullImage(imageName: string, onProgress?: (downloaded: number, total: number | null) => void): Promise<void> {
+    // «Кладезъ»: размер образа узнаём заранее (описание в хранилище) — тогда видны проценты
+    // (у ИИ-помощника это 3,4 ГБ, четверть часа). Не узнали — только «скачано N МБ».
+    const tracker = onProgress ? new PullProgress(await imageLayers(imageName)) : null
     const pullStream = await this.docker.pull(imageName)
     await new Promise<void>((resolve, reject) => {
-      this.docker.modem.followProgress(pullStream, (error: Error | null) => {
-        if (error) reject(error)
-        else resolve()
-      })
+      this.docker.modem.followProgress(
+        pullStream,
+        (error: Error | null) => {
+          if (error) reject(error)
+          else resolve()
+        },
+        (event: { id?: string; status?: string; progressDetail?: { current?: number; total?: number } }) => {
+          if (!onProgress || !tracker) return
+          onProgress(tracker.update(event), tracker.total)
+        }
+      )
     })
+  }
+
+  /** Сообщать о ходе скачивания образа не чаще раза в 2 секунды — иначе сотни сообщений в минуту. */
+  private _pullProgress(serviceName: string, status: string, image: string): (bytes: number, total: number | null) => void {
+    let last = 0
+    return (bytes, total) => {
+      const now = Date.now()
+      if (now - last < 2000) return
+      last = now
+      const mb = Math.round(bytes / 1024 / 1024).toLocaleString('ru-RU')
+      if (total) {
+        const pct = Math.min(99, Math.floor((bytes / total) * 100))
+        const totalMb = Math.round(total / 1024 / 1024).toLocaleString('ru-RU')
+        this._broadcast(serviceName, status, t('server.dockerService.pullingImagePercent', { image, pct, mb, totalMb }))
+      } else {
+        this._broadcast(serviceName, status, t('server.dockerService.pullingImageProgress', { image, mb }))
+      }
+    }
   }
 
   async affectContainer(
@@ -687,7 +716,10 @@ export class DockerService {
           'pulling',
           t('server.dockerService.pullingDockerImage', { container_image: service.container_image })
         )
-        await this.pullImage(service.container_image)
+        await this.pullImage(
+          service.container_image,
+          this._pullProgress(service.service_name, 'pulling', service.container_image)
+        )
       }
 
       if (service.service_name === SERVICE_NAMES.KIWIX) {
@@ -1849,7 +1881,7 @@ export class DockerService {
 
       // Step 1: Pull new image (runtimeImage diverges from newImage for AMD, see above)
       this._broadcast(serviceName, 'update-pulling', t('server.dockerService.pullingImage', { runtimeImage }))
-      await this.pullImage(runtimeImage)
+      await this.pullImage(runtimeImage, this._pullProgress(serviceName, 'update-pulling', runtimeImage))
 
       // Step 2: Find and stop existing container
       this._broadcast(serviceName, 'update-stopping', t('server.dockerService.stoppingCurrentContainer'))

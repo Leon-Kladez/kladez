@@ -73,4 +73,5 @@ export const depotEn = {
   'depot.autoUpdatesOffSettings': 'App auto-updates off — open Settings',
   'depot.updatePull': 'Update (pull latest)',
   'depot.inProgress': 'In progress…',
+  'depot.downloadingPct': 'Downloading… {pct}%',
 } as const

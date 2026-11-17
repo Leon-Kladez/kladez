@@ -2,6 +2,13 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.31" %}
+
+- **Percentages while installing and updating apps:** the App Store shows how much is downloaded: “Downloading… 42%” on the card and “42% (1,430 of 3,400 MB)” in the feed above. Before, a quarter of an hour (the AI assistant image is 3.4 GB) showed only “In progress…”, and it looked stuck.
+- **Updates no longer cover the screen:** while an app updates, the page stays usable, with no full-window overlay.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.30" %}
 
 - **“Go” sends the route to the navigator:** after building a route, press “Go”. On a phone it opens right away in the Organic Maps navigator (GPS guidance without internet, voice prompts, re-routing); on the computer a QR code for the phone appears. Details: [Maps on your phone for the road](/docs/travel-maps).

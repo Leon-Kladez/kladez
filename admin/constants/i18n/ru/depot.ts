@@ -75,4 +75,5 @@ export const depotRu: Record<keyof typeof depotEn, string> = {
   'depot.autoUpdatesOffSettings': 'Автообновление приложений выключено — открыть настройки',
   'depot.updatePull': 'Обновить (скачать новую версию)',
   'depot.inProgress': 'Выполняется…',
+  'depot.downloadingPct': 'Скачивается… {pct}%',
 }

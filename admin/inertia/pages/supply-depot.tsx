@@ -109,6 +109,15 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState<Modal>(null)
   const [loading, setLoading] = useState(false)
+  // Обновления, которые идут сейчас (запрос ещё не вернулся) — карточка показывает «Выполняется…».
+  const [updatingNow, setUpdatingNow] = useState<Set<string>>(new Set())
+  // «Кладезъ»: проценты скачивания образа — из последнего сообщения «… 42% (…)» по каждой программе.
+  const pullPct: Record<string, number> = {}
+  for (const a of installActivity) {
+    if (!/pulling$/.test(a.type)) continue
+    const m = /(\d{1,3})%/.exec(a.message)
+    if (m) pullPct[a.service_name] = Number(m[1])
+  }
   const [checkingUpdates, setCheckingUpdates] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [customAppOpen, setCustomAppOpen] = useState(false)
@@ -299,9 +308,15 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
   // Versioned update for a curated (non-custom) catalog app. Progress + reload are handled
   // by the installActivity effect (update-complete) above.
   async function handleUpdateService(service: ServiceSlim, targetVersion: string) {
-    setLoading(true)
+    // «Кладезъ»: без затемнения всего экрана — образ (у ИИ-помощника 3,4 ГБ) качается минутами.
+    // Ход виден в ленте сверху («скачано N МБ») и на карточке; страница остаётся рабочей.
+    setUpdatingNow((s) => new Set(s).add(service.service_name))
     const result = await api.updateService(service.service_name, targetVersion)
-    setLoading(false)
+    setUpdatingNow((s) => {
+      const next = new Set(s)
+      next.delete(service.service_name)
+      return next
+    })
     if (!result?.success) showError(errorText(result, t('depot.updateServiceFailed')))
   }
 
@@ -484,7 +499,8 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
                   {installedServices.map((service) => (
                     <AppCard
                       key={service.service_name}
-                      service={service}
+                      service={updatingNow.has(service.service_name) ? { ...service, installation_status: 'installing' } : service}
+                      progressPct={pullPct[service.service_name]}
                       openDropdown={openDropdown}
                       dropdownRef={dropdownRef}
                       onOpenDropdown={setOpenDropdown}
@@ -521,7 +537,8 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
                   {availableServices.map((service) => (
                     <AppCard
                       key={service.service_name}
-                      service={service}
+                      service={updatingNow.has(service.service_name) ? { ...service, installation_status: 'installing' } : service}
+                      progressPct={pullPct[service.service_name]}
                       openDropdown={openDropdown}
                       dropdownRef={dropdownRef}
                       onOpenDropdown={setOpenDropdown}
@@ -841,6 +858,8 @@ export default function SupplyDepotPage(props: { system: { services: ServiceSlim
 
 interface AppCardProps {
   service: ServiceSlim
+  /** Сколько процентов образа уже скачано (установка/обновление идёт сейчас). */
+  progressPct?: number
   openDropdown: string | null
   dropdownRef: React.RefObject<HTMLDivElement | null>
   onOpenDropdown: (name: string | null) => void
@@ -868,6 +887,7 @@ interface AppCardProps {
 
 function AppCard({
   service,
+  progressPct,
   openDropdown,
   dropdownRef,
   onOpenDropdown,
@@ -1161,7 +1181,7 @@ function AppCard({
         {service.installation_status === 'installing' && (
           <div className="flex-1 flex items-center justify-center text-xs text-text-muted gap-1 py-1">
             <span className="animate-spin inline-block w-3 h-3 border border-desert-green border-t-transparent rounded-full" />
-            {t('depot.inProgress')}
+            {progressPct !== undefined ? t('depot.downloadingPct', { pct: progressPct }) : t('depot.inProgress')}
           </div>
         )}
       </div>

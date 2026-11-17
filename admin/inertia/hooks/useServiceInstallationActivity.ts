@@ -10,15 +10,20 @@ export default function useServiceInstallationActivity() {
 
   useEffect(() => {
     const unsubscribe = subscribe(BROADCAST_CHANNELS.SERVICE_INSTALLATION, (data: any) => {
-      setInstallActivity((prev) => [
-        ...prev,
-        {
+      setInstallActivity((prev) => {
+        const entry = {
           service_name: data.service_name ?? 'unknown',
           type: data.status ?? 'unknown',
           timestamp: new Date().toISOString(),
           message: data.message ?? t('install.noMessage'),
-        },
-      ])
+        }
+        // «Кладезъ»: «скачано N МБ» приходит каждые 2 секунды — обновляем строку, а не копим сотни.
+        const last = prev[prev.length - 1]
+        if (last && last.service_name === entry.service_name && last.type === entry.type && /pulling$/.test(entry.type)) {
+          return [...prev.slice(0, -1), entry]
+        }
+        return [...prev, entry]
+      })
     })
 
     return () => {
