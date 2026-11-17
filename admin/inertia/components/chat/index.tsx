@@ -77,6 +77,8 @@ export default function Chat({
         id: s.id,
         title: s.title,
         model: s.model || undefined,
+        pinned: !!s.pinned,
+        unread: !!s.unread,
         timestamp: new Date(s.timestamp),
         lastMessage: s.lastMessage || undefined,
       })) || [],
@@ -615,6 +617,9 @@ export default function Chat({
           onSessionSelect={handleSessionSelect}
           onNewChat={handleNewChat}
           onClearHistory={handleClearHistory}
+          onSessionDeleted={(id) => {
+            if (id === activeSessionId) handleNewChat()
+          }}
           isInModal={isInModal}
           isMobileOpen={isMobileSidebarOpen}
           onMobileClose={() => setIsMobileSidebarOpen(false)}

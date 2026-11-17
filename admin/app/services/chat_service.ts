@@ -48,11 +48,14 @@ export class ChatService {
 
   async getAllSessions() {
     try {
-      const sessions = await ChatSession.query().orderBy('updated_at', 'desc')
+      // «Кладезъ»: закреплённые — наверху, дальше по последнему разговору.
+      const sessions = await ChatSession.query().orderBy('pinned', 'desc').orderBy('updated_at', 'desc')
       return sessions.map((session) => ({
         id: session.id.toString(),
         title: session.title,
         model: session.model,
+        pinned: Boolean(session.pinned),
+        unread: Boolean(session.unread),
         timestamp: session.updated_at.toJSDate(),
         lastMessage: null, // Will be populated from messages if needed
       }))
@@ -227,9 +230,20 @@ export class ChatService {
     }
   }
 
-  async updateSession(sessionId: number, data: { title?: string; model?: string }) {
+  async updateSession(
+    sessionId: number,
+    data: { title?: string; model?: string; pinned?: boolean; unread?: boolean }
+  ) {
     try {
       const session = await ChatSession.findOrFail(sessionId)
+
+      // «Кладезъ»: закрепить / пометить — без смены времени разговора (иначе он прыгал бы наверх).
+      const marks: Record<string, boolean> = {}
+      if (data.pinned !== undefined) marks.pinned = data.pinned
+      if (data.unread !== undefined) marks.unread = data.unread
+      if (Object.keys(marks).length) {
+        await ChatSession.query().where('id', sessionId).update(marks)
+      }
 
       if (data.title) {
         session.title = data.title
@@ -238,7 +252,7 @@ export class ChatService {
         session.model = data.model
       }
 
-      await session.save()
+      if (session.$isDirty) await session.save()
 
       return {
         id: session.id.toString(),

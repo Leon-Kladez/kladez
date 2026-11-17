@@ -620,6 +620,8 @@ class API {
         id: string
         title: string
         model: string | null
+        pinned?: boolean
+        unread?: boolean
         timestamp: string
         lastMessage: string | null
       }>>('/chat/sessions')
@@ -657,7 +659,10 @@ class API {
     })()
   }
 
-  async updateChatSession(sessionId: string, data: { title?: string; model?: string }) {
+  async updateChatSession(
+    sessionId: string,
+    data: { title?: string; model?: string; pinned?: boolean; unread?: boolean }
+  ) {
     return catchInternal(async () => {
       const response = await this.client.put<{
         id: string

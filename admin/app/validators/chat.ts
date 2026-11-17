@@ -11,6 +11,8 @@ export const updateSessionSchema = vine.compile(
   vine.object({
     title: vine.string().trim().minLength(1).maxLength(200).optional(),
     model: vine.string().trim().optional(),
+    pinned: vine.boolean().optional(),
+    unread: vine.boolean().optional(),
   })
 )
 

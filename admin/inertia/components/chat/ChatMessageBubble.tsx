@@ -92,6 +92,18 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
               h1: ({ children }) => <h1 className="text-xl font-bold mb-2">{children}</h1>,
               h2: ({ children }) => <h2 className="text-lg font-bold mb-2">{children}</h2>,
               h3: ({ children }) => <h3 className="text-base font-bold mb-2">{children}</h3>,
+              // «Кладезъ»: таблица с рамками и прокруткой вбок — без них столбцы сливались в текст.
+              table: ({ children }) => (
+                <div className="my-2 overflow-x-auto">
+                  <table className="min-w-full border-collapse text-sm">{children}</table>
+                </div>
+              ),
+              th: ({ children }) => (
+                <th className="border border-border-default bg-surface-primary px-2 py-1 text-left font-semibold align-top">
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => <td className="border border-border-default px-2 py-1 align-top">{children}</td>,
               blockquote: ({ children }) => (
                 <blockquote className="border-l-4 border-border-default pl-4 italic my-2">
                   {children}

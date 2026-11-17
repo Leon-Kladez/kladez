@@ -34,6 +34,10 @@ export interface ChatImageAttachment {
 export interface ChatSession {
   id: string
   title: string
+  /** «Кладезъ»: закреплён наверху списка. */
+  pinned?: boolean
+  /** «Кладезъ»: помечен непрочитанным. */
+  unread?: boolean
   lastMessage?: string
   timestamp: Date
 }

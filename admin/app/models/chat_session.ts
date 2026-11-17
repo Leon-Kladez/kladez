@@ -15,6 +15,14 @@ export default class ChatSession extends BaseModel {
   @column()
   declare model: string | null
 
+  /** «Кладезъ»: закреплён — наверху списка. */
+  @column({ consume: (v) => Boolean(v) })
+  declare pinned: boolean
+
+  /** «Кладезъ»: помечен непрочитанным — вернуться позже (жирный и точка в списке). */
+  @column({ consume: (v) => Boolean(v) })
+  declare unread: boolean
+
   @hasMany(() => ChatMessage, {
     foreignKey: 'session_id',
     localKey: 'id',

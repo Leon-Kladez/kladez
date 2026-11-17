@@ -4,6 +4,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.31" %}
 
+- **“⋮” menu for conversations:** each chat has three dots on the right: “Pin” (top of the list), “Mark as unread / read” (come back later: bold with a dot), “Rename” (right in the list) and “Delete”.
+- **Tables in assistant answers have borders:** columns no longer run together; a wide table scrolls sideways.
 - **Percentages while installing and updating apps:** the App Store shows how much is downloaded: “Downloading… 42%” on the card and “42% (1,430 of 3,400 MB)” in the feed above. Before, a quarter of an hour (the AI assistant image is 3.4 GB) showed only “In progress…”, and it looked stuck.
 - **Updates no longer cover the screen:** while an app updates, the page stays usable, with no full-window overlay.
 
