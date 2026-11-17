@@ -186,6 +186,10 @@ test('поиск по указателю: улица с домом, места, 
     const e = await MapSearchService.search('moscow', { english: true })
     assert.equal(e[0].name, 'Moscow')
 
+    // Брошенный запрос (человек допечатал слово) не ищет дальше и не держит сервер.
+    assert.deepEqual(await MapSearchService.search('Москва', { cancelled: () => true }), [])
+    assert.equal((await MapSearchService.search('Москва', { cancelled: () => false }))[0].name, 'Москва')
+
     assert.deepEqual(await MapSearchService.addressAt(55.74401, 37.62761), {
       street: 'Пятницкая улица',
       house: '7 с2',

@@ -244,7 +244,14 @@ export class MapSearchService {
 
   static async search(
     input: string,
-    opts: { lat?: number | null; lon?: number | null; limit?: number; english?: boolean } = {}
+    opts: {
+      lat?: number | null
+      lon?: number | null
+      limit?: number
+      english?: boolean
+      /** Запрос брошен (человек допечатал слово): прекратить после текущего указателя. */
+      cancelled?: () => boolean
+    } = {}
   ): Promise<MapSearchResult[]> {
     const parsed = parseCitySearch(input)
     const cityMatch = parsed.city ? ftsQuery(parsed.city) : null
@@ -274,6 +281,11 @@ export class MapSearchService {
     }
 
     for (const { db, region } of await this.databases()) {
+      // Поиск по указателю занимает сервер целиком (SQLite синхронный): между указателями — дать
+      // серверу ответить другим и бросить поиск, который уже никому не нужен. Иначе «Ми» (8 с по
+      // 11 указателям) задерживал подсказки на «Минск» — в «Маршруте» казалось, что их нет (0.1.29).
+      await new Promise<void>((resolve) => setImmediate(resolve))
+      if (opts.cancelled?.()) return []
       for (const q of queries) {
         const match = ftsQuery(q.words)
         if (!match) continue

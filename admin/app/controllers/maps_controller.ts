@@ -82,7 +82,13 @@ export default class MapsController {
       const [regions, results] = await Promise.all([
         // Кладезъ: скачанные страны и регионы по названию — первыми («Беларусь» → вся страна).
         this.mapService.searchRegions(q).catch(() => []),
-        MapSearchService.search(q, { lat, lon, limit, english: getLocale() === 'en' }),
+        MapSearchService.search(q, {
+          lat,
+          lon,
+          limit,
+          english: getLocale() === 'en',
+          cancelled: () => raw.destroyed || !!raw.socket?.destroyed,
+        }),
       ])
       return { results: [...regions, ...results] }
     } catch (error) {

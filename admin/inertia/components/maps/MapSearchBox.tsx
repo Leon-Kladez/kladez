@@ -105,7 +105,7 @@ export default function MapSearchBox({ hasIndex, canChange, onPick, onFocusChang
         setResults(res)
         setActive(0)
       }
-    }, 250)
+    }, 350)
     return () => {
       ctrl.abort()
       window.clearTimeout(timer)

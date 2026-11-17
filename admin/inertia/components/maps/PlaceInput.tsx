@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import { IconLoader2 } from '@tabler/icons-react'
 
 import api from '~/lib/api'
@@ -33,6 +34,7 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPre
   const [active, setActive] = useState(0)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
   // Город, уже выбранный в этом поле: Enter без новых подсказок — «весь город».
   const [cityPick, setCityPick] = useState<MapSearchResult | null>(null)
 
@@ -55,7 +57,7 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPre
       // Страна целиком — не точка маршрута: в «Откуда / Куда» только места.
       setResults((res ?? []).filter((r) => r.cls !== 'region').slice(0, 8))
       setActive(0)
-    }, 250)
+    }, 350)
     return () => {
       ctrl.abort()
       window.clearTimeout(timer)
@@ -64,7 +66,9 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPre
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setText(null)
+      const target = e.target as Node
+      if (boxRef.current?.contains(target) || dropRef.current?.contains(target)) return
+      setText(null)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
@@ -137,12 +141,15 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPre
         } bg-surface-primary placeholder:text-text-muted`}
       />
       {text !== null && cityPick && /,\s*$/.test(text) && results.length === 0 && !loading && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded border border-border-default bg-surface-primary px-2 py-1.5 text-xs text-text-muted shadow-lg">
+        <Floating anchor={inputRef} innerRef={dropRef}>
+        <div className="rounded border border-border-default bg-surface-primary px-2 py-1.5 text-xs text-text-muted shadow-lg">
           {t('routes.cityThenStreet', { city: cityPick.name })}
         </div>
+        </Floating>
       )}
       {text !== null && (coords || loading || results.length > 0) && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded border border-border-default bg-surface-primary shadow-lg">
+        <Floating anchor={inputRef} innerRef={dropRef}>
+        <div className="min-h-0 max-h-72 overflow-y-auto rounded border border-border-default bg-surface-primary shadow-lg">
           {coords && (
             <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={pickCoords} className="block w-full px-2 py-1.5 text-left text-sm hover:bg-surface-secondary">
               {t('mapsUi.goToCoords', { coords: `${coords.lat}, ${coords.lng}` })}
@@ -172,7 +179,49 @@ export default function PlaceInput({ value, placeholder, onPick, hasIndex, onPre
               )
             })}
         </div>
+        </Floating>
       )}
     </div>
+  )
+}
+
+/**
+ * Подсказки — поверх всей страницы, под полем. Внутри окна «Маршрут» (у него своя прокрутка)
+ * список обрезался: под нижним полем «Куда» было видно две-три строки или ничего (0.1.29).
+ */
+function Floating({
+  anchor,
+  innerRef,
+  children,
+}: {
+  anchor: RefObject<HTMLInputElement | null>
+  innerRef: RefObject<HTMLDivElement | null>
+  children: ReactNode
+}) {
+  const [box, setBox] = useState<{ left: number; top: number; width: number; maxHeight: number } | null>(null)
+  useLayoutEffect(() => {
+    const place = () => {
+      const r = anchor.current?.getBoundingClientRect()
+      if (!r) return
+      setBox({ left: r.left, top: r.bottom + 4, width: r.width, maxHeight: Math.max(120, window.innerHeight - r.bottom - 12) })
+    }
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [anchor])
+  if (!box || typeof document === 'undefined') return null
+  return createPortal(
+    <div
+      ref={innerRef}
+      style={{ position: 'fixed', left: box.left, top: box.top, width: box.width, maxHeight: box.maxHeight, zIndex: 1000 }}
+      className="flex flex-col"
+    >
+      {children}
+    </div>,
+    document.body
   )
 }

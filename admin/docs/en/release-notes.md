@@ -2,6 +2,13 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.29" %}
+
+- **Route suggestions are fully visible:** in the “From” and “To” fields the list of cities and streets is no longer cut off by the edge of the Route window; it now appears over the map, under the field.
+- **Suggestions appear faster:** while you type, Kladez drops the search for the unfinished word and searches the new one right away. Before, a search for the first letters (“Mi”) ran to the end, and suggestions for “Minsk” waited 5–8 seconds.
+
+{% /release %}
+
 {% release date="17 November 2026" versions="0.1.28" %}
 
 - **A new “Brief” video:** shows what Kladez can do now — world maps with search and routes, maps for the road on your phone, copy to a USB drive. Open it with the “Brief” button at the top right.
