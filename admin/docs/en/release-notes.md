@@ -6,6 +6,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 - **Route suggestions are fully visible:** in the “From” and “To” fields the list of cities and streets is no longer cut off by the edge of the Route window; it now appears over the map, under the field.
 - **Suggestions appear faster:** while you type, Kladez drops the search for the unfinished word and searches the new one right away. Before, a search for the first letters (“Mi”) ran to the end, and suggestions for “Minsk” waited 5–8 seconds.
+- **No more stuck “Installing”:** if Kladez restarted in the middle of installing or updating an app (network failure, a Kladez update, a reboot), its card in the App Store no longer shows “Installing… In progress…” forever; the mark is cleared on start and the app can be installed or updated again.
 
 {% /release %}
 
