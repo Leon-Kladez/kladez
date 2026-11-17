@@ -2,6 +2,15 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="17 November 2026" versions="0.1.26" %}
+
+- **Copy to a USB drive:** the Start menu has a new item, **Кладезъ → Копия на флешку**. It writes the installer and everything you downloaded — books, maps, search, roads and AI assistant models — to a USB drive, and the installer on that drive moves the library to another computer by itself, without internet. Routes and the AI assistant switch on there by themselves. Details: [Without internet](/docs/offline).
+- **How much space maps take:** Map Management shows how much each map takes together with its search and roads, and the total below the list.
+- **Clearer when a page loads slowly:** if Kladez has just started or updated, the “Loading…” screen shows a moving bar and, after a few seconds, a note that it can take up to a minute.
+- **No extra folder in the Start menu:** the empty “Kladez” folder Windows creates no longer appears next to “Кладезъ”.
+
+{% /release %}
+
 {% release date="17 November 2026" versions="0.1.25, 0.1.24" %}
 
 - **Maps of the whole world:** Maps now has “Latin America” (Mexico, Central and South America, the Caribbean), “Africa” and “Australia and Oceania”, and Greenland in “North America”. 317 country and region maps in total, large countries in parts (“Brazil: São Paulo”, “Australia: Queensland”). No program update is needed for them — the map list arrives by itself.
