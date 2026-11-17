@@ -13,6 +13,7 @@ import {
   resolveContextWindow,
   type ContextWindowDecision,
 } from '../utils/context_window.js'
+import { DEFAULT_OLLAMA_CONTEXT_LENGTH } from '../../constants/ollama.js'
 
 /**
  * Decides how large a context window each chat model gets, and then holds that
@@ -35,6 +36,8 @@ import {
 export class ContextWindowService {
   private decisions: Map<string, Promise<ContextWindowDecision>> = new Map()
   private availableBytes: Promise<number | undefined> | null = null
+  /** Кладезъ: Ollama нашла видеокарту (по её журналу) — тогда окно не урезаем. */
+  private gpu = false
 
   constructor(
     private ollamaService: OllamaService,
@@ -89,7 +92,7 @@ export class ContextWindowService {
       computeKvBytesPerToken(info.rawModelInfo) ??
       estimateKvBytesPerToken(parseParameterBillions(info.parameterSize, model))
 
-    const decision = resolveContextWindow({
+    let decision = resolveContextWindow({
       modelMaxCtx: info.contextLength,
       modelfileNumCtx: info.modelfileNumCtx,
       kvBytesPerToken,
@@ -97,6 +100,14 @@ export class ContextWindowService {
       modelBytes: await this._modelBytes(model),
       userCap,
     })
+
+    // Кладезъ: слабый процессор без видеокарты (4 потока и меньше) — окно не больше, чем у служебных
+    // задач (DEFAULT_OLLAMA_CONTEXT_LENGTH, 8K). Замер на i3-6300: окно 32K пишет на ~25 % медленнее,
+    // а разное окно у чата и у задач (название, подсказки) заставляет Ollama перезагружать модель
+    // по 15–18 секунд. Своё значение в настройках человек может поставить как раньше.
+    if (!userCap && !this.gpu && os.cpus().length <= 4 && decision.contextWindow > DEFAULT_OLLAMA_CONTEXT_LENGTH) {
+      decision = { ...decision, contextWindow: DEFAULT_OLLAMA_CONTEXT_LENGTH, limitedBy: 'default' }
+    }
 
     logger.info(
       `[ContextWindow] ${model}: ${decision.contextWindow} tokens (limited by ${decision.limitedBy}; ` +
@@ -121,6 +132,7 @@ export class ContextWindowService {
         try {
           const compute = await this.systemService.getOllamaInferenceComputeFromLogs()
           if (compute && compute.vramMiB > 0) {
+            this.gpu = true
             return compute.vramMiB * 1024 * 1024
           }
         } catch (error) {
