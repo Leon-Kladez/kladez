@@ -148,6 +148,20 @@ function Write-KladezNetworkFile {
     $path
 }
 
-Export-ModuleMember -Function Get-KladezWslIp, ConvertFrom-KladezPortProxyShow, Get-KladezPortProxyPlan,
+# Адреса из прошлого файла: если сейчас сеть пропала на минуту (переподключение Wi-Fi, VPN), не затирать
+# найденный раньше адрес пустым списком — иначе QR-код «Открыть на телефоне» пропадёт до перезапуска.
+function Get-KladezPreviousLanAddress {
+    param([Parameter(Mandatory)][string]$LibraryDir)
+    $path = Join-Path $LibraryDir $script:NetworkFileName
+    try {
+        $data = [IO.File]::ReadAllText($path) | ConvertFrom-Json -ErrorAction Stop
+    } catch { return @() }
+    @(@($data.addresses) | Where-Object { $_ -and (Test-KladezPrivateIPv4 -Ip "$($_.ip)") } | ForEach-Object {
+        $kind = if ("$($_.kind)" -in @('wifi', 'ethernet')) { "$($_.kind)" } else { 'other' }
+        [pscustomobject]@{ ip = "$($_.ip)"; kind = $kind; name = "$($_.name)" }
+    })
+}
+
+Export-ModuleMember -Function Get-KladezPreviousLanAddress, Get-KladezWslIp, ConvertFrom-KladezPortProxyShow, Get-KladezPortProxyPlan,
     Get-KladezPortProxyRemovePlan, New-KladezFirewallRule, Remove-KladezFirewallRule,
     Test-KladezPrivateIPv4, Get-KladezLanAddress, ConvertTo-KladezNetworkJson, Write-KladezNetworkFile, Get-KladezHostDisk

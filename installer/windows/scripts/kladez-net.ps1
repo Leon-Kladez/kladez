@@ -40,6 +40,10 @@ try {
             if ($try -eq 0) { Write-NetLog 'lan: no address yet, waiting for the network' }
             Start-Sleep -Seconds 10
         }
+        if (-not $lan.Count) {
+            $lan = @(Get-KladezPreviousLanAddress -LibraryDir $ini['LibraryDir'])
+            if ($lan.Count) { Write-NetLog 'lan: no address now, keeping the previous one' }
+        }
         $mem = 0L; $disks = @()
         try { $mem = Get-KladezInstalledMemory -VisibleBytes 0 } catch { }
         try { $disks = @(Get-KladezHostDisk -LogicalDisks @(Get-CimInstance Win32_LogicalDisk -ErrorAction Stop)) } catch { }

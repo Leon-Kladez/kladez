@@ -149,6 +149,30 @@ Describe 'ConvertTo-KladezNetworkJson / Write-KladezNetworkFile' {
     }
 }
 
+Describe 'Get-KladezPreviousLanAddress' {
+    It 'returns addresses from the previous file, skips junk' {
+        $dir = Join-Path ([IO.Path]::GetTempPath()) ("kladez-net-" + [guid]::NewGuid())
+        New-Item -ItemType Directory -Path $dir | Out-Null
+        try {
+            $two = @([pscustomobject]@{ ip = '192.168.0.9'; kind = 'wifi'; name = 'Беспроводная сеть 2' },
+                [pscustomobject]@{ ip = '8.8.8.8'; kind = 'odd'; name = 'x' })
+            Write-KladezNetworkFile -LibraryDir $dir -Json (ConvertTo-KladezNetworkJson -Addresses $two -AdminPort 8080) | Out-Null
+            $r = @(Get-KladezPreviousLanAddress -LibraryDir $dir)
+            $r.Count | Should -Be 1
+            $r[0].ip | Should -Be '192.168.0.9'; $r[0].kind | Should -Be 'wifi'; $r[0].name | Should -Be 'Беспроводная сеть 2'
+        } finally { Remove-Item -Recurse -Force $dir }
+    }
+    It 'no file or broken file → empty' {
+        $dir = Join-Path ([IO.Path]::GetTempPath()) ("kladez-net-" + [guid]::NewGuid())
+        New-Item -ItemType Directory -Path $dir | Out-Null
+        try {
+            @(Get-KladezPreviousLanAddress -LibraryDir $dir).Count | Should -Be 0
+            [IO.File]::WriteAllText((Join-Path $dir '.kladez-network.json'), '{oops')
+            @(Get-KladezPreviousLanAddress -LibraryDir $dir).Count | Should -Be 0
+        } finally { Remove-Item -Recurse -Force $dir }
+    }
+}
+
 Describe 'Get-KladezHostDisk / memory and disks in the network file' {
     It 'keeps local fixed disks only, sorted' {
         $ld = @(
