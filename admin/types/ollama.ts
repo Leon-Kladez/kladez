@@ -14,6 +14,8 @@ export type NomadOllamaModel = {
   ru?: 'good' | 'fair'
   /** Kladez: исходное английское описание, если description переведено на русский. */
   description_en?: string
+  /** Kladez: подобранные модели «Быстрой настройки» — подпись, потянет ли компьютер, рекомендуем ли. */
+  kladez?: { label: string; label_en?: string; fit: 'good' | 'slow' | 'too-big'; recommended: boolean }
 }
 
 export type NomadOllamaModelTag = {

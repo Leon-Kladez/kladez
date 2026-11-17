@@ -27,7 +27,9 @@ import {
   installedModelsFromOpenAIResponse,
   resolveModelCapabilities,
 } from '../utils/model_capabilities.js'
-import { t } from '../../constants/i18n/index.js'
+import { getLocale, t } from '../../constants/i18n/index.js'
+import { modelPicks } from '../utils/model_picks.js'
+import os from 'node:os'
 import { humanizeError } from '../utils/user_errors.js'
 
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
@@ -1327,6 +1329,18 @@ export class OllamaService {
       limit: 15,
     }
   ): Promise<{ models: NomadOllamaModel[]; hasMore: boolean } | null> {
+    // Kladez: «Быстрая настройка» — подобранные модели с русским под память этого компьютера, а не
+    // первые три из каталога (там выходили alfred на 24 ГБ, служебная all-minilm, athene на 30 ГБ).
+    if (recommendedOnly) {
+      const en = getLocale() === 'en'
+      const picks = modelPicks(os.totalmem(), os.cpus().length).map((m) => ({
+        ...m,
+        description: en ? m.description_en ?? m.description : m.description,
+        kladez: { ...m.kladez, label: en ? m.kladez.label_en : m.kladez.label },
+      }))
+      const found = query ? this.fuseSearchModels(picks, query) : picks
+      return { models: found, hasMore: false }
+    }
     try {
       const fetched = await this.retrieveAndRefreshModels(sort, force)
       // Kladez: описания моделей — на языке интерфейса (английский, если есть description_en).

@@ -1104,14 +1104,20 @@ export default function EasySetupWizard(props: {
             <LoadingSpinner />
           </div>
         ) : recommendedModels && recommendedModels.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recommendedModels.map((model) => (
+          <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recommendedModels.map((model) => {
+              // Кладезъ: «не потянет этот компьютер» — выбрать нельзя (скачается зря и не запустится).
+              const tooBig = model.kladez?.fit === 'too-big'
+              const selected = selectedAiModels.includes(model.name)
+              return (
               <div
                 key={model.name}
-                onClick={() => isOnline && toggleAiModel(model.name)}
+                onClick={() => isOnline && !tooBig && toggleAiModel(model.name)}
                 className={classNames(
-                  'p-4 rounded-lg border-2 transition-all cursor-pointer',
-                  selectedAiModels.includes(model.name)
+                  'p-4 rounded-lg border-2 transition-all',
+                  tooBig ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+                  selected
                     ? 'border-desert-green bg-desert-green shadow-md'
                     : 'border-desert-stone-light bg-surface-primary hover:border-desert-green hover:shadow-sm',
                   !isOnline && 'opacity-50 cursor-not-allowed'
@@ -1119,14 +1125,37 @@ export default function EasySetupWizard(props: {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
+                    {model.kladez?.recommended && (
+                      <span
+                        className={classNames(
+                          'inline-block mb-2 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                          selected ? 'bg-white text-desert-green' : 'bg-desert-green text-white'
+                        )}
+                      >
+                        {t('easySetup.ai.recommended')}
+                      </span>
+                    )}
                     <h4
                       className={classNames(
-                        'text-lg font-semibold mb-1',
-                        selectedAiModels.includes(model.name) ? 'text-white' : 'text-text-primary'
+                        'text-lg font-semibold',
+                        selected ? 'text-white' : 'text-text-primary'
                       )}
                     >
-                      {model.name}
+                      {model.kladez?.label ?? model.name}
                     </h4>
+                    {model.kladez && (
+                      <p className={classNames('text-xs font-mono mb-1', selected ? 'text-green-100' : 'text-text-muted')}>
+                        {model.name}
+                      </p>
+                    )}
+                    {model.kladez?.fit === 'slow' && (
+                      <p className={classNames('text-sm font-semibold mb-1', selected ? 'text-white' : 'text-desert-orange')}>
+                        {t('easySetup.ai.fitSlow')}
+                      </p>
+                    )}
+                    {tooBig && (
+                      <p className="text-sm font-semibold mb-1 text-desert-red">{t('easySetup.ai.fitTooBig')}</p>
+                    )}
                     <p
                       className={classNames(
                         'text-sm mb-2',
@@ -1175,8 +1204,11 @@ export default function EasySetupWizard(props: {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
+          <p className="mt-3 text-sm text-text-muted">{t('easySetup.ai.moreModels')}</p>
+          </>
         ) : (
           <div className="text-center py-8 bg-surface-secondary rounded-lg">
             <p className="text-text-secondary">{t('easySetup.ai.noModels')}</p>
