@@ -10,4 +10,5 @@ export const serverErrorEn = {
   'serverError.mime': 'MIME type {type} is not allowed',
   'serverError.gated': 'This content is only available in the official build of the original program, not in Kladez.',
   'serverError.diskInsufficient': 'Insufficient disk space: {free} free, {required} required',
+  'serverError.ollamaNotReady': 'waiting for the AI assistant to finish installing — it will start by itself',
 } as const

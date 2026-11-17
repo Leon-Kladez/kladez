@@ -102,14 +102,17 @@ export class DownloadService {
       }
     })
 
-    const modelDownloads = modelTagged.map(({ job }) => ({
+    // Kladez: настоящее состояние. Модель ждёт, пока поставится Ollama (повтор раз в минуту, до 40
+    // раз) — это «delayed» с прошлой причиной, а не окончательная ошибка с кнопкой «Повторить».
+    const modelDownloads = modelTagged.map(({ job, state }) => ({
       jobId: job.id!.toString(),
       url: job.data.modelName || 'Unknown Model',
       progress: parseInt(job.progress.toString(), 10),
       filepath: job.data.modelName || 'Unknown Model',
       filetype: 'model',
-      status: (job.failedReason ? 'failed' : 'active') as 'active' | 'failed',
+      status: (state === 'failed' ? 'failed' : state === 'delayed' || state === 'waiting' ? state : 'active') as FileJobState,
       failedReason: job.failedReason ? humanizeError(job.failedReason) : undefined,
+      attemptsMade: job.attemptsMade || undefined,
     }))
 
     // FDA drug dataset — DOWNLOAD phase only, collapsed to ONE card. The job fans

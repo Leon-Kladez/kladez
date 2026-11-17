@@ -12,4 +12,5 @@ export const serverErrorRu: Record<keyof typeof serverErrorEn, string> = {
   'serverError.mime': 'Этот тип файла не подходит ({type}).',
   'serverError.gated': 'Эти материалы доступны только в официальной сборке исходной программы, в Кладезе их нет.',
   'serverError.diskInsufficient': 'Не хватает места на диске: свободно {free}, нужно {required}.',
+  'serverError.ollamaNotReady': 'ждёт, пока установится ИИ-помощник — начнётся сама',
 }

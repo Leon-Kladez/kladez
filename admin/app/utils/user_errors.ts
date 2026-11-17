@@ -20,6 +20,8 @@ const RULES: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/Download aborted/i, () => t('serverError.aborted')],
   [/MIME type (.*) is not allowed/i, (m) => t('serverError.mime', { type: m[1].trim() || '?' })],
   [/requires an official release build/i, () => t('serverError.gated')],
+  // Модель начали качать раньше, чем поставилась сама программа ИИ (так делает «Быстрая настройка»).
+  [/Ollama service (?:is not installed or running|not ready yet)/i, () => t('serverError.ollamaNotReady')],
 ]
 
 export function humanizeError(raw: unknown): string {

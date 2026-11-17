@@ -210,7 +210,9 @@ export class DownloadModelJob {
     try {
       const job = await queue.add(this.key, params, {
         jobId,
-        attempts: 40, // Many attempts since services may take considerable time to install
+        // Kladez: «Быстрая настройка» ставит Ollama и качает модель одновременно, а образ Ollama на
+        // медленном интернете качается дольше 40 минут — ждём до 4 часов (попытка раз в минуту).
+        attempts: 240,
         backoff: {
           type: 'fixed',
           delay: 60000, // Check every 60 seconds
