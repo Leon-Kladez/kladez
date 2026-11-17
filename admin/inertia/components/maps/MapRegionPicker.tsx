@@ -194,10 +194,9 @@ export default function MapRegionPicker(props: MapRegionPickerProps) {
                   className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-surface-secondary"
                 >
                   <span className="text-text-primary">{countryLabel(c)}</span>
-                  {c.hasPackages && (
-                    <span className="text-xs rounded-full bg-desert-green-lighter px-2 py-0.5 text-desert-green-dark">
-                      {t('mapRegions.hasPackages')}
-                    </span>
+                  {/* Готовые карты теперь почти у всех стран — помечаем только те, где их нет. */}
+                  {!c.hasPackages && (
+                    <span className="text-xs text-text-muted">{t('mapRegions.noPackages')}</span>
                   )}
                 </button>
               </li>

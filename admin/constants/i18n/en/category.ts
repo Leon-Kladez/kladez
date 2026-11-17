@@ -4,4 +4,5 @@ export const categoryEn = {
   'category.tiersAvailable': '{count} tiers available',
   'category.clickToChoose': ' - Click to choose',
   'category.sizeRange': 'Size: {min} - {max}',
+  'category.size': 'Size: {size}',
 } as const

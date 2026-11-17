@@ -92,7 +92,7 @@ export const easySetupRu: Record<keyof typeof easySetupEn, string> = {
   'easySetup.review.readyTitle': 'Всё готово',
   'easySetup.review.readyMessage': 'Нажмите «Завершить настройку», чтобы начать установку программ и скачивание материалов. Это может занять время — зависит от скорости интернета и размера файлов.',
   'easySetup.noInternet.proceed': 'Чтобы продолжить, нужен интернет. Подключитесь и попробуйте снова.',
-  'easySetup.summary.capabilities': 'Выбрано: {count} возможность|Выбрано: {count} возможности|Выбрано: {count} возможностей',
+  'easySetup.summary.capabilities': 'Выбрано: {count} программа|Выбрано: {count} программы|Выбрано: {count} программ',
   'easySetup.summary.maps': '{count} карта|{count} карты|{count} карт',
   'easySetup.summary.content': '{count} раздел материалов|{count} раздела материалов|{count} разделов материалов',
   'easySetup.summary.packs': '{count} набор авторов|{count} набора авторов|{count} наборов авторов',

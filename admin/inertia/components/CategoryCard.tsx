@@ -122,7 +122,9 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, selectedTier, onC
           })}
         </div>
         <p className="text-gray-300 text-xs mt-3">
-          {t('category.sizeRange', { min: formatBytes(minSize, 1), max: formatBytes(maxSize, 1) })}
+          {formatBytes(minSize, 1) === formatBytes(maxSize, 1)
+            ? t('category.size', { size: formatBytes(maxSize, 1) })
+            : t('category.sizeRange', { min: formatBytes(minSize, 1), max: formatBytes(maxSize, 1) })}
         </p>
       </div>
     </div>

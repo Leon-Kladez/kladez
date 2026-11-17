@@ -4,7 +4,7 @@ export const mapRegionsEn = {
   'mapRegions.title': 'Choose your region',
   'mapRegions.where': 'Where do you live or travel?',
   'mapRegions.search': 'Find a country',
-  'mapRegions.hasPackages': 'Ready-made maps',
+  'mapRegions.noPackages': 'no ready-made map — cut from the world map',
   'mapRegions.back': 'Back to countries',
   'mapRegions.wholeCountry': 'Whole country',
   'mapRegions.detailFull': 'Detailed (down to buildings)',

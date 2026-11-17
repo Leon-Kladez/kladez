@@ -30,7 +30,9 @@ const RU_NAME_OVERRIDES: Record<CountryCode, { name: string; aliases: string[] }
 }
 
 export function ruCountryName(code: CountryCode, neName: string): string {
-  return RU_NAME_OVERRIDES[code]?.name ?? neName
+  const name = RU_NAME_OVERRIDES[code]?.name ?? neName
+  // У Natural Earth некоторые — со строчной («остров Мэн», «острова Кайман»): в списке с заглавной.
+  return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
 /** Поиск без учёта регистра; «ё» = «е»; по русскому и английскому названию и по коду. */

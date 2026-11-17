@@ -7,6 +7,7 @@ export const wikipediaRu: Record<keyof typeof wikipediaEn, string> = {
   'wikipedia.downloading': 'Википедия скачивается… Большие варианты могут скачиваться долго.',
   'wikipedia.failed': 'Не удалось скачать Википедию. Выберите вариант и попробуйте ещё раз.',
   'wikipedia.noDownload': 'Ничего не скачивать',
+  'wikipedia.noSpace': '0 ГБ',
   'wikipedia.remove': 'Удалить Википедию',
   'wikipedia.downloadSelected': 'Скачать выбранное',
 }

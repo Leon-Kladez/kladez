@@ -153,7 +153,7 @@ const WikipediaSelector: React.FC<WikipediaSelectorProps> = ({
                       option.size_mb === 0 ? 'bg-surface-secondary text-text-muted' : 'bg-surface-secondary text-text-secondary'
                     )}
                   >
-                    {option.size_mb === 0 ? t('wikipedia.noDownload') : formatBytes(option.size_mb * 1024 * 1024, 1)}
+                    {option.size_mb === 0 ? t('wikipedia.noSpace') : formatBytes(option.size_mb * 1024 * 1024, 1)}
                   </span>
                 </div>
               </div>

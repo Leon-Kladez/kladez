@@ -6,4 +6,5 @@ export const categoryRu: Record<keyof typeof categoryEn, string> = {
   'category.tiersAvailable': 'Доступно {count} уровень|Доступно {count} уровня|Доступно {count} уровней',
   'category.clickToChoose': ' — нажмите, чтобы выбрать',
   'category.sizeRange': 'Размер: {min} — {max}',
+  'category.size': 'Размер: {size}',
 }

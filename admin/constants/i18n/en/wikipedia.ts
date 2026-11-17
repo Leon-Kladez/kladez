@@ -5,6 +5,7 @@ export const wikipediaEn = {
   'wikipedia.downloading': 'Downloading Wikipedia... This may take a while for larger packages.',
   'wikipedia.failed': 'Wikipedia download failed. Select a package and try again.',
   'wikipedia.noDownload': 'No download',
+  'wikipedia.noSpace': '0 GB',
   'wikipedia.remove': 'Remove Wikipedia',
   'wikipedia.downloadSelected': 'Download Selected',
 } as const

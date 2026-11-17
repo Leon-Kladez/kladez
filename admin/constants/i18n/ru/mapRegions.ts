@@ -5,7 +5,7 @@ export const mapRegionsRu: Record<keyof typeof mapRegionsEn, string> = {
   'mapRegions.title': 'Выбрать регион',
   'mapRegions.where': 'Где вы живёте или куда едете?',
   'mapRegions.search': 'Найти страну',
-  'mapRegions.hasPackages': 'Готовые карты',
+  'mapRegions.noPackages': 'нет готовой карты — вырежу из карты мира',
   'mapRegions.back': 'К списку стран',
   'mapRegions.wholeCountry': 'Вся страна',
   'mapRegions.detailFull': 'Подробно (до домов)',
