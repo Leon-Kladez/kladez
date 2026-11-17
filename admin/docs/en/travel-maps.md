@@ -36,3 +36,7 @@ Maps take from tens of megabytes (a small country) to several gigabytes (all of 
 - **"Installation blocked"** — in the phone settings, allow installing apps from unknown sources for the browser you downloaded with.
 - **The QR code does not open** — check that the phone is on the same Wi-Fi as the computer (not mobile data). See [Phones over Wi-Fi](/docs/phones).
 - **It does not download on the computer** — internet is needed. Prepare the app when it is back.
+
+---
+
+Organic Maps — © Organic Maps contributors, Apache License 2.0 ([organicmaps.app](https://organicmaps.app)). Kladez passes the official app file to phones unchanged and checks it against the published checksum.
