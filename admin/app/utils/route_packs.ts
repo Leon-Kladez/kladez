@@ -119,10 +119,14 @@ export async function installPack(
   const sha256 = await sha256File(tarPath)
   const previous = await packFiles(packsDir, m[1])
   const entries: string[] = []
+  const sizes = new Map<string, number>()
   await list({
     file: tarPath,
     onReadEntry: (entry) => {
-      if (entry.type === 'File') entries.push(entry.path.replace(/^\.\//, ''))
+      if (entry.type !== 'File') return
+      const path = entry.path.replace(/^\.\//, '')
+      entries.push(path)
+      sizes.set(path, entry.size ?? 0)
     },
   })
   const safe = new Set(entries.filter((p) => PACK_ENTRY_RE.test(p)))
@@ -136,7 +140,9 @@ export async function installPack(
     }
     await removeFiles(tilesDir, previous.filter((f) => !keep.has(f)))
   }
-  await writeFile(join(packsDir, `${m[1]}.files.json`), JSON.stringify({ region: m[1], version: m[2], sha256, files: tiles }))
+  // bytes — сколько занимают кусочки набора (для «Занимает» в «Управлении картами»).
+  const bytes = tiles.reduce((sum, f) => sum + (sizes.get(f) ?? 0), 0)
+  await writeFile(join(packsDir, `${m[1]}.files.json`), JSON.stringify({ region: m[1], version: m[2], sha256, bytes, files: tiles }))
   await unlink(tarPath).catch(() => {})
   return { region: m[1], version: m[2], files: tiles.length }
 }
@@ -174,4 +180,35 @@ async function removeFiles(tilesDir: string, files: string[]): Promise<number> {
     )
   }
   return removed
+}
+
+/** Сколько занимают дороги региона (bytes из списка набора; null — набор поставлен до 0.1.26). */
+export async function packBytes(packsDir: string, region: string): Promise<number | null> {
+  try {
+    const j = JSON.parse(await readFile(join(packsDir, `${region}.files.json`), 'utf8'))
+    return typeof j.bytes === 'number' ? j.bytes : null
+  } catch {
+    return null
+  }
+}
+
+/** Наборам, поставленным до 0.1.26, дописать bytes: сложить размеры их кусочков (один раз, в фоне). */
+export async function backfillPackBytes(tilesDir: string, packsDir: string): Promise<number> {
+  let done = 0
+  for (const region of await installedRegions(packsDir)) {
+    const path = join(packsDir, `${region}.files.json`)
+    try {
+      const j = JSON.parse(await readFile(path, 'utf8'))
+      if (typeof j.bytes === 'number') continue
+      let bytes = 0
+      for (const f of (j.files ?? []) as string[]) {
+        try {
+          bytes += (await stat(join(tilesDir, f))).size
+        } catch {}
+      }
+      await writeFile(path, JSON.stringify({ ...j, bytes }))
+      done++
+    } catch {}
+  }
+  return done
 }

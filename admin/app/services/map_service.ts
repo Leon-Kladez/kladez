@@ -56,7 +56,7 @@ import {
   siblingVariantId,
 } from '../utils/map_packages.js'
 import { missingRegionIds } from '../../constants/map_variants.js'
-import { copyFile, open as openFile, readFile, statfs } from 'fs/promises'
+import { copyFile, open as openFile, readFile, stat, statfs } from 'fs/promises'
 import { explainExtractError, pickerCountries, type PickerCountry } from '../utils/map_picker.js'
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
@@ -66,7 +66,7 @@ import { promisify } from 'util'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { MapSearchService, SEARCH_FILE_RE } from './map_search_service.js'
 import { MapRouteService, ROUTES_FILE_RE } from './map_route_service.js'
-import { adoptLegacyPacks, outdatedPacks } from '../utils/route_packs.js'
+import { adoptLegacyPacks, outdatedPacks, packBytes } from '../utils/route_packs.js'
 import { DockerService } from './docker_service.js'
 import { readdir } from 'fs/promises'
 
@@ -126,14 +126,48 @@ export class MapService implements IMapService {
       const spec = await new CollectionManifestService().getSpecWithFallback<MapsSpec>('maps')
       for (const col of spec?.collections ?? []) for (const r of col.resources) titles.set(r.id, fullMapTitle(r))
     } catch {}
-    const named = files.map((f) => {
+    // Кладезъ: сколько занимает каждая карта — сама карта, её поиск и её дороги (их удаление убирает
+    // всё это вместе), и сколько всего. Дороги соседних регионов делят кусочки на границах, поэтому
+    // сумма по строкам дорог — чуть больше, чем на диске; в «Всего» — то же «около».
+    const sizeOf = async (path: string) => {
+      try {
+        return (await stat(path)).size
+      } catch {
+        return 0
+      }
+    }
+    const searchFiles = await MapSearchService.files()
+    const searchBytes = new Map<string, number>()
+    for (const [region, name] of searchFiles) searchBytes.set(region, await sizeOf(join(MapSearchService.dir(), name)))
+    const routeBytes = new Map<string, number>()
+    const totals = { maps: 0, search: 0, routes: 0 }
+    for (const v of searchBytes.values()) totals.search += v
+    const named = []
+    for (const f of files) {
       const id = CollectionManifestService.parseMapFilename(f.name)?.resource_id
-      return { ...f, title: (id && titles.get(id)) || f.name }
-    })
+      const region = id?.replace(/-overview$/, '')
+      const mapBytes = f.type === 'file' ? await sizeOf(f.key) : 0
+      if (region && !routeBytes.has(region)) {
+        const b = await packBytes(MapRouteService.packsDir(), region)
+        routeBytes.set(region, b ?? 0)
+        totals.routes += b ?? 0
+      }
+      totals.maps += mapBytes
+      named.push({
+        ...f,
+        title: (id && titles.get(id)) || f.name,
+        size: {
+          map: mapBytes,
+          search: (region && searchBytes.get(region)) || 0,
+          routes: (region && routeBytes.get(region)) || 0,
+        },
+      })
+    }
     named.sort((a, b) => a.title.localeCompare(b.title, 'ru'))
 
     return {
       files: named,
+      totals,
     }
   }
 

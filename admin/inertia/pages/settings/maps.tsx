@@ -27,9 +27,21 @@ import StorageFolderNote from '~/components/StorageFolderNote'
 const CURATED_COLLECTIONS_KEY = 'curated-map-collections'
 const GLOBAL_MAP_INFO_KEY = 'global-map-info'
 
+/** Кладезъ: сколько занимает карта — сама карта, её поиск и её дороги (удаляются вместе). */
+type MapSize = { map: number; search: number; routes: number }
+
+function sizeTotal(s?: MapSize): number {
+  return s ? s.map + s.search + s.routes : 0
+}
+
 export default function MapsManager(props: {
   libraryPath?: string
-  maps: { baseAssetsExist: boolean; worldBasemapExists: boolean; regionFiles: (FileEntry & { title?: string })[] }
+  maps: {
+    baseAssetsExist: boolean
+    worldBasemapExists: boolean
+    regionFiles: (FileEntry & { title?: string; size?: MapSize })[]
+    totals?: { maps: number; search: number; routes: number }
+  }
 }) {
   const queryClient = useQueryClient()
   const { openModal, closeAllModals } = useModals()
@@ -386,7 +398,7 @@ export default function MapsManager(props: {
               {t('mapsManager.downloadCustom')}
             </StyledButton>
           </div>
-          <StyledTable<FileEntry & { actions?: any; version?: string; title?: string }>
+          <StyledTable<FileEntry & { actions?: any; version?: string; title?: string; size?: MapSize }>
             className="font-semibold mt-4"
             rowLines={true}
             loading={false}
@@ -414,6 +426,25 @@ export default function MapsManager(props: {
                 },
               },
               {
+                accessor: 'size',
+                title: t('mapRegions.sizeColumn'),
+                render: (record) =>
+                  record.size ? (
+                    <div className="whitespace-nowrap">
+                      <div>{formatBytes(sizeTotal(record.size), 1)}</div>
+                      <div className="text-xs font-normal text-text-muted">
+                        {record.size.search || record.size.routes
+                          ? t('mapRegions.sizeParts', {
+                              map: formatBytes(record.size.map, 1),
+                              search: formatBytes(record.size.search, 1),
+                              routes: formatBytes(record.size.routes, 1),
+                            })
+                          : t('mapRegions.sizeMapOnly')}
+                      </div>
+                    </div>
+                  ) : null,
+              },
+              {
                 accessor: 'actions',
                 title: t('zimManager.actions'),
                 render: (record) => (
@@ -433,6 +464,22 @@ export default function MapsManager(props: {
             ]}
             data={props.maps.regionFiles || []}
           />
+          {props.maps.totals && (props.maps.regionFiles || []).length > 0 && (
+            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 px-3">
+              <span className="text-lg font-semibold">
+                {t('mapRegions.total', {
+                  total: formatBytes(props.maps.totals.maps + props.maps.totals.search + props.maps.totals.routes, 1),
+                })}
+              </span>
+              <span className="text-sm text-text-muted">
+                {t('mapRegions.totalParts', {
+                  maps: formatBytes(props.maps.totals.maps, 1),
+                  search: formatBytes(props.maps.totals.search, 1),
+                  routes: formatBytes(props.maps.totals.routes, 1),
+                })}
+              </span>
+            </div>
+          )}
           <ActiveDownloads filetype="map" withHeader />
           <details className="mt-12 rounded-lg border border-border-subtle p-4">
             <summary className="cursor-pointer text-lg font-semibold">{t('mapRegions.advanced')}</summary>

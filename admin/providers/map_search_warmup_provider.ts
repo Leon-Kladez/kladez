@@ -14,6 +14,10 @@ export default class MapSearchWarmupProvider {
       try {
         const { MapSearchService } = await import('#services/map_search_service')
         await MapSearchService.warmUp()
+        // Наборам дорог, поставленным до 0.1.26, — их размер для «Управления картами» (один раз).
+        const { MapRouteService } = await import('#services/map_route_service')
+        const { backfillPackBytes } = await import('../app/utils/route_packs.js')
+        await backfillPackBytes(MapRouteService.tilesDir(), MapRouteService.packsDir())
       } catch {}
     }, 2000)
   }
