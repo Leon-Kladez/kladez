@@ -13,6 +13,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **No model — a hint, not an error:** with no model installed, the chat does not let you send a message and explains what to do instead of “The model returned an error”.
 - **Save an answer as Word, Excel or PDF:** every answer has «Word» and «PDF» buttons, plus «Excel» when it contains a table. Headings, lists and tables are kept; in Excel numbers stay numbers and each table gets its own sheet. Everything happens on your computer, offline.
 - **The knowledge base reads Excel and CSV:** upload .xlsx workbooks (all sheets, dates as dates) and .csv files and the assistant answers from them. The upload area now lists the supported file types.
+- **Downloads survive a network hiccup:** if the internet dropped for a minute (or a VPN was switched on and off), Kladez apps could stay “offline” until a restart — models and maps failed with a server-address error. Kladez now watches this once per computer and never removes the workaround apps are already using.
 
 {% /release %}
 

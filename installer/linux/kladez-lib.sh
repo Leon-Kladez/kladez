@@ -252,12 +252,15 @@ kz_ensure_dns() {
     kz_dns_ok && return 0
     kz_log "dns: адреса не находятся — включаю пересылку DNS по TCP"
     kz_write_dns_js
-    docker rm -f kladez_dns >/dev/null 2>&1 || true
-    if ! docker run -d --name kladez_dns --network host --restart unless-stopped \
-        -e LISTEN="$KZ_DNS_IP" -v "$(dirname "$KZ_DNS_JS"):/dns:ro" --entrypoint node \
-        "$(kz_image admin)" "/dns/$(basename "$KZ_DNS_JS")" >> "$KZ_LOG_DIR/kladez-start.log" 2>&1; then
-        kz_log "dns: пересыльщик не запустился"
-        return 0
+    # Уже работающий пересыльщик не трогаем (0.1.28): программы, перезапущенные с ним, ходят через него.
+    if [ -z "$(docker ps -q --filter name='^kladez_dns$' --filter status=running 2>/dev/null)" ]; then
+        docker rm -f kladez_dns >/dev/null 2>&1 || true
+        if ! docker run -d --name kladez_dns --network host --restart unless-stopped \
+            -e LISTEN="$KZ_DNS_IP" -v "$(dirname "$KZ_DNS_JS"):/dns:ro" --entrypoint node \
+            "$(kz_image admin)" "/dns/$(basename "$KZ_DNS_JS")" >> "$KZ_LOG_DIR/kladez-start.log" 2>&1; then
+            kz_log "dns: пересыльщик не запустился"
+            return 0
+        fi
     fi
     grep -q "^nameserver $KZ_DNS_IP\$" "$KZ_RESOLV" 2>/dev/null || cp "$KZ_RESOLV" "$KZ_RESOLV.wsl" 2>/dev/null || true
     printf 'nameserver %s\n' "$KZ_DNS_IP" > "$KZ_RESOLV"
@@ -272,16 +275,26 @@ kz_ensure_dns() {
     else
         kz_log "dns: не отвечает и по TCP (нет интернета?) — оставляю как было"
         [ -f "$KZ_RESOLV.wsl" ] && cp "$KZ_RESOLV.wsl" "$KZ_RESOLV"
-        docker rm -f kladez_dns >/dev/null 2>&1 || true
+        # Пересыльщик НЕ убираем (0.1.28): программы, которые раньше перезапустились с ним, без него
+        # остаются без адресов и после того, как интернет вернётся (модели и карты не скачивались).
+        # Без интернета он ничему не мешает — слушает только мост Docker.
     fi
 }
 
 # Раз в несколько минут: VPN могут включить и после запуска Кладезя.
+# Сторож один на весь дистрибутив (0.1.28): kladez-start --keepalive запускается при каждом открытии
+# Кладезя, и пять сторожей разом удаляли друг у друга пересыльщик — программы теряли интернет.
 kz_dns_watch() {
     [ "${KZ_DNS_WATCH:-1}" = 1 ] || return 0
     (
+        if command -v flock >/dev/null 2>&1; then
+            mkdir -p "$KZ_ROOT/run"
+            exec 9>"${KZ_DNS_LOCK:-$KZ_ROOT/run/kladez-dns-watch.lock}"
+            flock -n 9 || exit 0
+        fi
         while true; do
             kz_ensure_dns || true
+            [ "${KZ_DNS_WATCH_ONCE:-0}" = 1 ] && break
             sleep "${KZ_DNS_INTERVAL:-300}"
         done
     ) < /dev/null > /dev/null 2>&1 &

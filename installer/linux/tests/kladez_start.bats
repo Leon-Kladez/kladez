@@ -199,14 +199,42 @@ line_of() { grep -n -m1 -- "$1" "$STUB_LOG" | cut -d: -f1; }
   [ "$(cat "$KZ_ROOT/etc/resolv.conf.wsl")" = "nameserver 172.29.160.1" ]
 }
 
-@test "dns: no internet at all → resolv.conf stays as it was, forwarder removed" {
+@test "dns: no internet at all → resolv.conf stays as it was, forwarder kept for apps restarted with it" {
   mkdir -p "$KZ_ROOT/etc"; echo "nameserver 172.29.160.1" > "$KZ_ROOT/etc/resolv.conf"
   run first_run
   touch "$STUB_STATE/dns-broken" "$STUB_STATE/dns-dead"; : > "$STUB_LOG"
   run bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_ensure_dns"
   [ "$status" -eq 0 ]
   [ "$(cat "$KZ_ROOT/etc/resolv.conf")" = "nameserver 172.29.160.1" ]
-  grep -q 'docker rm -f kladez_dns' "$STUB_LOG"
+  # 0.1.28: removing it left apps restarted with it without addresses after the internet came back.
+  run grep -c 'docker rm -f kladez_dns' "$STUB_LOG"
+  [ "$output" = 1 ]
+  [ "$(tail -n1 "$STUB_LOG" | grep -c 'rm -f kladez_dns')" = 0 ]
+}
+
+@test "dns: a running forwarder is reused, not killed and started again" {
+  mkdir -p "$KZ_ROOT/etc"; echo "nameserver 172.29.160.1" > "$KZ_ROOT/etc/resolv.conf"
+  run first_run
+  touch "$STUB_STATE/dns-broken" "$STUB_STATE/dns-running"; : > "$STUB_LOG"
+  run bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_ensure_dns"
+  [ "$status" -eq 0 ]
+  run grep -E 'docker (rm -f|run -d --name) kladez_dns' "$STUB_LOG"
+  [ "$status" -eq 1 ]
+  [ "$(cat "$KZ_ROOT/etc/resolv.conf")" = "nameserver 10.213.0.1" ]
+}
+
+@test "dns watcher: one per distro — a second keepalive does not start another" {
+  mkdir -p "$KZ_ROOT/etc" "$KZ_ROOT/run"; echo "nameserver 172.29.160.1" > "$KZ_ROOT/etc/resolv.conf"
+  run first_run
+  touch "$STUB_STATE/dns-broken"; : > "$STUB_LOG"
+  exec 8>"$KZ_ROOT/run/kladez-dns-watch.lock"
+  flock -n 8
+  KZ_DNS_WATCH=1 KZ_DNS_WATCH_ONCE=1 bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_dns_watch; wait"
+  run grep -q 'kladez_dns' "$STUB_LOG"
+  [ "$status" -eq 1 ]
+  exec 8>&-
+  KZ_DNS_WATCH=1 KZ_DNS_WATCH_ONCE=1 bash -c ". '$LINUX_DIR/kladez-lib.sh'; kz_dns_watch; wait"
+  grep -q 'docker run -d --name kladez_dns' "$STUB_LOG"
 }
 
 @test "unknown option prints usage and fails" {
