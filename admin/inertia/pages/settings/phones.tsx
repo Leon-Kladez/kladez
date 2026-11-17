@@ -4,6 +4,7 @@ import SettingsLayout from '~/layouts/SettingsLayout'
 import StyledSectionHeader from '~/components/StyledSectionHeader'
 import Switch from '~/components/inputs/Switch'
 import OpenOnPhone from '~/components/phones/OpenOnPhone'
+import TravelMaps from '~/components/phones/TravelMaps'
 import api from '~/lib/api'
 import { useNotifications } from '~/context/NotificationContext'
 import { useDevice } from '~/hooks/useDevice'
@@ -37,6 +38,8 @@ export default function PhonesSettingsPage(props: { allowChanges: boolean }) {
           <p className="text-text-muted mb-6 text-lg">{t('phones.settings.intro')}</p>
 
           <OpenOnPhone />
+
+          <TravelMaps />
 
           <StyledSectionHeader title={t('phones.settings.accessTitle')} className="mt-8 mb-4" />
           <div className="bg-surface-primary rounded-lg border-2 border-border-subtle p-4 sm:p-6">

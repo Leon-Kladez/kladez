@@ -38,6 +38,17 @@ export type PhonesInfo = {
   }>
 }
 
+/** «Кладезъ»: «Карты в дорогу» — Organic Maps для телефонов с этого компьютера. */
+export type TravelMapsInfo = {
+  app: { version: string; size: number; sha256: string; downloadedAt: string } | null
+  downloading: boolean
+  received: number
+  total: number
+  error: 'network' | 'failed' | null
+  path: string
+  addresses: PhonesInfo['addresses']
+}
+
 type OllamaChatRequestWithImages = OllamaChatRequest & { images?: File[] }
 
 function serializeChatRequest(chatRequest: OllamaChatRequestWithImages): {
@@ -1404,6 +1415,21 @@ class API {
   async getPhonesInfo() {
     return catchInternal(async () => {
       const response = await this.client.get<PhonesInfo>('/phones/info')
+      return response.data
+    })()
+  }
+
+  /** «Кладезъ»: «Карты в дорогу» — готово ли приложение для телефонов и QR-коды. */
+  async getTravelMaps() {
+    return catchInternal(async () => {
+      const response = await this.client.get<TravelMapsInfo>('/phones/travel-maps')
+      return response.data
+    })()
+  }
+
+  async downloadTravelMaps() {
+    return catchInternal(async () => {
+      const response = await this.client.post<{ started: boolean }>('/phones/travel-maps/download')
       return response.data
     })()
   }

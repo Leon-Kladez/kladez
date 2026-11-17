@@ -363,6 +363,16 @@ documented(router.get('/api/phones/info', [PhonesController, 'info']), {
   summary: 'Addresses of this computer in the home network, with QR codes, and whether this device may change things',
   tags: ['system'],
 })
+// «Кладезъ»: «Карты в дорогу» — Organic Maps для Android с этого компьютера, без магазина.
+documented(router.get('/api/phones/travel-maps', [PhonesController, 'travelMaps']), {
+  summary: 'Offline navigator app (Organic Maps) for phones: whether it is ready, download progress, QR codes',
+  tags: ['system'],
+})
+documented(router.post('/api/phones/travel-maps/download', [PhonesController, 'travelMapsDownload']), {
+  summary: 'Download the offline navigator app (Organic Maps) to this computer for phones',
+  tags: ['system'],
+})
+router.get('/phone-apps/organic-maps.apk', [PhonesController, 'travelMapsApk'])
 router.get('/api/openapi.json', [OpenApiController, 'spec'])
 router.get('/reference', [OpenApiController, 'reference'])
 router.get('/reference/assets/standalone.js', [OpenApiController, 'standalone'])

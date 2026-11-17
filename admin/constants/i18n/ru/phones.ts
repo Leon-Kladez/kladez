@@ -29,4 +29,20 @@ export const phonesRu: Record<keyof typeof phonesEn, string> = {
   'phones.settings.saved': 'Сохранено',
   'phones.settings.saveFailed': 'Не удалось сохранить',
   'phones.settings.computerOnly': 'Этот переключатель можно менять только на компьютере.',
+  'phones.travel.title': 'Карты в дорогу на телефон',
+  'phones.travel.intro':
+    'Organic Maps — бесплатный навигатор: скачайте страны в телефон, и он ведёт по GPS без интернета — на машине, пешком и на велосипеде. Без рекламы и слежки. Кладезъ даёт приложение для Android телефонам в доме прямо с этого компьютера, без магазина приложений.',
+  'phones.travel.prepare': 'Подготовить приложение для телефонов',
+  'phones.travel.prepareNote': 'Около 66 МБ, скачивается один раз, пока есть интернет.',
+  'phones.travel.downloading': 'Скачиваю приложение… {pct} %',
+  'phones.travel.errorNetwork': 'Нет связи с интернетом — подготовьте приложение, когда интернет появится.',
+  'phones.travel.errorFailed': 'Не удалось скачать приложение. Попробуйте ещё раз.',
+  'phones.travel.notReadyPhone': 'Приложение ещё не подготовлено — сделайте это на компьютере: Настройки → Телефоны.',
+  'phones.travel.scan':
+    'Наведите камеру телефона на этот квадрат и нажмите на ссылку — скачается приложение. Откройте файл и разрешите установку.',
+  'phones.travel.onPhone': 'Скачать приложение на этот телефон',
+  'phones.travel.ready': 'Organic Maps {version}, {size}',
+  'phones.travel.update': 'Проверить новую версию',
+  'phones.travel.iphone': 'iPhone: поставьте «Organic Maps» из App Store.',
+  'phones.travel.help': 'Как пользоваться в дороге',
 }

@@ -4,6 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="17 November 2026" versions="0.1.26" %}
 
+- **Maps for the road on your phone:** **Settings → Phones** now offers the Organic Maps navigator for Android. The computer downloads it once, and phones in your home install it by QR code straight from the computer, with no app store. Download countries to the phone and it guides you by GPS without internet — by car, on foot or by bike. Details: [Maps on your phone for the road](/docs/travel-maps).
 - **Copy to a USB drive:** the Start menu has a new item, **Кладезъ → Копия на флешку**. It writes the installer and everything you downloaded — books, maps, search, roads and AI assistant models — to a USB drive, and the installer on that drive moves the library to another computer by itself, without internet. Routes and the AI assistant switch on there by themselves. Details: [Without internet](/docs/offline).
 - **How much space maps take:** Map Management shows how much each map takes together with its search and roads, and the total below the list.
 - **Clearer when a page loads slowly:** if Kladez has just started or updated, the “Loading…” screen shows a moving bar and, after a few seconds, a note that it can take up to a minute.

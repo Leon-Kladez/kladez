@@ -15,6 +15,7 @@ export const DOC_ORDER: readonly string[] = [
   'maps',
   'ai',
   'phones',
+  'travel-maps',
   'offline',
   'drug-reference',
   'supply-depot-apps',

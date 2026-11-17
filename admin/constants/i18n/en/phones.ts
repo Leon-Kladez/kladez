@@ -28,4 +28,20 @@ export const phonesEn = {
   'phones.settings.saved': 'Saved',
   'phones.settings.saveFailed': 'Could not save',
   'phones.settings.computerOnly': 'This switch can only be changed on the computer.',
+  'phones.travel.title': 'Maps for the road on your phone',
+  'phones.travel.intro':
+    'Organic Maps is a free navigator: download countries to the phone and it guides you by GPS without internet — by car, on foot or by bike. No ads, no tracking. Kladez gives the Android app to phones in your home straight from this computer, with no app store.',
+  'phones.travel.prepare': 'Prepare the app for phones',
+  'phones.travel.prepareNote': 'About 66 MB, downloaded once while there is internet.',
+  'phones.travel.downloading': 'Downloading the app… {pct}%',
+  'phones.travel.errorNetwork': 'No internet connection — prepare the app when the internet is back.',
+  'phones.travel.errorFailed': 'Could not download the app. Try again.',
+  'phones.travel.notReadyPhone': 'The app is not prepared yet — do it on the computer: Settings → Phones.',
+  'phones.travel.scan':
+    'Point the phone camera at this square and tap the link — the app downloads. Open the file and allow the installation.',
+  'phones.travel.onPhone': 'Download the app to this phone',
+  'phones.travel.ready': 'Organic Maps {version}, {size}',
+  'phones.travel.update': 'Check for a new version',
+  'phones.travel.iphone': 'iPhone: install “Organic Maps” from the App Store.',
+  'phones.travel.help': 'How to use it on the road',
 } as const
