@@ -29,6 +29,7 @@ import {
 } from '../utils/model_capabilities.js'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { modelPicks } from '../utils/model_picks.js'
+import { matchesPurpose, type ModelPurpose } from '../../constants/model_purpose.js'
 import os from 'node:os'
 import { humanizeError } from '../utils/user_errors.js'
 
@@ -1316,12 +1317,14 @@ export class OllamaService {
       query,
       limit,
       force,
+      purpose,
     }: {
       sort?: 'pulls' | 'name'
       recommendedOnly?: boolean
       query: string | null
       limit?: number
       force?: boolean
+      purpose?: ModelPurpose | 'all'
     } = {
       sort: 'pulls',
       recommendedOnly: false,
@@ -1361,7 +1364,9 @@ export class OllamaService {
       }
 
       if (!recommendedOnly) {
-        const filteredModels = query ? this.fuseSearchModels(models, query) : models
+        // Kladez: по назначению — до поиска и до «первых 15», иначе страница выходила полупустой.
+        const byPurpose = purpose && purpose !== 'all' ? models.filter((m) => matchesPurpose(m, purpose)) : models
+        const filteredModels = query ? this.fuseSearchModels(byPurpose, query) : byPurpose
         return {
           models: filteredModels.slice(0, limit || 15),
           hasMore: filteredModels.length > (limit || 15),

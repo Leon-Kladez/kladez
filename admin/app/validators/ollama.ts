@@ -30,5 +30,7 @@ export const getAvailableModelsSchema = vine.compile(
     query: vine.string().trim().optional(),
     limit: vine.number().positive().optional(),
     force: vine.boolean().optional(),
+    // Kladez: фильтр «для чего» — общение, код, картинки, служебные.
+    purpose: vine.enum(['chat', 'code', 'images', 'service', 'all'] as const).optional(),
   })
 )

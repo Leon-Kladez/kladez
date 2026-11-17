@@ -29,6 +29,12 @@ import { tx } from '~/lib/tx'
 import { t } from '../../../constants/i18n'
 import { errorText } from '~/lib/error_text'
 import { relativeTimeRu } from '~/lib/relative_time'
+import useOllamaModelDownloads from '~/hooks/useOllamaModelDownloads'
+import { mainTags, modelPurpose, type ModelPurpose } from '../../../constants/model_purpose'
+import { useEffect } from 'react'
+
+/** Кладезъ: фильтр каталога моделей — для чего модель. */
+const PURPOSE_FILTERS: Array<ModelPurpose | 'all'> = ['chat', 'code', 'images', 'all']
 
 const RELEVANCE_LABELS: Record<string, string> = {
   'Off — use every passage retrieved': t('models.relevance.off'),
@@ -118,6 +124,16 @@ export default function ModelsPage(props: {
   const [query, setQuery] = useState('')
   const [queryUI, setQueryUI] = useState('')
   const [limit, setLimit] = useState(15)
+  // Кладезъ: по умолчанию — модели для общения; технические варианты размеров — по кнопке.
+  const [purpose, setPurpose] = useState<ModelPurpose | 'all'>('chat')
+  const [allTagsFor, setAllTagsFor] = useState<Set<string>>(new Set())
+  // Ход скачивания прямо в строке размера; скачалась — обновить список установленных.
+  const { downloads: modelDownloads } = useOllamaModelDownloads()
+  const [starting, setStarting] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    const done = modelDownloads.filter((d) => d.percent >= 100)
+    if (done.length > 0) router.reload({ only: ['models'] })
+  }, [modelDownloads])
 
   const debouncedSetQuery = debounce((val: string) => {
     setQuery(val)
@@ -127,7 +143,7 @@ export default function ModelsPage(props: {
   const [isForceRefreshing, setIsForceRefreshing] = useState(false)
 
   const { data: availableModelData, isFetching, refetch } = useQuery({
-    queryKey: ['ollama', 'availableModels', query, limit],
+    queryKey: ['ollama', 'availableModels', query, limit, purpose],
     queryFn: async () => {
       const force = forceRefreshRef.current
       forceRefreshRef.current = false
@@ -136,6 +152,7 @@ export default function ModelsPage(props: {
         recommendedOnly: false,
         limit,
         force: force || undefined,
+        purpose,
       })
       if (!res) {
         return {
@@ -157,12 +174,14 @@ export default function ModelsPage(props: {
   }
 
   async function handleInstallModel(modelName: string) {
+    setStarting((s) => new Set(s).add(modelName))
     try {
       const res = await api.downloadModel(modelName)
-      if (res.success) {
-        addNotification({
-          message: t('models.downloadStarted', { name: modelName }),
-          type: 'success',
+      if (!res?.success) {
+        setStarting((s) => {
+          const n = new Set(s)
+          n.delete(modelName)
+          return n
         })
       }
     } catch (error) {
@@ -568,6 +587,27 @@ export default function ModelsPage(props: {
               {t('models.refresh')}
             </StyledButton>
           </div>
+          {/* Кладезъ: для чего модель — общение, код, картинки, все (в «Все» — и служебные). */}
+          <div className="flex flex-wrap gap-2 mt-4" role="group" aria-label={t('models.purpose.label')}>
+            {PURPOSE_FILTERS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => {
+                  setPurpose(p)
+                  setLimit(15)
+                }}
+                aria-pressed={purpose === p}
+                className={
+                  purpose === p
+                    ? 'rounded-full border-2 border-desert-green bg-desert-green px-4 py-1.5 text-sm font-semibold text-white'
+                    : 'rounded-full border-2 border-border-subtle px-4 py-1.5 text-sm font-semibold hover:border-desert-green'
+                }
+              >
+                {t(`models.purpose.${p}`)}
+              </button>
+            ))}
+          </div>
           <StyledTable<NomadOllamaModel>
             className="font-semibold mt-4"
             rowLines={true}
@@ -580,7 +620,12 @@ export default function ModelsPage(props: {
                     <div className="flex flex-col">
                       <p className="text-lg font-semibold">{record.name}</p>
                       <p className="text-sm text-text-muted">{record.description}</p>
-                      <RussianLanguageBadge ru={record.ru} className="mt-1 self-start" />
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-surface-secondary px-2 py-0.5 text-xs font-semibold text-text-secondary">
+                          {t(`models.purpose.badge.${modelPurpose(record)}`)}
+                        </span>
+                        <RussianLanguageBadge ru={record.ru} className="self-start" />
+                      </div>
                     </div>
                   )
                 },
@@ -588,11 +633,12 @@ export default function ModelsPage(props: {
               {
                 accessor: 'estimated_pulls',
                 title: t('models.col.pulls'),
+                render: (record) => record.estimated_pulls || '—',
               },
               {
                 accessor: 'model_last_updated',
                 title: t('models.col.updated'),
-                render: (record) => relativeTimeRu(record.model_last_updated),
+                render: (record) => (record.model_last_updated ? relativeTimeRu(record.model_last_updated) : '—'),
               },
             ]}
             data={availableModelData?.models || []}
@@ -622,10 +668,13 @@ export default function ModelsPage(props: {
                         </tr>
                       </thead>
                       <tbody className="bg-surface-primary divide-y divide-border-subtle">
-                        {record.tags.map((tag, tagIndex) => {
+                        {(allTagsFor.has(record.name) ? record.tags : mainTags(record.tags)).map((tag, tagIndex) => {
                           const isInstalled = props.models.installedModels.some(
                             (mod) => mod.name === tag.name
                           )
+                          const dl = modelDownloads.find((d) => d.model === tag.name)
+                          const downloading = !isInstalled && dl && dl.percent >= 0 && dl.percent < 100
+                          const waiting = !isInstalled && !downloading && starting.has(tag.name)
                           return (
                             <tr key={tagIndex} className="hover:bg-surface-secondary">
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -645,25 +694,56 @@ export default function ModelsPage(props: {
                                 <span className="text-sm text-text-secondary">{tag.size || 'N/A'}</span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <StyledButton
-                                  variant={isInstalled ? 'danger' : 'primary'}
-                                  onClick={() => {
-                                    if (!isInstalled) {
-                                      handleInstallModel(tag.name)
-                                    } else {
-                                      confirmDeleteModel(tag.name)
-                                    }
-                                  }}
-                                  icon={isInstalled ? 'IconTrash' : 'IconDownload'}
-                                >
-                                  {isInstalled ? t('common.delete') : t('common.install')}
-                                </StyledButton>
+                                {downloading ? (
+                                  // Кладезъ: ход скачивания прямо здесь — проценты и полоса.
+                                  <div className="w-48" aria-live="polite">
+                                    <div className="h-2 w-full overflow-hidden rounded bg-surface-secondary">
+                                      <div className="h-full bg-desert-green transition-all" style={{ width: `${Math.round(dl!.percent)}%` }} />
+                                    </div>
+                                    <p className="mt-1 text-xs text-text-secondary">
+                                      {t('models.downloadingPct', { pct: Math.round(dl!.percent) })}
+                                    </p>
+                                  </div>
+                                ) : waiting ? (
+                                  <span className="text-sm text-text-secondary">{t('models.downloadPreparing')}</span>
+                                ) : isInstalled ? (
+                                  <div className="flex items-center gap-2">
+                                    <StyledButton variant="primary" icon="IconRobot" onClick={() => router.visit('/chat')}>
+                                      {t('models.goToChat')}
+                                    </StyledButton>
+                                    <StyledButton variant="danger" icon="IconTrash" onClick={() => confirmDeleteModel(tag.name)}>
+                                      {t('common.delete')}
+                                    </StyledButton>
+                                  </div>
+                                ) : (
+                                  <StyledButton variant="primary" icon="IconDownload" onClick={() => handleInstallModel(tag.name)}>
+                                    {t('common.install')}
+                                  </StyledButton>
+                                )}
                               </td>
                             </tr>
                           )
                         })}
                       </tbody>
                     </table>
+                    {mainTags(record.tags).length < record.tags.length && (
+                      <button
+                        type="button"
+                        className="mt-2 ml-6 text-sm font-semibold text-desert-green underline"
+                        onClick={() =>
+                          setAllTagsFor((s) => {
+                            const n = new Set(s)
+                            if (n.has(record.name)) n.delete(record.name)
+                            else n.add(record.name)
+                            return n
+                          })
+                        }
+                      >
+                        {allTagsFor.has(record.name)
+                          ? t('models.mainSizesOnly')
+                          : t('models.allVariants', { count: record.tags.length })}
+                      </button>
+                    )}
                   </div>
                 </div>
               ),

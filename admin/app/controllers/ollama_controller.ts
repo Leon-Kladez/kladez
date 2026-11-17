@@ -49,6 +49,7 @@ export default class OllamaController {
       query: reqData.query || null,
       limit: reqData.limit || 15,
       force: reqData.force,
+      purpose: reqData.purpose,
     })
   }
 
