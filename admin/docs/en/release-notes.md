@@ -4,6 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.31" %}
 
+- **A long conversation no longer “thinks” for 5 minutes:** on a computer without a graphics card the model now stays in memory for an hour instead of 15 minutes, so while you read an answer it is not unloaded and does not re-read the whole conversation. Before answering it reads only the latest questions, not the entire long history; before, after a pause an answer could fail to arrive at all (the wait was cut off after 5 minutes).
 - **“⋮” menu for conversations:** each chat has three dots on the right: “Pin” (top of the list), “Mark as unread / read” (come back later: bold with a dot), “Rename” (right in the list) and “Delete”.
 - **Tables in assistant answers have borders:** columns no longer run together; a wide table scrolls sideways.
 - **Percentages while installing and updating apps:** the App Store shows how much is downloaded: “Downloading… 42%” on the card and “42% (1,430 of 3,400 MB)” in the feed above. Before, a quarter of an hour (the AI assistant image is 3.4 GB) showed only “In progress…”, and it looked stuck.

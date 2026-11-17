@@ -1,3 +1,4 @@
+import { ContextWindowService } from '#services/context_window_service'
 import { ChatService } from '#services/chat_service'
 import { DockerService } from '#services/docker_service'
 import { OllamaService, type NomadChatUsage } from '#services/ollama_service'
@@ -12,7 +13,7 @@ import { assertNotCloudMetadataUrl } from '#validators/common'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
-import { DEFAULT_KEEP_ALIVE } from '../../constants/ollama.js'
+import { DEFAULT_KEEP_ALIVE, SLOW_HOST_KEEP_ALIVE } from '../../constants/ollama.js'
 import { resolveResponseStyle } from '../utils/response_style.js'
 import { resolveSamplerProfile } from '../utils/sampler.js'
 import type { PipelineTrace } from '../../types/rag.js'
@@ -38,8 +39,16 @@ export default class OllamaController {
     private ollamaService: OllamaService,
     private ragPipelineService: RagPipelineService,
     private ragService: RagService,
-    private tokenCalibration: TokenCalibrationService
+    private tokenCalibration: TokenCalibrationService,
+    private contextWindowService?: ContextWindowService
   ) { }
+
+  /** Сколько держать модель в памяти: как задано в настройках, иначе — по силе компьютера. */
+  private async keepAliveFor(): Promise<string> {
+    const set = await KVStore.getValue('ai.keepAlive')
+    if (set) return String(set)
+    return (await this.contextWindowService?.isSlowHost()) ? SLOW_HOST_KEEP_ALIVE : DEFAULT_KEEP_ALIVE
+  }
 
   async availableModels({ request }: HttpContext) {
     const reqData = await request.validateUsing(getAvailableModelsSchema)
@@ -73,7 +82,7 @@ export default class OllamaController {
     // Kladez: чат открыт или выбрана модель — сразу загрузить её (и модель поиска по библиотеке,
     // если включена «База знаний»), чтобы первый вопрос не ждал загрузки с диска. В фоне.
     if (targetModel) {
-      const keepAlive = String((await KVStore.getValue('ai.keepAlive')) || DEFAULT_KEEP_ALIVE)
+      const keepAlive = await this.keepAliveFor()
       const ragEnabled = (await KVStore.getValue('rag.enabled')) ?? true
       void this.ollamaService.preloadForChat(targetModel, keepAlive, ragEnabled !== false).catch(() => {})
     }
@@ -187,7 +196,7 @@ export default class OllamaController {
       // Keeping the model resident is what makes the KV cache worth building:
       // Ollama's default evicts after 5 minutes, which is well inside the time a
       // user spends reading an answer and typing the next question.
-      const keepAlive = (await KVStore.getValue('ai.keepAlive')) || DEFAULT_KEEP_ALIVE
+      const keepAlive = await this.keepAliveFor()
 
       // Check if the model supports "thinking" capability for enhanced response generation.
       // Thinking is only enabled when the model supports it AND the user wants it: the explicit

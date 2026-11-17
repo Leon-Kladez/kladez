@@ -251,6 +251,12 @@ export const RELEVANCE_CHECK_MAX_TOKENS = 32
  * moment in a conversation. Overridable via the `ai.keepAlive` setting.
  */
 export const DEFAULT_KEEP_ALIVE = '15m'
+/**
+ * «Кладезъ»: на слабом компьютере без видеокарты модель держим в памяти час. Пока человек читает
+ * длинный ответ и думает над вопросом, 15 минут проходят, модель выгружается и потом перечитывает
+ * весь разговор с нуля (~12 токенов в секунду — 3 000 токенов это 5 минут до первого слова).
+ */
+export const SLOW_HOST_KEEP_ALIVE = '60m'
 
 /**
  * Sampler settings per Response Style.

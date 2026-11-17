@@ -280,3 +280,15 @@ test('empty history and no chunks still produces a valid prompt', () => {
   assert.equal(result.trace.turnsKept, 0)
   assert.equal(result.trace.historyElided, false)
 })
+
+test('«Кладезъ»: на слабом компьютере история разговора не длиннее потолка', () => {
+  const long = history(10, 200) // ~4 000 токенов истории
+  const full = planPrompt(makeInputs({ history: long }))
+  const capped = planPrompt(makeInputs({ history: long, historyMax: 1200 }))
+  assert.ok(full.trace.historyTokens > 3000, 'без потолка — почти вся история')
+  assert.ok(capped.trace.historyTokens <= 1200, `с потолком — не больше 1200 (${capped.trace.historyTokens})`)
+  assert.ok(capped.trace.historyTokens > 0, 'последний вопрос с ответом остаётся')
+  assert.ok(capped.trace.historyElided)
+  const last = long[long.length - 1].content
+  assert.ok(capped.messages.some((m) => m.content === last), 'самый свежий ответ на месте')
+})

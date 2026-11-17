@@ -67,6 +67,12 @@ export type BudgetInputs = {
   /** Learned per-model token-estimator correction. */
   ratio?: number
   ragPlacement?: RagPlacement
+  /**
+   * «Кладезъ»: потолок истории разговора в токенах. На слабом процессоре без видеокарты модель
+   * читает ~10 токенов в секунду, а некоторые (Qwen 3.5, Gemma с «скользящим окном») перечитывают
+   * всю историю перед каждым ответом — 3 000 токенов это 5 минут до первого слова.
+   */
+  historyMax?: number
   /** Overrides for the response reserve and RAG share; mostly for tests. */
   responseReserve?: number
   ragShare?: number
@@ -244,10 +250,11 @@ export function planPrompt(inputs: BudgetInputs): BudgetResult {
   const turns = groupIntoTurns(inputs.history)
   const keptTurns: BudgetMessage[][] = []
   let historyTokens = 0
+  const historyLimit = Math.min(remaining, inputs.historyMax ?? Number.POSITIVE_INFINITY)
 
   for (let i = turns.length - 1; i >= 0; i--) {
     const turnTokens = cost(turns[i])
-    if (historyTokens + turnTokens > remaining) break
+    if (historyTokens + turnTokens > historyLimit) break
     keptTurns.unshift(turns[i])
     historyTokens += turnTokens
   }

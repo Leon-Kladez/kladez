@@ -24,6 +24,9 @@ import { resolveTasksModel } from '../utils/tasks_model.js'
 import { buildContextBlock, getContextLimitsForModel } from '../utils/rag_prompt.js'
 import { QUERIES_SCHEMA, pickQueries, resolveStructured } from '../utils/structured_output.js'
 
+/** «Кладезъ»: сколько истории разговора давать модели на слабом компьютере без видеокарты. */
+export const SLOW_HOST_HISTORY_TOKENS = 1200
+
 /**
  * Everything that happens between "a user sent a message" and "a payload goes
  * to Ollama": system-prompt assembly, history-aware query rewriting, retrieval,
@@ -211,6 +214,8 @@ export class RagPipelineService {
       contextWindow,
       ratio,
       ragPlacement: opts.ragPlacement ?? RAG_PLACEMENT,
+      // Кладезъ: на слабом компьютере — только последние ~1 200 токенов разговора (1–3 вопроса).
+      historyMax: (await this.contextWindowService.isSlowHost()) ? SLOW_HOST_HISTORY_TOKENS : undefined,
     })
 
     trace.messages = plan.messages as OllamaChatMessage[]

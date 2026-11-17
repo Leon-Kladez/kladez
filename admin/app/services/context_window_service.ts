@@ -48,6 +48,15 @@ export class ContextWindowService {
    * The context window to request for `model`. Memoized — repeat calls within a
    * process return the identical number, which is what keeps the model loaded.
    */
+  /** «Кладезъ»: слабый процессор (4 потока и меньше) и нет видеокарты — модель читает медленно. */
+  async isSlowHost(): Promise<boolean> {
+    if (os.cpus().length > 4) return false
+    try {
+      await this._availableBytes()
+    } catch {}
+    return !this.gpu
+  }
+
   async windowFor(model: string): Promise<number> {
     return (await this.decisionFor(model)).contextWindow
   }
