@@ -8,10 +8,12 @@ import { create } from 'tar'
 
 import {
   adoptLegacyPacks,
+  backfillPackBytes,
   installedPacks,
   installedRegions,
   installPack,
   outdatedPacks,
+  packBytes,
   PACK_ENTRY_RE,
   removePack,
 } from '../../app/utils/route_packs.js'
@@ -156,6 +158,29 @@ test('наборы без отпечатка (до 0.1.18): поставленн
     assert.deepEqual(outdatedPacks(await installedPacks(packs), available), ['ru-volga'])
     // Повторно ничего не меняет.
     assert.deepEqual(await adoptLegacyPacks(packs, available), [])
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('размер набора: записывается при установке, у старых наборов дописывается', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kz-routes-'))
+  try {
+    const tiles = join(dir, 'tiles')
+    const packs = join(dir, 'packs')
+    // Содержимое кусочка — его путь: 17 + 17 байт, admins.sqlite не считается.
+    const a = await makePack(dir, 'routes-by_2026-11.tar', ['2/000/800/000.gph', '2/000/800/001.gph', 'admins.sqlite'])
+    await installPack(a, tiles, packs)
+    assert.equal(await packBytes(packs, 'by'), 34)
+    const path = join(packs, 'by.files.json')
+    const j = JSON.parse(readFileSync(path, 'utf8'))
+    delete j.bytes
+    writeFileSync(path, JSON.stringify(j))
+    assert.equal(await packBytes(packs, 'by'), null)
+    assert.equal(await backfillPackBytes(tiles, packs), 1)
+    assert.equal(await packBytes(packs, 'by'), 34)
+    assert.equal(await backfillPackBytes(tiles, packs), 0, 'второй раз не пересчитывает')
+    assert.equal(await packBytes(packs, 'нет-такого'), null)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
