@@ -1333,7 +1333,12 @@ export class OllamaService {
     // первые три из каталога (там выходили alfred на 24 ГБ, служебная all-minilm, athene на 30 ГБ).
     if (recommendedOnly) {
       const en = getLocale() === 'en'
-      const picks = modelPicks(os.totalmem(), os.cpus().length).map((m) => ({
+      // Видеокарта — по метке, которую пишет установщик (nvidia/amd); нет метки — считаем, что нет.
+      let gpu = false
+      try {
+        gpu = /nvidia|amd/i.test(await fs.readFile('/app/storage/.nomad-gpu-type', 'utf8'))
+      } catch {}
+      const picks = modelPicks(os.totalmem(), os.cpus().length, gpu).map((m) => ({
         ...m,
         description: en ? m.description_en ?? m.description : m.description,
         kladez: { ...m.kladez, label: en ? m.kladez.label_en : m.kladez.label },

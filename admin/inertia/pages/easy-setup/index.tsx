@@ -1113,8 +1113,16 @@ export default function EasySetupWizard(props: {
           </div>
         ) : recommendedModels && recommendedModels.length > 0 ? (
           <>
+          {/* Кладезъ: три ряда — для обычного компьютера, для мощного, лучшие на английском. */}
+          {(['home', 'power', 'english'] as const).map((group) => {
+            const inGroup = recommendedModels.filter((m) => (m.kladez?.group ?? 'home') === group)
+            if (inGroup.length === 0) return null
+            return (
+          <div key={group} className="mb-6">
+          <h4 className="text-lg font-semibold text-text-primary">{t(`easySetup.ai.group.${group}`)}</h4>
+          <p className="text-sm text-text-muted mb-3">{t(`easySetup.ai.groupNote.${group}`)}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {recommendedModels.map((model) => {
+            {inGroup.map((model) => {
               // Кладезъ: «не потянет этот компьютер» — выбрать нельзя (скачается зря и не запустится).
               const tooBig = model.kladez?.fit === 'too-big'
               const selected = selectedAiModels.includes(model.name)
@@ -1215,6 +1223,9 @@ export default function EasySetupWizard(props: {
               )
             })}
           </div>
+          </div>
+            )
+          })}
           <p className="mt-3 text-sm text-text-muted">{t('easySetup.ai.moreModels')}</p>
           </>
         ) : (
