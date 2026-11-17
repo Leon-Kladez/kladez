@@ -48,6 +48,9 @@ jobs:
           for f in admin/docs/ru/release-notes.md admin/docs/en/release-notes.md; do
             grep -qE "versions=\"[^\"]*\\b${VERSION//./\\.}\\b" "$f" || {
               echo "::error file=$f::Версии ${VERSION} нет в «Что нового» — добавьте запись {% release %} сверху"; exit 1; }
+            # Каждый блок закрыт: без {% /release %} справка не разбирает файл («Ошибка на сервере», 0.1.24).
+            o=$(grep -c '^{% release ' "$f"); c=$(grep -c '^{% /release %}' "$f")
+            [ "$o" = "$c" ] || { echo "::error file=$f::Открытых {% release %}: $o, закрытых {% /release %}: $c"; exit 1; }
           done
 
       - name: Тесты bash (bats)

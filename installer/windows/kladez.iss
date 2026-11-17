@@ -863,6 +863,8 @@ procedure InitializeWizard;
 begin
   WizardForm.LicenseLabel1.Caption := 'Прочитайте соглашение. Прокрутите текст до конца — ' +
     'тогда станет доступно «Я принимаю условия соглашения».';
+  { Установка идёт до 15 минут — окно можно свернуть и заняться своими делами. }
+  WizardForm.BorderIcons := WizardForm.BorderIcons + [biMinimize];
   if not MusicReady then
   begin
     MusicMuted := MuteRemembered;

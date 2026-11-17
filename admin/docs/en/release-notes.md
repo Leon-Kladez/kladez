@@ -9,6 +9,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Roads update by themselves:** downloaded roads were rebuilt together with the whole world — Kladez downloads the new sets when there is internet. The old ones work meanwhile.
 - **The phone QR code no longer disappears:** if Wi-Fi dropped for a minute while Kladez was starting (reconnecting, VPN), the home page no longer says “Could not find this computer's address” — the address found earlier stays.
 
+{% /release %}
+
 {% release date="13 November 2026" versions="0.1.23, 0.1.22, 0.1.21, 0.1.20, 0.1.19, 0.1.18" %}
 
 - **Search countries and regions by name:** “Belarus”, “China”, “Siberian” in the map search show the downloaded map of the country or region first; clicking it shows the whole of it. Villages with the same name follow below.
