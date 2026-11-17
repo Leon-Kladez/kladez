@@ -649,7 +649,8 @@ var
 begin
   if MaxProgress <= 0 then
     Exit;
-  Pct := Trunc(CurProgress / MaxProgress * 100);
+  { Целые CurProgress / MaxProgress Pascal Script делит нацело — было всегда 0 % (0.1.26). }
+  Pct := Integer((Int64(CurProgress) * 100) div Int64(MaxProgress));
   WizardForm.StatusLabel.Caption := 'Распаковка файлов… ' + IntToStr(Pct) + ' %';
 end;
 
