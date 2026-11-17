@@ -17,7 +17,10 @@ param(
     [int]$AdminPort = 8080,
     [int]$KiwixPort = 8090,
     [string]$IniPath = (Join-Path $env:ProgramData 'Kladez\kladez.ini'),
-    [string]$LogDir = (Join-Path $env:ProgramData 'Kladez\logs')
+    [string]$LogDir = (Join-Path $env:ProgramData 'Kladez\logs'),
+    # Код выхода ещё и в файл: установщик запускает шаг в фоне и ждёт этот файл, а окно установки
+    # тем временем отвечает (его можно двигать и сворачивать).
+    [string]$DoneFile
 )
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Kladez.Checks.psm1') -Force
@@ -25,6 +28,15 @@ Import-Module (Join-Path $PSScriptRoot 'Kladez.Wsl.psm1') -Force
 
 $log = Join-Path $LogDir 'setup.log'
 function Write-StepLog([string]$text) { Write-KladezLog -Path $log -Tag $Step -Text $text }
+function Exit-Step([int]$code) {
+    if ($DoneFile) {
+        try {
+            [IO.File]::WriteAllText("$DoneFile.tmp", "$code")
+            Move-Item -LiteralPath "$DoneFile.tmp" -Destination $DoneFile -Force
+        } catch { }
+    }
+    exit $code
+}
 
 try {
     $result = switch ($Step) {
@@ -79,8 +91,8 @@ try {
         }
     }
     Write-StepLog "result: $result"
-    if ($result -eq 'reboot') { exit 3010 }
-    exit 0
+    if ($result -eq 'reboot') { Exit-Step 3010 }
+    Exit-Step 0
 } catch {
     $msg = $_.Exception.Message
     Write-StepLog "ERROR: $msg"
@@ -88,5 +100,5 @@ try {
         foreach ($l in @(Get-KladezStartLogTail)) { Write-StepLog "kladez-start.log: $l" }
     }
     Write-Output $msg
-    exit 1
+    Exit-Step 1
 }

@@ -1041,9 +1041,43 @@ begin
   NeedsReboot := True;
 end;
 
+{ Шаг установки в фоне: окно установщика всё время отвечает — его можно двигать и сворачивать
+  (обычный Exec с ожиданием держал окно, пока шаг шёл до 10 минут). Код выхода шаг пишет в файл. }
 function Step(const Name, Params: String; AsOriginalUser: Boolean): Integer;
+var
+  Done, Cmd: String;
+  Lines: TArrayOfString;
+  Code: Integer;
+  Ok: Boolean;
+  T0: LongWord;
 begin
-  Result := RunScript(ExpandConstant('{app}\scripts\setup-step.ps1'), '-Step ' + Name + ' ' + Params, AsOriginalUser);
+  Result := 1;
+  ForceDirectories(LogDir);
+  Done := LogDir + '\step-' + Name + '.done';
+  DeleteFile(Done);
+  Cmd := ScriptParams(ExpandConstant('{app}\scripts\setup-step.ps1'), '-Step ' + Name + ' ' + Params +
+    ' -DoneFile "' + Done + '"');
+  if AsOriginalUser then
+    Ok := ExecAsOriginalUser(PowerShellExe, Cmd, '', SW_HIDE, ewNoWait, Code)
+  else
+    Ok := Exec(PowerShellExe, Cmd, '', SW_HIDE, ewNoWait, Code);
+  if not Ok then
+  begin
+    Log('step ' + Name + ': не запустился, код ' + IntToStr(Code));
+    Exit;
+  end;
+  { Самый долгий шаг (первый запуск на медленном диске) — до получаса; три часа — с большим запасом. }
+  T0 := KzGetTickCount;
+  while not FileExists(Done) and (KzGetTickCount - T0 < 3 * 3600 * 1000) do
+  begin
+    PumpMessages;
+    Sleep(50);
+  end;
+  if LoadStringsFromFile(Done, Lines) and (GetArrayLength(Lines) > 0) then
+    Result := StrToIntDef(Trim(Lines[0]), 1)
+  else
+    Log('step ' + Name + ': нет файла с кодом выхода');
+  DeleteFile(Done);
 end;
 
 { Phones (portproxy, firewall, addresses file for the QR code) and keepalive right away, not only at the
