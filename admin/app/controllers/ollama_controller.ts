@@ -63,6 +63,13 @@ export default class OllamaController {
   async unloadChatModels({ request, response }: HttpContext) {
     const { targetModel } = await request.validateUsing(unloadChatModelsSchema)
     const unloaded = await this.ollamaService.unloadAllChatModelsExcept(targetModel ?? null)
+    // Kladez: чат открыт или выбрана модель — сразу загрузить её (и модель поиска по библиотеке,
+    // если включена «База знаний»), чтобы первый вопрос не ждал загрузки с диска. В фоне.
+    if (targetModel) {
+      const keepAlive = String((await KVStore.getValue('ai.keepAlive')) || DEFAULT_KEEP_ALIVE)
+      const ragEnabled = (await KVStore.getValue('rag.enabled')) ?? true
+      void this.ollamaService.preloadForChat(targetModel, keepAlive, ragEnabled !== false).catch(() => {})
+    }
     return response.status(200).json({ unloaded })
   }
 

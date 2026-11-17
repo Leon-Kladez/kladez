@@ -17,6 +17,7 @@ import {
 import type { OllamaChatMessage } from '../../types/ollama.js'
 import type { PipelineOptions, PipelineTrace, RetrievalFloorStats, RetrievedChunk } from '../../types/rag.js'
 import { planPrompt } from '../utils/context_budget.js'
+import os from 'node:os'
 import { estimateMessagesTokens } from '../utils/token_estimate.js'
 import { resolveMinFinalScore } from '../utils/rag_relevance.js'
 import { resolveTasksModel } from '../utils/tasks_model.js'
@@ -192,7 +193,10 @@ export class RagPipelineService {
     const modelInfo = await this.ollamaService.getModelInfo(model).catch(() => undefined)
     const limits = getContextLimitsForModel(model, RAG_CONTEXT_LIMITS, modelInfo?.parameterSize)
     trace.contextLimits = limits
-    const candidateDocs = relevantDocs.slice(0, limits.maxResults)
+    // Кладезъ: на слабом процессоре (4 потока и меньше, без видеокарты) модель читает ~10 слов в
+    // секунду — пять отрывков из библиотеки это 2–3 минуты до первого слова ответа. Берём два.
+    const weakCpu = os.cpus().length <= 4
+    const candidateDocs = relevantDocs.slice(0, weakCpu ? Math.min(2, limits.maxResults) : limits.maxResults)
 
     const contextWindow = await this.contextWindowService.windowFor(model)
     const ratio = await this.tokenCalibration.ratioFor(model)

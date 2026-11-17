@@ -24,6 +24,9 @@ export const chatEn = {
   'chat.startText': 'Interact with your installed language models directly in Kladez.',
   'chat.suggestions': 'Suggestions:',
   'chat.thinking': 'Thinking',
+  'chat.thinkingFor': 'Thinking — {seconds} s',
+  'chat.slowHint':
+    'Without a graphics card an answer can take a minute or two: the model loads and reads the question first (and library passages if the Knowledge base is on). Nothing is stuck.',
   'chat.inspiration': 'Need some inspiration? Enable chat suggestions in settings to get started with example prompts.',
   'chat.attachedImages': 'Attached images',
   'chat.attachImages': 'Attach images',

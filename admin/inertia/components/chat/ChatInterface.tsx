@@ -32,6 +32,26 @@ const MAX_VISION_IMAGES = 4
 const MAX_VISION_IMAGE_BYTES = 8 * 1024 * 1024
 const SUPPORTED_VISION_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
+/**
+ * Кладезъ: «Думаю…» с секундами, а через 15 секунд — почему долго. На компьютере без видеокарты
+ * первый ответ ждёт загрузки модели с диска, а модель читает вопрос и отрывки из библиотеки
+ * со скоростью ~10 слов в секунду — без пояснения кажется, что всё зависло.
+ */
+function ThinkingWithTime() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const started = Date.now()
+    const id = setInterval(() => setSeconds(Math.floor((Date.now() - started) / 1000)), 1000)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <div>
+      <BouncingDots text={seconds >= 3 ? t('chat.thinkingFor', { seconds }) : t('chat.thinking')} />
+      {seconds >= 15 && <p className="mt-2 text-xs text-text-muted">{t('chat.slowHint')}</p>}
+    </div>
+  )
+}
+
 export default function ChatInterface({
   messages,
   onSendMessage,
@@ -230,7 +250,7 @@ export default function ChatInterface({
               <div className="flex gap-4 justify-start">
                 <ChatAssistantAvatar />
                 <div className="max-w-[85%] sm:max-w-[70%] rounded-lg px-4 py-3 bg-surface-secondary text-text-primary">
-                  <BouncingDots text={t('chat.thinking')} />
+                  <ThinkingWithTime />
                 </div>
               </div>
             )}

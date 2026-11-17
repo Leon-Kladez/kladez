@@ -1264,6 +1264,31 @@ export class OllamaService {
     return toUnload
   }
 
+  /**
+   * Kladez: прогреть модель, как только открыт чат, — чтобы первый вопрос не ждал загрузки с диска
+   * (на Windows модели лежат на диске D: за мостом WSL: модель 3B грузится ~20 с, служебная модель
+   * поиска по библиотеке — до минуты). Пустой запрос к Ollama только загружает модель. В фоне,
+   * без ожидания; не вышло — не страшно, модель загрузится при первом вопросе.
+   */
+  public async preloadForChat(model: string, keepAlive: string, withEmbeddings: boolean): Promise<void> {
+    try {
+      await this._initialize()
+    } catch {
+      return
+    }
+    const jobs: Promise<unknown>[] = [
+      axios.post(`${this.baseUrl}/api/generate`, { model, prompt: '', keep_alive: keepAlive }, { timeout: 180000 }),
+    ]
+    if (withEmbeddings) {
+      jobs.push(
+        axios.post(`${this.baseUrl}/api/embed`, { model: EMBEDDING_MODEL_NAME, input: 'ok', keep_alive: keepAlive }, { timeout: 180000 })
+      )
+    }
+    const results = await Promise.allSettled(jobs)
+    const failed = results.filter((r) => r.status === 'rejected').length
+    logger.info(`[OllamaService] Прогрев для чата: ${model}${withEmbeddings ? ' и модель поиска' : ''}${failed ? `, не вышло: ${failed}` : ''}`)
+  }
+
   public async getModels(includeEmbeddings = false): Promise<NomadInstalledModel[]> {
     await this._ensureDependencies()
     if (!this.baseUrl) {
