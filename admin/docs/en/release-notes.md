@@ -2,11 +2,13 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="17 November 2026" versions="0.1.24" %}
+{% release date="17 November 2026" versions="0.1.25, 0.1.24" %}
 
 - **Maps of the whole world:** Maps now has “Latin America” (Mexico, Central and South America, the Caribbean), “Africa” and “Australia and Oceania”, and Greenland in “North America”. 317 country and region maps in total, large countries in parts (“Brazil: São Paulo”, “Australia: Queensland”). No program update is needed for them — the map list arrives by itself.
 - **Search and routes for every map:** all 317 maps have address and place search and car, walking and cycling routes. Roads are built as two large sets — the Old World (Europe, Asia, Africa, Oceania) and the Americas — so routes cross borders: Khartoum → Cairo, Tijuana → San Diego, Buenos Aires → Santiago, if the maps of the countries on the way are downloaded.
 - **Roads update by themselves:** downloaded roads were rebuilt together with the whole world — Kladez downloads the new sets when there is internet. The old ones work meanwhile.
+- **The installer window can be minimized:** the installer now has a Minimize button — you can do other things while it installs.
+- **“What's new” opens again:** in 0.1.24 this help page showed “Server error”.
 - **The phone QR code no longer disappears:** if Wi-Fi dropped for a minute while Kladez was starting (reconnecting, VPN), the home page no longer says “Could not find this computer's address” — the address found earlier stays.
 
 {% /release %}
