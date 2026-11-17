@@ -43,6 +43,9 @@ export const chatEn = {
   'chat.model': 'Model:',
   'chat.loadingModels': 'Loading models...',
   'chat.noModels': 'No models installed',
+  'chat.noModelsNotice':
+    'The assistant needs at least one model to answer. If a model is already downloading, wait for it to finish (see downloads); otherwise choose one:',
+  'chat.noModelsLink': 'Models and settings',
   'chat.kbLabel': 'Knowledge Base:',
   'chat.kbHint': 'When on, the assistant searches your knowledge base for relevant documents before answering. Turning this off is faster and lighter on hardware, which helps when your knowledge base is small or empty. This is the same setting as in AI Assistant settings.',
   'chat.thinkingLabel': 'Thinking:',

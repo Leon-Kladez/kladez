@@ -19,6 +19,8 @@ interface ChatInterfaceProps {
   chatSuggestions?: string[]
   chatSuggestionsEnabled?: boolean
   chatSuggestionsLoading?: boolean
+  /** Кладезъ: ни одной модели — писать нельзя, вместо «Модель выдала ошибку» — подсказка. */
+  noModels?: boolean
 }
 
 // Sent as an ordinary turn, so it goes through retrieval, budgeting and
@@ -38,6 +40,7 @@ export default function ChatInterface({
   chatSuggestions = [],
   chatSuggestionsEnabled = false,
   chatSuggestionsLoading = false,
+  noModels = false,
 }: ChatInterfaceProps) {
   const { aiAssistantName } = usePage<{ aiAssistantName: string }>().props
   const [input, setInput] = useState('')
@@ -237,6 +240,14 @@ export default function ChatInterface({
         )}
       </div>
       <div className="border-t border-border-subtle bg-surface-primary px-6 py-4 flex-shrink-0 min-h-[90px]">
+        {noModels && (
+          <p className="mb-3 rounded-lg border border-desert-orange bg-surface-secondary px-4 py-3 text-sm">
+            {t('chat.noModelsNotice')}{' '}
+            <a href="/settings/models" className="font-semibold text-desert-green underline">
+              {t('chat.noModelsLink')}
+            </a>
+          </p>
+        )}
         {images.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-3" aria-label={t('chat.attachedImages')}>
             {images.map((image) => (
@@ -307,13 +318,13 @@ export default function ChatInterface({
               placeholder={t('chat.inputPlaceholder', { name: aiAssistantName })}
               className="w-full resize-none rounded-lg border border-border-default px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent disabled:bg-surface-secondary disabled:text-text-muted"
               rows={1}
-              disabled={isLoading}
+              disabled={isLoading || noModels}
               style={{ maxHeight: '200px' }}
             />
           </div>
           <button
             type="submit"
-            disabled={(!input.trim() && images.length === 0) || isLoading}
+            disabled={(!input.trim() && images.length === 0) || isLoading || noModels}
             className={classNames(
               'p-3 rounded-lg transition-all duration-200 flex-shrink-0 mb-2',
               (!input.trim() && images.length === 0) || isLoading

@@ -744,6 +744,7 @@ export default function Chat({
             chatSuggestions={chatSuggestions}
             chatSuggestionsEnabled={suggestionsEnabled}
             chatSuggestionsLoading={chatSuggestionsLoading}
+            noModels={!isLoadingModels && installedModels.length === 0}
           />
         </div>
       </div>
