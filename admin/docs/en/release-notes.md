@@ -2,6 +2,15 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="17 November 2026" versions="0.1.27" %}
+
+- **A clear choice of AI assistant:** Easy Setup now offers four hand-picked models that understand Russian, from “Fastest” to “Smartest”, instead of three random catalog models (two too heavy for an ordinary computer, the third not for chatting at all). Kladez checks the computer’s memory and processor, marks the recommended model and warns when a model will be slow or will not fit.
+- **The question about preparing materials for the AI, in plain words:** what it is, why, and how long it takes.
+- **Percentages during installation:** “Extracting files…” no longer stays at 0% while the bar moves.
+- **Tidier Easy Setup:** the country list no longer shows the same “Ready-made maps” badge on every country — only countries without a ready-made map are marked; country names start with a capital; “Size: 3.4 GB” instead of “3.4 GB - 3.4 GB”.
+
+{% /release %}
+
 {% release date="17 November 2026" versions="0.1.26" %}
 
 - **Maps for the road on your phone:** **Settings → Phones** now offers the Organic Maps navigator for Android. The computer downloads it once, and phones in your home install it by QR code straight from the computer, with no app store. Download countries to the phone and it guides you by GPS without internet — by car, on foot or by bike. Details: [Maps on your phone for the road](/docs/travel-maps).
