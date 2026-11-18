@@ -20,6 +20,8 @@ export const homeRu: Record<keyof typeof homeEn, string> = {
   'home.tiles.opensNewTab': 'Откроется в новой вкладке',
   'home.linkRemoveFailed': 'Не удалось убрать ссылку.',
   'home.updateAvailable': 'Вышло обновление Кладезя!',
+  'home.updateAvailableVersion': 'Вышла новая версия Кладезя — {version}',
+  'home.updateDownload': 'Скачать обновление',
   'home.goToSettings': 'Перейти в настройки',
   'home.rerun.title': 'Проверку скорости можно пересчитать по новой оценке',
   'home.rerun.message': 'Мы обновили систему оценки. Запустите проверку снова, чтобы получить новую оценку в общей таблице.',

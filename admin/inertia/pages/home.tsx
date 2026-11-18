@@ -252,14 +252,18 @@ export default function Home(props: {
         updateInfo?.updateAvailable && (
           <div className='flex justify-center items-center p-4 w-full'>
             <Alert
-              title={t('home.updateAvailable')}
+              title={
+                updateInfo.latestVersion
+                  ? t('home.updateAvailableVersion', { version: updateInfo.latestVersion })
+                  : t('home.updateAvailable')
+              }
               type="info-inverted"
               variant="solid"
               className="w-full"
               buttonProps={{
                 variant: 'primary',
-                children: t('home.goToSettings'),
-                icon: 'IconSettings',
+                children: t('home.updateDownload'),
+                icon: 'IconCloudDownload',
                 onClick: () => router.visit('/settings/update'),
               }}
             />

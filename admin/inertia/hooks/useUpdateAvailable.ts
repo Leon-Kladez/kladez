@@ -7,8 +7,9 @@ export const useUpdateAvailable = () => {
     const queryData = useQuery<CheckLatestVersionResult | undefined>({
         queryKey: ['system-update-available'],
         queryFn: () => api.checkLatestVersion(),
-        refetchInterval: Infinity, // Disable automatic refetching
-        refetchOnWindowFocus: false,
+        // «Кладезъ»: главная открыта долго — раз в полчаса спросить у панели (ответ из кэша, быстро).
+        refetchInterval: 30 * 60 * 1000,
+        refetchOnWindowFocus: true,
     })
 
     return queryData.data

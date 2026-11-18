@@ -2,6 +2,12 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.35" %}
+
+- **The new-version bar appears by itself:** Kladez checks for updates at start-up and then every hour, and the home page shows “A new version of Kladez is out: 0.1.35” with a “Download the update” button. Before, the scheduled check did not actually check anything, and the bar appeared only after a manual “Check again”.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.34" %}
 
 - **“What to do if…”:** a home page tile with emergency checklists: emergency numbers, an unconscious person, bleeding, burns, fire, gas smell, poisoning, no power or water, sirens, lost in a forest, and radios without internet: which need no registration and which channels people listen on for help.

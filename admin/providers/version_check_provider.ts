@@ -51,6 +51,14 @@ export default class VersionCheckProvider {
       } catch (err: any) {
         logger.warn(`[VersionCheckProvider] Self-heal skipped: ${err?.message ?? err}`)
       }
+      // «Кладезъ»: сразу после запуска — свежая проверка на GitHub (компьютер мог быть выключен
+      // в часы плановой проверки). Без интернета задача просто не удастся и повторится по плану.
+      try {
+        const { CheckUpdateJob } = await import('#jobs/check_update_job')
+        await CheckUpdateJob.dispatch()
+      } catch (err: any) {
+        logger.warn(`[VersionCheckProvider] Startup update check not queued: ${err?.message ?? err}`)
+      }
     })
   }
 }

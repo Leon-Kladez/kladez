@@ -21,7 +21,9 @@ export class CheckUpdateJob {
     const systemService = new SystemService(dockerService)
 
     try {
-      const result = await systemService.checkLatestVersion()
+      // «Кладезъ»: force — иначе checkLatestVersion отдаёт запомненный ответ и на GitHub не ходит:
+      // плановая проверка годами ничего не находила, плашка появлялась только после ручной.
+      const result = await systemService.checkLatestVersion(true)
 
       if (result.updateAvailable) {
         logger.info(
@@ -47,7 +49,9 @@ export class CheckUpdateJob {
 
     await queue.upsertJobScheduler(
       'nightly-update-check',
-      { pattern: '0 2,14 * * *' }, // Every 12 hours at 2am and 2pm
+      // «Кладезъ»: каждый час — плашка «Вышла новая версия» появляется не позже чем через час.
+      // Один короткий запрос к GitHub в час; о пользователе ничего не отправляется.
+      { pattern: '7 * * * *' },
       {
         name: this.key,
         opts: {
@@ -57,7 +61,7 @@ export class CheckUpdateJob {
       }
     )
 
-    logger.info('[CheckUpdateJob] Update check scheduled with cron: 0 2,14 * * *')
+    logger.info('[CheckUpdateJob] Update check scheduled with cron: 7 * * * *')
   }
 
   static async dispatch() {

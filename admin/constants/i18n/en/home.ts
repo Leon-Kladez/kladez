@@ -18,6 +18,8 @@ export const homeEn = {
   'home.tiles.opensNewTab': 'Opens in a new tab',
   'home.linkRemoveFailed': 'Failed to remove this link.',
   'home.updateAvailable': 'An update is available for Kladez!',
+  'home.updateAvailableVersion': 'A new version of Kladez is out: {version}',
+  'home.updateDownload': 'Download the update',
   'home.goToSettings': 'Go to Settings',
   'home.rerun.title': 'Your benchmark can be re-scored with Score v2',
   'home.rerun.message': 'We\'ve upgraded the benchmark scoring system. Re-run your benchmark to get an updated Score v2 result on the community leaderboard.',
