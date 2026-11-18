@@ -26,7 +26,8 @@ import {
   normalizeChatImages,
   type NormalizedChatImage,
 } from '../utils/chat_images.js'
-import { t } from '../../constants/i18n/index.js'
+import { getLocale, t } from '../../constants/i18n/index.js'
+import { RU_THINK_PREFIX, canSteerThinking } from '../utils/russian_thinking.js'
 
 const unknownVisionCompatibilityMessage = (model: string) =>
   `NOMAD cannot confirm that "${model}" accepts images, and this image request failed. Choose a model marked "Supports images", or remove the image and try again.`
@@ -264,6 +265,11 @@ export default class OllamaController {
             keepAlive,
           sampler,
             signal: abortController.signal,
+            // «Кладезъ»: русский интерфейс — Qwen начинает рассуждение по-русски (иначе думает
+            // по-английски, что бы ни было в указаниях). См. utils/russian_thinking.ts.
+            ...(getLocale() === 'ru' && canSteerThinking(reqData.model, think, upstreamMessages as any)
+              ? { thinkPrefix: RU_THINK_PREFIX }
+              : {}),
           })
           for await (const chunk of stream) {
             if (chunk.message?.content) {
