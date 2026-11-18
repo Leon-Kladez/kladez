@@ -141,8 +141,8 @@ Tables, the tab title and search results are not translated.
 
 Adds a **microphone** button to the [chat](/chat): talk instead of typing. Speech becomes text right on this computer with **whisper.cpp**, without internet; your voice goes nowhere.
 
-**Install:** about 600 MB (the program and the 60 MB Whisper “base” model), once, while you have internet. It understands Russian, English and dozens of other languages; the language is detected automatically.
+**Install:** about 700 MB (the program and the 190 MB Whisper “small” model), once, while you have internet. The speech language is the same as Kladez’s: Russian or English.
 
-**Speed:** on an ordinary computer without a graphics card a phrase takes 5–10 seconds; on a powerful one, a second or two.
+**Speed:** on an ordinary computer without a graphics card a phrase takes about 10 seconds; on a powerful one, a second or two.
 
 If the box shows something other than what you said, speak closer to the microphone without background noise; you can always correct the text before sending.

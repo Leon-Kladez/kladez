@@ -1,9 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
-import { readFile } from 'node:fs/promises'
+import { readFile, unlink } from 'node:fs/promises'
 import Service from '#models/service'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
-import { SPEECH_MAX_UPLOAD } from '../../constants/speech.js'
+import { SPEECH_MAX_UPLOAD, speechLanguage } from '../../constants/speech.js'
 import { t } from '../../constants/i18n/index.js'
 import { cleanTranscript } from '../utils/speech_text.js'
 
@@ -31,17 +31,24 @@ export default class SpeechController {
     if (!file || !file.tmpPath || !file.isValid) {
       return response.badRequest({ message: t('speech.noAudio') })
     }
+    const tmpPath = file.tmpPath
+    // Запись голоса не храним ни секунды дольше нужного (0.1.33: временные файлы оставались).
+    const forget = () => unlink(tmpPath).catch(() => {})
     const service = await Service.query().where('service_name', SERVICE_NAMES.SPEECH).first()
     if (!service?.installed) {
+      await forget()
       return response.conflict({ message: t('speech.notInstalled') })
     }
     try {
-      const audio = await readFile(file.tmpPath)
+      const audio = await readFile(tmpPath)
+      await forget()
       const form = new FormData()
       const type = file.headers?.['content-type'] ?? 'audio/webm'
       form.append('file', new Blob([audio], { type }), file.clientName || 'speech.webm')
       form.append('response_format', 'json')
       form.append('temperature', '0')
+      // Язык интерфейса: угадывание на короткой фразе ошибается («Привет» → индонезийский).
+      form.append('language', speechLanguage(request.input('language')))
       const res = await fetch(`${whisperBaseUrl()}/inference`, {
         method: 'POST',
         body: form,

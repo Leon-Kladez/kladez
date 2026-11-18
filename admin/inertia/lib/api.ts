@@ -20,7 +20,7 @@ import { BenchmarkType, RunBenchmarkResponse, SubmitBenchmarkResponse, UpdateBui
 import type { CreateMapMarkerPayload, MapMarkerResponse, UpdateMapMarkerPayload } from '../../types/maps'
 import type { ChatSource } from '../../types/chat'
 import { chatStreamErrorMessage } from './chat_stream.js'
-import { t } from '../../constants/i18n/index.js'
+import { getLocale, t } from '../../constants/i18n/index.js'
 import { errorText } from './error_text.js'
 import type { MapSearchResult } from '../../types/maps'
 import type { RouteResult } from '../../app/utils/map_route.js'
@@ -1472,6 +1472,7 @@ class API {
       const form = new FormData()
       const ext = audio.type.includes('ogg') ? 'ogg' : 'webm'
       form.append('audio', audio, `speech.${ext}`)
+      form.append('language', getLocale())
       // Заголовок обязателен: у клиента по умолчанию JSON, и axios превращал запись в пустой JSON (0.1.31).
       const response = await this.client.post<{ text: string }>('/speech/transcribe', form, {
         timeout: 200_000,

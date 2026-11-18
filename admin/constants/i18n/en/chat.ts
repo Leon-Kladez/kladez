@@ -27,7 +27,7 @@ export const chatEn = {
   'speech.recording': 'Listening… {s} s',
   'speech.working': 'Recognising speech…',
   'speech.empty': 'Did not catch that. Speak closer to the microphone.',
-  'speech.install': 'To talk instead of typing, install Speech to Text in the App Store (about 600 MB, once, while you have internet).',
+  'speech.install': 'To talk instead of typing, install Speech to Text in the App Store (about 700 MB, once, while you have internet).',
   'speech.installLink': 'Open the App Store',
   'speech.installing': 'Speech to Text is installing; progress is shown in the App Store.',
   'speech.needsLocalhost': 'Browsers give the microphone only to secure pages. On this computer open Kladez at localhost; on a phone it will work once Kladez has a secure address.',

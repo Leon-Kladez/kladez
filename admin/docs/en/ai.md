@@ -26,7 +26,7 @@ The assistant answers in the language of the question.
 
 To the right of the input box there is a **microphone** button. Press it, speak, press it again: the text appears in the box, where you can fix it and send it. Speech is recognised right on this computer, without internet; your voice goes nowhere.
 
-Install the **Speech to Text** app once in the [App Store](/supply-depot) while you have internet (about 600 MB). A phrase takes a few seconds. The microphone works in Kladez on the computer itself; on a phone it will work once Kladez has a secure address.
+Install the **Speech to Text** app once in the [App Store](/supply-depot) while you have internet (about 700 MB). A phrase takes about 10 seconds on an ordinary computer and 1–2 seconds on a powerful one. The speech language is the same as Kladez’s (Russian or English). The microphone works in Kladez on the computer itself; on a phone it will work once Kladez has a secure address.
 
 ## Your own documents
 

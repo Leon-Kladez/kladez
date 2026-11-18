@@ -2,6 +2,12 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.33" %}
+
+- **The microphone understands Russian better:** recognition now listens in Kladez’s language (Russian or English) instead of guessing; a short “Привет” could be taken for Indonesian before. The recognition model is stronger too (“small” instead of “base”), so “Привет, как дела?” no longer turns into nonsense. A phrase takes about 10 seconds on an ordinary computer. If Speech to Text is already installed, the new model (190 MB) downloads by itself when Kladez starts. Voice recordings are deleted right after recognition.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.32" %}
 
 - **The chat microphone works:** in 0.1.31 a recording ended with “The recording did not arrive”: the button sent the audio the wrong way. Now what you say appears in the input box within a few seconds.

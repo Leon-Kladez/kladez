@@ -62,6 +62,7 @@ export default defineConfig({
     () => import('#providers/drug_install_row_provider'),
     () => import('#providers/map_search_warmup_provider'),
     () => import('#providers/copied_library_provider'),
+    () => import('#providers/speech_refresh_provider'),
   ],
 
   /*

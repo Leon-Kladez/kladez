@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { cleanTranscript } from '../../app/utils/speech_text.js'
-import { whisperStartScript, WHISPER_MODEL } from '../../constants/speech.js'
+import { speechLanguage, whisperStartScript, WHISPER_MODEL, WHISPER_OLD_MODELS } from '../../constants/speech.js'
 
 test('текст из Whisper: метки и лишние пробелы убираются', () => {
   assert.equal(cleanTranscript('  Привет,   как дела? [BLANK_AUDIO] '), 'Привет, как дела?')
@@ -25,4 +25,17 @@ test('скрипт запуска: модель, автоязык, переко�
   assert.ok(s.includes('--convert'))
   assert.ok(s.includes('[ "$THREADS" -gt 4 ] && THREADS=4'))
   assert.ok(!s.includes('\r'), 'перевод строк — как в Linux')
+})
+
+test('язык распознавания — из интерфейса; чужое — «угадай сам»', () => {
+  assert.equal(speechLanguage('ru'), 'ru')
+  assert.equal(speechLanguage('en'), 'en')
+  assert.equal(speechLanguage('id'), 'auto')
+  assert.equal(speechLanguage(undefined), 'auto')
+})
+
+test('модель «small»: прежняя «base» уходит в старые и удаляется после перехода', () => {
+  assert.equal(WHISPER_MODEL.filename, 'ggml-small-q5_1.bin')
+  assert.ok(WHISPER_OLD_MODELS.includes('ggml-base-q5_1.bin'))
+  assert.ok(!WHISPER_OLD_MODELS.includes(WHISPER_MODEL.filename))
 })

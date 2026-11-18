@@ -1,4 +1,4 @@
-import { WHISPER_MODEL, WHISPER_START_SCRIPT, WHISPER_STORAGE_DIR, whisperStartScript } from '../../constants/speech.js'
+import { WHISPER_MODEL, WHISPER_OLD_MODELS, WHISPER_START_SCRIPT, WHISPER_STORAGE_DIR, whisperStartScript } from '../../constants/speech.js'
 import Service from '#models/service'
 import { PullProgress, imageLayers } from '../utils/image_size.js'
 import Docker from 'dockerode'
@@ -105,6 +105,33 @@ export class DockerService {
    * Модель уже лежит (копия с флешки, переустановка) и цела — не качаем. Качаем с Hugging Face,
    * при неудаче — с зеркала; проверяем SHA-256, ход — в процентах на карточке программы.
    */
+  /**
+   * «Кладезъ»: распознавание речи уже стоит, а Кладезъ обновился с другой моделью или скриптом
+   * (0.1.33: «base» → «small» — «base» путала русские слова). Докачать модель, переписать
+   * скрипт, перезапустить программу и убрать старую модель. В фоне при запуске панели.
+   */
+  async refreshWhisper(): Promise<void> {
+    const service = await Service.query().where('service_name', SERVICE_NAMES.SPEECH).first()
+    if (!service?.installed || service.installation_status === 'installing') return
+    const { readFile, unlink } = await import('node:fs/promises')
+    const { getFileStatsIfExists } = await import('../utils/fs.js')
+    const dir = join(process.cwd(), 'storage', WHISPER_STORAGE_DIR)
+    const script = await readFile(join(dir, WHISPER_START_SCRIPT), 'utf-8').catch(() => '')
+    const model = await getFileStatsIfExists(join(dir, WHISPER_MODEL.filename))
+    const current = script === whisperStartScript() && !!model && Number(model.size) === WHISPER_MODEL.bytes
+    if (!current) {
+      logger.info('[DockerService] Speech to Text: updating the model/start script')
+      await this._runPreinstallActions__Whisper()
+      await this.docker
+        .getContainer(SERVICE_NAMES.SPEECH)
+        .restart()
+        .catch((error) => logger.warn(`[DockerService] restart ${SERVICE_NAMES.SPEECH}: ${error?.message ?? error}`))
+    }
+    for (const old of WHISPER_OLD_MODELS) {
+      await unlink(join(dir, old)).catch(() => {})
+    }
+  }
+
   private async _runPreinstallActions__Whisper(): Promise<void> {
     const { mkdir, writeFile, chmod } = await import('node:fs/promises')
     const { getFileStatsIfExists } = await import('../utils/fs.js')
