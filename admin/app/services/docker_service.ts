@@ -110,6 +110,47 @@ export class DockerService {
    * (0.1.33: «base» → «small» — «base» путала русские слова). Докачать модель, переписать
    * скрипт, перезапустить программу и убрать старую модель. В фоне при запуске панели.
    */
+  /**
+   * «Кладезъ»: «Учебная платформа» (Kolibri) пуста, а русских каналов в её каталоге почти нет.
+   * Кладём в неё русские видеоуроки Sikana (97 роликов: первая помощь, безопасность на дороге,
+   * утепление дома, мебель своими руками; CC BY-NC-ND) — в фоне, командами самой Kolibri.
+   * Один раз: удалось — запоминаем; нет интернета — попробуем при следующем запуске панели.
+   */
+  async importKolibriStarterChannels(): Promise<void> {
+    const { KOLIBRI_STARTER_CHANNELS } = await import('../../constants/kolibri_channels.js')
+    const { getLocale } = await import('../../constants/i18n/index.js')
+    if (getLocale() !== 'ru') return
+    const service = await Service.query().where('service_name', SERVICE_NAMES.KOLIBRI_GEN2).first()
+    if (!service?.installed) return
+    const container = this.docker.getContainer(SERVICE_NAMES.KOLIBRI_GEN2)
+    for (const channel of KOLIBRI_STARTER_CHANNELS) {
+      const key = `kolibri.channel.${channel.id}`
+      if ((await KVStore.getValue(key as any)) === 'done') continue
+      try {
+        for (const step of ['importchannel', 'importcontent'] as const) {
+          logger.info(`[DockerService] Kolibri: ${step} ${channel.name}`)
+          const exec = await container.exec({
+            Cmd: ['kolibri', 'manage', step, 'network', channel.id],
+            AttachStdout: true,
+            AttachStderr: true,
+          })
+          const stream = await exec.start({})
+          await new Promise<void>((resolve) => {
+            stream.on('end', () => resolve())
+            stream.on('error', () => resolve())
+            stream.resume()
+          })
+          const { ExitCode } = await exec.inspect()
+          if (ExitCode !== 0) throw new Error(`${step} exited with ${ExitCode}`)
+        }
+        await KVStore.setValue(key as any, 'done')
+        logger.info(`[DockerService] Kolibri: ${channel.name} — готово`)
+      } catch (error: any) {
+        logger.warn(`[DockerService] Kolibri: ${channel.name} не загрузился (${error?.message ?? error}) — повторим при запуске`)
+      }
+    }
+  }
+
   async refreshWhisper(): Promise<void> {
     const service = await Service.query().where('service_name', SERVICE_NAMES.SPEECH).first()
     if (!service?.installed || service.installation_status === 'installing') return
@@ -1110,6 +1151,11 @@ export class DockerService {
         ragService.discoverNomadDocs().catch((error) => {
           logger.error('[DockerService] Failed to discover Nomad docs:', error)
         })
+      }
+
+      if (service.service_name === SERVICE_NAMES.KOLIBRI_GEN2) {
+        // «Кладезъ»: в пустую учебную платформу — русские видеоуроки (в фоне, ~1 ГБ).
+        this.importKolibriStarterChannels().catch(() => {})
       }
 
       this._broadcast(

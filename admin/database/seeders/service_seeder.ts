@@ -599,7 +599,8 @@ export default class ServiceSeeder extends BaseSeeder {
           // rather than a host port means this survives the library being
           // remapped.
           'KIWIX=http://nomad_kiwix_server:8080',
-          'TRANSLATE_LANGS=fr,es,de',
+          // «Кладезъ»: русский — английские материалы «Библиотеки» читаются по-русски (~60 МБ модель).
+          'TRANSLATE_LANGS=ru',
           'WORKERS=8',
         ],
       }),

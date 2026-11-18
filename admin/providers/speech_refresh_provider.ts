@@ -2,8 +2,9 @@ import logger from '@adonisjs/core/services/logger'
 import type { ApplicationService } from '@adonisjs/core/types'
 
 /**
- * «Кладезъ»: «Распознавание речи» обновляется вместе с Кладезем — новая модель и скрипт запуска
- * подтягиваются сами, в фоне при запуске панели (без интернета — тихо остаётся как было).
+ * «Кладезъ»: в фоне при запуске панели — «Распознавание речи» подтягивает новую модель и скрипт,
+ * а «Учебная платформа» докачивает русские видеоуроки, если в прошлый раз не вышло
+ * (без интернета — тихо остаётся как было).
  */
 export default class SpeechRefreshProvider {
   constructor(protected app: ApplicationService) {}
@@ -13,7 +14,9 @@ export default class SpeechRefreshProvider {
     setImmediate(async () => {
       try {
         const { DockerService } = await import('#services/docker_service')
-        await new DockerService().refreshWhisper()
+        const docker = new DockerService()
+        await docker.refreshWhisper()
+        await docker.importKolibriStarterChannels()
       } catch (err: any) {
         logger.warn(`[SpeechRefresh] не удалось обновить распознавание речи: ${err?.message ?? err}`)
       }

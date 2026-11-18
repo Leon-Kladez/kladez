@@ -113,7 +113,9 @@ Video lessons, exercises and progress tracking — for school and self-study, wi
 
 **First start:** a short wizard — facility type and administrator account (write the password down).
 
-**Adding lessons:** **Device → Channels → Import**. Lessons are downloaded from the internet as channels; take only the ones you need — there are many and they are large.
+**Russian video lessons right away:** after installation Kladez downloads the **Sikana (Russian)** channel by itself (97 videos, about 1 GB): first aid, road safety, home insulation and saving on electricity, DIY furniture. Internet is needed; if there was none, the download is retried at the next start.
+
+**Adding other lessons:** **Device → Channels → Import**. Lessons are downloaded from the internet as channels; take only the ones you need — there are many and they are large.
 
 Website: [learningequality.org/kolibri](https://learningequality.org/kolibri)
 
@@ -131,7 +133,7 @@ Website: [meshcore.io](https://meshcore.io)
 
 Translates library articles into another language on this computer, without internet. Open an article and a **Translate this page** bar appears at the top with a button for each language and an **Original** button.
 
-**Languages:** French, Spanish and German by default. To change the list: Manage → Edit → in the `TRANSLATE_LANGS` variable list language codes separated by commas (for example `en,uk,de`) → Save. Each new language needs internet and 45–140 MB of space.
+**Languages:** Russian by default, so the English materials in the Library (survival, water, medicine) can be read in Russian. Articles are translated, speech in videos is not. To change the list: Manage → Edit → in the `TRANSLATE_LANGS` variable list language codes separated by commas (for example `en,uk,de`) → Save. Each new language needs internet and 45–140 MB of space.
 
 **The translation is machine-made and literal.** It conveys the meaning well, but for medical and safety wording check the original.
 

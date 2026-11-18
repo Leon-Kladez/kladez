@@ -4,6 +4,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.33" %}
 
+- **English materials in Russian:** the Translated Library now translates into Russian by default. Install it in the App Store and the articles in the “In English” section (survival, water, field medicine, gardening) can be read in Russian offline. Machine translation; speech in videos is not translated.
+- **Russian video lessons in the Education Platform:** after installation it downloads the Sikana (Russian) channel by itself: 97 videos (about 1 GB) on first aid, road safety, home insulation and DIY furniture.
 - **The microphone understands Russian better:** recognition now listens in Kladez’s language (Russian or English) instead of guessing; a short “Привет” could be taken for Indonesian before. The recognition model is stronger too (“small” instead of “base”), so “Привет, как дела?” no longer turns into nonsense. A phrase takes about 10 seconds on an ordinary computer. If Speech to Text is already installed, the new model (190 MB) downloads by itself when Kladez starts. Voice recordings are deleted right after recognition.
 
 {% /release %}
