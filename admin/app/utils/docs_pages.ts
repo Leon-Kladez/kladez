@@ -10,6 +10,7 @@ import path from 'node:path'
 /** Порядок страниц в меню справки. Неизвестные — в конце, по алфавиту. */
 export const DOC_ORDER: readonly string[] = [
   'home',
+  'emergency',
   'easy-setup',
   'library',
   'maps',

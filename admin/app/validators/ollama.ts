@@ -6,6 +6,8 @@ export const chatSchema = vine.compile(
     messages: vine.array(
       vine.object({
         role: vine.enum(['system', 'user', 'assistant'] as const),
+        // Пустое содержимое приходит как null (convertEmptyStringsToNull) и отвергается 422 —
+        // поэтому чат «Кладезя» пустые ответы (модель только «размышляла») не отправляет.
         content: vine.string(),
       })
     ),

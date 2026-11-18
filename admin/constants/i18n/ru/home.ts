@@ -11,6 +11,8 @@ export const homeRu: Record<keyof typeof homeEn, string> = {
   'home.tiles.supplyDepot.title': 'Склад программ',
   'home.tiles.supplyDepot.description': 'Выбирайте и устанавливайте проверенные программы или добавьте свой контейнер Docker',
   'home.tiles.docs.title': 'Справка',
+  'home.tiles.emergency.title': 'Что делать, если…',
+  'home.tiles.emergency.description': 'Памятки на случай беды: первая помощь, пожар, газ, нет света и воды, рации',
   'home.tiles.docs.description': 'Инструкции и руководства',
   'home.tiles.settings.title': 'Настройки',
   'home.tiles.settings.description': 'Настройки программы',

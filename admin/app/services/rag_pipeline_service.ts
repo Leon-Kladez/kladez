@@ -18,6 +18,7 @@ import type { OllamaChatMessage } from '../../types/ollama.js'
 import type { PipelineOptions, PipelineTrace, RetrievalFloorStats, RetrievedChunk } from '../../types/rag.js'
 import { planPrompt } from '../utils/context_budget.js'
 import os from 'node:os'
+import { getLocale } from '../../constants/i18n/index.js'
 import { estimateMessagesTokens } from '../utils/token_estimate.js'
 import { resolveMinFinalScore } from '../utils/rag_relevance.js'
 import { resolveTasksModel } from '../utils/tasks_model.js'
@@ -75,6 +76,12 @@ export class RagPipelineService {
     if (callerSystem.length === 0) {
       logger.debug('[RagPipeline] Injecting system prompt')
       systemBlocks.push({ role: 'system', content: SYSTEM_PROMPTS.default })
+    }
+
+    // «Кладезъ»: русский интерфейс — и ответ, и «размышление» по-русски. Qwen 3.5 без этого
+    // рассуждает по-английски, и человек видит английский текст в окне «Размышление».
+    if (getLocale() === 'ru') {
+      systemBlocks.push({ role: 'system', content: SYSTEM_PROMPTS.answer_in_russian })
     }
 
     // The user-managed NOMAD.md goes in front of the formatting prompt so the

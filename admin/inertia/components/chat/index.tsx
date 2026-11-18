@@ -444,7 +444,8 @@ export default function Chat({
       }
 
       const chatMessages = [
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
+        // Пустые ответы (модель только «размышляла») не отправляем: сервер их отвергал (422).
+        ...messages.filter((m) => m.content.trim()).map((m) => ({ role: m.role, content: m.content })),
         { role: 'user' as const, content },
       ]
 

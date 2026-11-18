@@ -1,4 +1,4 @@
-import {
+import { IconFirstAidKit,
   IconBolt,
   IconBox,
   IconHelp,
@@ -61,6 +61,17 @@ const DRUG_REFERENCE_ITEM = {
 
 // System items shown after all apps
 const SYSTEM_ITEMS = [
+  {
+    // «Кладезъ»: памятки на случай беды — на виду, а не в глубине справки.
+    label: t('home.tiles.emergency.title'),
+    to: '/docs/emergency',
+    target: '',
+    description: t('home.tiles.emergency.description'),
+    icon: <IconFirstAidKit size={48} />,
+    installed: true,
+    displayOrder: 49,
+    poweredBy: null,
+  },
   {
     label: t('home.tiles.easySetup.title'),
     to: '/easy-setup',

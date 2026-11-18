@@ -324,6 +324,9 @@ export const RESPONSE_STYLE_PRESETS: { value: ResponseStyle; label: string }[] =
 ]
 
 export const SYSTEM_PROMPTS = {
+  // «Кладезъ»: язык ответа и рассуждений при русском интерфейсе.
+  answer_in_russian:
+    'Отвечай на русском языке, если пользователь сам не попросил другой язык. Если перед ответом ты рассуждаешь, рассуждай тоже по-русски.',
   default: `
  Format all responses using markdown for better readability. Vanilla markdown or GitHub-flavored markdown is preferred.
  - Use **bold** and *italic* for emphasis.

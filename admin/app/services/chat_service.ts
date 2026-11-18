@@ -16,7 +16,7 @@ import {
   resolveStructured,
 } from '../utils/structured_output.js'
 import type { ChatSource } from '../../types/chat.js'
-import { t } from '../../constants/i18n/index.js'
+import { getLocale, t } from '../../constants/i18n/index.js'
 
 /** Sidebar width, near enough. Applied once, to whichever candidate title won. */
 const TITLE_MAX_LENGTH = 57
@@ -103,7 +103,12 @@ export class ChatService {
         messages: [
           {
             role: 'user',
-            content: SYSTEM_PROMPTS.chat_suggestions,
+            // «Кладезъ»: подсказки «Можно спросить» — на языке интерфейса, а не всегда по-английски.
+            content:
+              getLocale() === 'ru'
+                ? `${SYSTEM_PROMPTS.chat_suggestions}
+Write the questions in Russian.`
+                : SYSTEM_PROMPTS.chat_suggestions,
           }
         ],
         stream: false,

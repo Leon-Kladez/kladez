@@ -9,6 +9,8 @@ export const homeEn = {
   'home.tiles.supplyDepot.title': 'Supply Depot',
   'home.tiles.supplyDepot.description': 'Browse and install curated apps, or add your own Docker container',
   'home.tiles.docs.title': 'Docs',
+  'home.tiles.emergency.title': 'What to do if…',
+  'home.tiles.emergency.description': 'Emergency checklists: first aid, fire, gas, no power or water, radios',
   'home.tiles.docs.description': 'Read Kladez manuals and guides',
   'home.tiles.settings.title': 'Settings',
   'home.tiles.settings.description': 'Configure Kladez settings',
