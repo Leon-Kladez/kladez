@@ -4,6 +4,9 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.35" %}
 
+- **Map on a phone:** the map tools (route, Nearby, markers, layers…) live in a slide-out panel at the right edge: tap the tab and it slides out, tap again and it hides. Zoom and full-screen buttons are gone on phones, since fingers zoom the map anyway.
+- **Chat on a phone:** Model, Knowledge base and Thinking no longer overlap, the model list spans the full width and the input box is wider. The Knowledge base switch is inactive on a phone with a note that it is changed on the computer (it used to jump back).
+- **Night mode on a phone** without the false “Changes are only possible on the computer”.
 - **The new-version bar appears by itself:** Kladez checks for updates at start-up and then every hour, and the home page shows “A new version of Kladez is out: 0.1.35” with a “Download the update” button. Before, the scheduled check did not actually check anything, and the bar appeared only after a manual “Check again”.
 
 {% /release %}

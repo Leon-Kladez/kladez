@@ -260,7 +260,7 @@ export default function ChatInterface({
           </>
         )}
       </div>
-      <div className="border-t border-border-subtle bg-surface-primary px-6 py-4 flex-shrink-0 min-h-[90px]">
+      <div className="border-t border-border-subtle bg-surface-primary px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0 min-h-[90px]">
         {noModels && (
           <p className="mb-3 rounded-lg border border-desert-orange bg-surface-secondary px-4 py-3 text-sm">
             {t('chat.noModelsNotice')}{' '}
@@ -290,7 +290,7 @@ export default function ChatInterface({
             ))}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+        <form onSubmit={handleSubmit} className="flex gap-2 sm:gap-3 items-end">
           <input
             ref={imageInputRef}
             type="file"
@@ -309,7 +309,7 @@ export default function ChatInterface({
                 visionCapability === 'unsupported'
               }
               className={classNames(
-                'p-3 rounded-lg transition-colors flex-shrink-0',
+                'p-2 sm:p-3 rounded-lg transition-colors flex-shrink-0',
                 isLoading ||
                   images.length >= MAX_VISION_IMAGES ||
                   visionCapability === 'unsupported'
@@ -337,7 +337,7 @@ export default function ChatInterface({
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.inputPlaceholder', { name: aiAssistantName })}
-              className="w-full resize-none rounded-lg border border-border-default px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent disabled:bg-surface-secondary disabled:text-text-muted"
+              className="w-full resize-none rounded-lg border border-border-default px-3 py-2.5 sm:px-4 sm:py-3 sm:pr-12 focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent disabled:bg-surface-secondary disabled:text-text-muted"
               rows={1}
               disabled={isLoading || noModels}
               style={{ maxHeight: '200px' }}
@@ -362,7 +362,7 @@ export default function ChatInterface({
             type="submit"
             disabled={(!input.trim() && images.length === 0) || isLoading || noModels}
             className={classNames(
-              'p-3 rounded-lg transition-all duration-200 flex-shrink-0 mb-2',
+              'p-2 sm:p-3 rounded-lg transition-all duration-200 flex-shrink-0 mb-2',
               (!input.trim() && images.length === 0) || isLoading
                 ? 'bg-border-default text-text-muted cursor-not-allowed'
                 : 'bg-desert-green text-white hover:bg-desert-green/90 hover:scale-105'

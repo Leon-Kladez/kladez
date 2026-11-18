@@ -55,6 +55,8 @@ type MapComponentProps = {
   startBounds?: [number, number, number, number] | null
   /** Кладезъ: скачан ли указатель поиска (тогда в подсказке — точный адрес). */
   hasSearchIndex?: boolean
+  /** Телефон: без кнопок MapLibre справа. */
+  compact?: boolean
   /** Кладезъ: маршрут — линия, точки, выбор точки нажатием на карту. */
   route?: RouteResult | null
   routeEnds?: { from: RouteEnd | null; to: RouteEnd | null }
@@ -174,6 +176,7 @@ export default function MapComponent({
                                        showCoordinatesEnabled = true,
                                        startBounds = null,
                                        hasSearchIndex = false,
+                                       compact = false,
                                        route = null,
                                        routeEnds,
                                        routePickMode = null,
@@ -599,8 +602,10 @@ export default function MapComponent({
           onMouseMove={handleMouseMove}
           onMouseLeave={hideCoordinates}
         >
-          <NavigationControl style={{ marginTop: '110px', marginRight: '36px' }} />
-          <FullscreenControl style={{ marginTop: '30px', marginRight: '36px' }} />
+          {/* «Кладезъ»: на телефоне кнопки приближения и «во весь экран» не нужны — пальцы и так
+              приближают и вращают карту, а кнопки закрывали полэкрана. */}
+          {!compact && <NavigationControl style={{ marginTop: '110px', marginRight: '36px' }} />}
+          {!compact && <FullscreenControl style={{ marginTop: '30px', marginRight: '36px' }} />}
           <ScaleControl position="bottom-left" maxWidth={150} unit={scaleUnit} />
 
           {!mapReady && (

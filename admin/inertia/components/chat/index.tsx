@@ -651,7 +651,7 @@ export default function Chat({
                 {activeSession?.title || t('chat.newChat')}
               </h2>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 min-w-0 sm:w-auto">
               {remoteOllamaUrlSetting?.value && (
                 <span
                   className={classNames(
@@ -682,8 +682,8 @@ export default function Chat({
                   </select>
                 </div>
               )}
-              <div className="flex items-center gap-2 min-w-0">
-                <label htmlFor="model-select" className="text-sm text-text-secondary">
+              <div className="flex w-full items-center gap-2 min-w-0 sm:w-auto">
+                <label htmlFor="model-select" className="whitespace-nowrap text-sm text-text-secondary">
                   {t('chat.model')}
                 </label>
                 {isLoadingModels ? (
@@ -695,7 +695,7 @@ export default function Chat({
                     id="model-select"
                     value={pendingModelSwitch ?? selectedModel}
                     onChange={(e) => handleUserSelectedModel(e.target.value)}
-                    className="min-w-0 max-w-44 sm:max-w-none px-2 sm:px-3 py-1.5 border border-border-default rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent bg-surface-primary"
+                    className="min-w-0 flex-1 sm:flex-none sm:max-w-none px-2 sm:px-3 py-1.5 border border-border-default rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent bg-surface-primary"
                   >
                     {installedModels.map((model) => {
                       // Кладезъ: сразу в списке видно, какая модель на этом компьютере будет тормозить.
@@ -711,21 +711,24 @@ export default function Chat({
                   </select>
                 )}
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center whitespace-nowrap">
                 <span className="text-sm text-text-secondary select-none">{t('chat.kbLabel')}</span>
                 <InfoTooltip
                   position="bottom"
                   align="right"
-                  text={t('chat.kbHint')}
+                  text={canChange ? t('chat.kbHint') : `${t('chat.kbHint')} ${t('chat.kbComputerOnly')}`}
                 />
+                {/* «Кладезъ»: это общая настройка — с телефона «только для чтения» её не поменять,
+                    и ползунок дёргался туда-обратно. На телефоне он просто неактивен. */}
                 <Switch
                   id="chat-rag-toggle"
                   checked={ragEnabled}
+                  disabled={!canChange}
                   onChange={(v) => ragEnabledMutation.mutate(v)}
                 />
               </div>
               {selectedModelSupportsThinking && (
-                <div className="flex items-center">
+                <div className="flex items-center whitespace-nowrap">
                   <span className="text-sm text-text-secondary select-none">{t('chat.thinkingLabel')}</span>
                   <InfoTooltip
                     position="bottom"

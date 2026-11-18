@@ -88,6 +88,7 @@ export const chatEn = {
   'chat.noModelsLink': 'Models and settings',
   'chat.kbLabel': 'Knowledge Base:',
   'chat.kbHint': 'When on, the assistant searches your knowledge base for relevant documents before answering. Turning this off is faster and lighter on hardware, which helps when your knowledge base is small or empty. This is the same setting as in AI Assistant settings.',
+  'chat.kbComputerOnly': 'It is switched on and off on the computer itself.',
   'chat.thinkingLabel': 'Thinking:',
   'chat.thinkingHint': 'When on, this model works through its reasoning before answering. Slower, but often better on tricky questions. Your choice is remembered for this model; the default for other models is set in AI Assistant settings.',
   'chat.close': 'Close chat',

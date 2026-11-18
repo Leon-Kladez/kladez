@@ -1531,6 +1531,19 @@ class API {
     })()
   }
 
+  /**
+   * «Кладезъ»: тихо сохранить настройку на компьютере — без всплывающей ошибки. Для мелочей вроде
+   * темы: на телефоне (только чтение) она и так меняется в самом телефоне, а отказ сервера
+   * показывал ложное «Изменять можно только на компьютере».
+   */
+  async updateSettingQuietly(key: string, value: any) {
+    try {
+      await this.client.patch('/system/settings', { key, value })
+    } catch {
+      // нет прав (телефон) или нет связи — ничего страшного
+    }
+  }
+
   async updateSetting(key: string, value: any) {
     return catchInternal(async () => {
       const response = await this.client.patch<{ success: boolean; message: string }>(

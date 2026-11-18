@@ -15,6 +15,8 @@ export const mapsPageEn = {
   'mapsUi.fullscreenEnter': 'Enter fullscreen',
   'mapsUi.fullscreenExit': 'Exit fullscreen',
   'mapsUi.findMe': 'Find my location',
+  'mapsUi.toolsShow': 'Show map tools',
+  'mapsUi.toolsHide': 'Hide map tools',
   'mapsUi.m': 'm',
   'mapsUi.house': 'House',
   'mapsUi.nearStreet': 'Nearby street',

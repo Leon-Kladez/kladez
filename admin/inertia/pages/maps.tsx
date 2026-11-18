@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 
 import MapsLayout from '~/layouts/MapsLayout'
 import MapComponent from '~/components/maps/MapComponent'
 import StyledButton from '~/components/StyledButton'
-import { IconArrowLeft } from '@tabler/icons-react'
+import { IconArrowLeft, IconChevronRight, IconTools } from '@tabler/icons-react'
+import { useNarrowScreen } from '~/hooks/useNarrowScreen'
 import NearbyPanel from '~/components/maps/NearbyPanel'
 import { getLiveMapCenter } from '~/lib/map_search_ui'
 import RoutePanel, { type RouteEnd, type RouteEnds } from '~/components/maps/RoutePanel'
@@ -53,6 +54,12 @@ export default function Maps(props: {
   const [tool, setTool] = useState<MapTool>('info')
   // Слева — одна панель: «Что здесь?» или «Маршрут».
   const [leftPanel, setLeftPanel] = useState<'here' | 'route' | 'nearby' | null>(null)
+  // «Кладезъ»: телефон — меню карты выдвижное; открыли окно слева (маршрут, «Рядом») — меню прячется.
+  const narrow = useNarrowScreen()
+  const [toolsOpen, setToolsOpen] = useState(false)
+  useEffect(() => {
+    if (narrow && leftPanel) setToolsOpen(false)
+  }, [leftPanel, narrow])
   // «Рядом»: откуда искать — «Где я», если место известно, иначе центр карты в момент нажатия.
   const [nearbyCenter, setNearbyCenter] = useState<{ lat: number; lon: number; mine: boolean } | null>(null)
   const [here, setHere] = useState<HerePoint | null>(null)
@@ -207,8 +214,30 @@ export default function Maps(props: {
         )}
         </div>
 
-        {/* Кладезъ: меню карты справа, под «+ / −» и «во весь экран». */}
-        <div className="absolute right-[46px] top-[17rem] z-40">
+        {/* Кладезъ: меню карты справа, под «+ / −» и «во весь экран». На телефоне — выдвижная
+            панель у самого края: язычок с ключами, нажали — выехала, нажали ещё раз — спряталась. */}
+        <div
+          className={
+            narrow
+              ? `absolute right-0 top-[9.5rem] z-40 flex items-start transition-transform duration-200 ${
+                  toolsOpen ? 'translate-x-0' : 'translate-x-[calc(100%-2.75rem)]'
+                }`
+              : 'absolute right-[46px] top-[17rem] z-40'
+          }
+        >
+          {narrow && (
+            <button
+              type="button"
+              onClick={() => setToolsOpen((v) => !v)}
+              aria-expanded={toolsOpen}
+              aria-label={toolsOpen ? t('mapsUi.toolsHide') : t('mapsUi.toolsShow')}
+              title={toolsOpen ? t('mapsUi.toolsHide') : t('mapsUi.toolsShow')}
+              className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-l-lg border border-r-0 border-border-default bg-surface-primary text-text-secondary shadow-md"
+            >
+              {toolsOpen ? <IconChevronRight size={22} /> : <IconTools size={22} />}
+            </button>
+          )}
+          <div className={narrow ? 'mr-2' : ''}>
           <MapToolbar
             tool={tool}
             onTool={(next) => {
@@ -240,6 +269,7 @@ export default function Maps(props: {
             onMouseEnter={() => setIsHoveringUI(true)}
             onMouseLeave={() => setIsHoveringUI(false)}
           />
+          </div>
         </div>
 
         {/* Слева под верхней панелью: «Что здесь?» или «Маршрут». */}
@@ -305,6 +335,7 @@ export default function Maps(props: {
 
         <div className="absolute inset-0">
           <MapComponent
+            compact={narrow}
             startBounds={props.maps.startBounds ?? null}
             hasSearchIndex={hasSearchIndex}
             route={route}

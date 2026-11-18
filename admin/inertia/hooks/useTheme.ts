@@ -23,7 +23,7 @@ export function useTheme() {
       localStorage.setItem(STORAGE_KEY, newTheme)
     } catch {}
     // Fire-and-forget KV store sync for cross-device persistence
-    api.updateSetting('ui.theme', newTheme).catch(() => {})
+    void api.updateSettingQuietly('ui.theme', newTheme)
   }, [])
 
   const toggleTheme = useCallback(() => {
@@ -33,7 +33,7 @@ export function useTheme() {
       try {
         localStorage.setItem(STORAGE_KEY, next)
       } catch {}
-      api.updateSetting('ui.theme', next).catch(() => {})
+      void api.updateSettingQuietly('ui.theme', next)
       return next
     })
   }, [])
