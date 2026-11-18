@@ -5,6 +5,8 @@ import MapsLayout from '~/layouts/MapsLayout'
 import MapComponent from '~/components/maps/MapComponent'
 import StyledButton from '~/components/StyledButton'
 import { IconArrowLeft } from '@tabler/icons-react'
+import NearbyPanel from '~/components/maps/NearbyPanel'
+import { getLiveMapCenter } from '~/lib/map_search_ui'
 import RoutePanel, { type RouteEnd, type RouteEnds } from '~/components/maps/RoutePanel'
 import HerePanel, { type HerePoint } from '~/components/maps/HerePanel'
 import MapToolbar, { type MapLayerKind, type MapTool } from '~/components/maps/MapToolbar'
@@ -50,7 +52,9 @@ export default function Maps(props: {
   // Кладезъ: меню справа. По умолчанию — «Что здесь?»: нажатие показывает подробности слева.
   const [tool, setTool] = useState<MapTool>('info')
   // Слева — одна панель: «Что здесь?» или «Маршрут».
-  const [leftPanel, setLeftPanel] = useState<'here' | 'route' | null>(null)
+  const [leftPanel, setLeftPanel] = useState<'here' | 'route' | 'nearby' | null>(null)
+  // «Рядом»: откуда искать — «Где я», если место известно, иначе центр карты в момент нажатия.
+  const [nearbyCenter, setNearbyCenter] = useState<{ lat: number; lon: number; mine: boolean } | null>(null)
   const [here, setHere] = useState<HerePoint | null>(null)
 
   // Маршрут — точки А/Б, выбор точки на карте, готовая линия.
@@ -212,6 +216,14 @@ export default function Maps(props: {
               if (next === 'marker') addNotification({ type: 'info', message: t('mapsUi.markerModeHint'), duration: 6000 })
             }}
             routeOpen={leftPanel === 'route'}
+            nearbyOpen={leftPanel === 'nearby'}
+            onNearby={() => {
+              if (leftPanel === 'nearby') return setLeftPanel(null)
+              const c = myPosition ? { lat: myPosition.lat, lon: myPosition.lon, mine: true } : getLiveMapCenter()
+              if (!c) return
+              setNearbyCenter({ lat: c.lat, lon: c.lon, mine: !!myPosition })
+              setLeftPanel('nearby')
+            }}
             onRoute={() => {
               setLeftPanel((cur) => (cur === 'route' ? null : 'route'))
               setRoutePickMode(null)
@@ -248,6 +260,23 @@ export default function Maps(props: {
                 onAddMarker={() => {
                   setMapCommand({ id: Date.now(), lat: here.lat, lng: here.lon, action: 'marker' })
                   setLeftPanel(null)
+                }}
+              />
+            )}
+            {leftPanel === 'nearby' && nearbyCenter && (
+              <NearbyPanel
+                center={nearbyCenter}
+                hasIndex={hasSearchIndex}
+                onClose={() => setLeftPanel(null)}
+                onShow={(p) => setMapCommand({ id: Date.now(), lat: p.lat, lng: p.lon, action: 'fly', zoom: 17 })}
+                onRouteTo={(p, label) => {
+                  if (myPosition) {
+                    setRouteEnds({ from: { lat: myPosition.lat, lon: myPosition.lon, label: t('mapsUi.locateYou') }, to: { lat: p.lat, lon: p.lon, label } })
+                    setRoute(null)
+                    setLeftPanel('route')
+                  } else {
+                    handleRoutePoint('to', { lat: p.lat, lon: p.lon, label })
+                  }
                 }}
               />
             )}

@@ -1,4 +1,4 @@
-import { IconCrosshair, IconCurrentLocation, IconInfoCircle, IconMapPinPlus, IconRoute, IconStack2 } from '@tabler/icons-react'
+import { IconCrosshair, IconCurrentLocation, IconInfoCircle, IconMapPinPlus, IconMapSearch, IconRoute, IconStack2 } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { t } from '../../../constants/i18n'
@@ -11,6 +11,9 @@ type Props = {
   tool: MapTool
   onTool: (tool: MapTool) => void
   routeOpen: boolean
+  /** «Рядом»: открыто ли окно и как его открыть. */
+  nearbyOpen?: boolean
+  onNearby?: () => void
   onRoute: () => void
   onLocate: () => void
   locating: boolean
@@ -82,6 +85,9 @@ export default function MapToolbar(props: Props) {
         </ToolButton>
         <ToolButton active={props.routeOpen} label={t('mapsUi.tool.route')} onClick={props.onRoute}>
           <IconRoute size={20} />
+        </ToolButton>
+        <ToolButton active={props.nearbyOpen} label={t('nearby.tool')} onClick={() => props.onNearby?.()}>
+          <IconMapSearch size={20} />
         </ToolButton>
         {props.canChange && (
           <ToolButton active={props.tool === 'marker'} label={t('mapsUi.tool.marker')} onClick={() => props.onTool(props.tool === 'marker' ? 'info' : 'marker')}>

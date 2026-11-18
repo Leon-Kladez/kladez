@@ -18,6 +18,14 @@ export const SEARCH_FILE_RE = /^search-([a-z0-9-]+)_(\d{4}-\d{2})\.sqlite$/
 const SUPPORTED_SCHEMA = 1
 
 import type { MapSearchResult } from '../../types/maps.js'
+import {
+  NEARBY_GROUPS,
+  NEARBY_PER_GROUP,
+  NEARBY_RADII_KM,
+  pickNearest,
+  type NearbyCandidate,
+  type NearbyPlace,
+} from '../../constants/nearby.js'
 export type { MapSearchResult }
 
 type Row = {
@@ -480,4 +488,56 @@ export async function describeHere(lat: number, lon: number): Promise<HereInfo> 
 /** Для тестов и журнала: короткая подпись результата. */
 export function resultLabel(r: MapSearchResult): string {
   return [r.name, r.address, r.city].filter(Boolean).map((s) => normalizeText(String(s))).join(' · ')
+}
+
+/**
+ * «Кладезъ»: «Рядом» — по каждой группе (аптека, больница, продукты, вода…) ближайшие места
+ * из скачанных указателей. Радиус растёт, пока в группе не наберётся несколько мест.
+ */
+export async function nearbyPlaces(
+  lat: number,
+  lon: number
+): Promise<{ id: string; places: NearbyPlace[] }[]> {
+  const dbs = await MapSearchService.databases()
+  const groups: { id: string; places: NearbyPlace[] }[] = []
+  for (const group of NEARBY_GROUPS) {
+    let places: NearbyPlace[] = []
+    for (const km of NEARBY_RADII_KM) {
+      const dLat = km / 111.2
+      const dLon = km / (111.2 * Math.max(0.2, Math.cos((lat * Math.PI) / 180)))
+      const marks = group.kinds.map(() => '?').join(',')
+      const found: NearbyCandidate[] = []
+      for (const { db } of dbs) {
+        const rows = db
+          .prepare(
+            `SELECT name, kind, street, house, lat, lon FROM items
+             WHERE cls = 'poi' AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? AND kind IN (${marks}) LIMIT 2000`
+          )
+          .all(lat - dLat, lat + dLat, lon - dLon, lon + dLon, ...group.kinds) as {
+          name: string
+          kind: string | null
+          street: string | null
+          house: string | null
+          lat: number
+          lon: number
+        }[]
+        for (const r of rows) {
+          const d = distanceKm(lat, lon, r.lat, r.lon)
+          if (d > km) continue
+          found.push({
+            name: r.name ?? '',
+            kind: r.kind,
+            lat: r.lat,
+            lon: r.lon,
+            distanceKm: d,
+            address: r.street ? [r.street, r.house].filter(Boolean).join(', ') : null,
+          })
+        }
+      }
+      places = pickNearest(found)
+      if (places.length >= NEARBY_PER_GROUP) break
+    }
+    groups.push({ id: group.id, places })
+  }
+  return groups
 }

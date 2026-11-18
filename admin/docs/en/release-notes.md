@@ -4,6 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.34" %}
 
+- **“Nearby” on the map:** a new button in the map menu on the right lists the nearest pharmacies, hospitals and clinics, food, drinking water, fuel, ATMs, police and fire stations, three per group, with the distance and a “Route here” button. Searches from you (after “Where am I”) or from the map centre, offline, using the downloaded search.
 - **“Kladez has been updated: reload the page”:** if a page was open while Kladez updated, a bar with a “Reload page” button appears at the bottom. Before, the old page silently kept showing old things, such as the previous list of AI models.
 - **A readable install progress:** app names (“AI Assistant”) instead of technical ones like “nomad_ollama”, and the time as hours and minutes instead of “2026-11-18T08:13:44Z”.
 

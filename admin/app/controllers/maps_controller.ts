@@ -16,7 +16,7 @@ import vine from '@vinejs/vine'
 import { t } from '../../constants/i18n/index.js'
 import logger from '@adonisjs/core/services/logger'
 import { humanizeError } from '../utils/user_errors.js'
-import { describeHere, MapSearchService } from '#services/map_search_service'
+import { describeHere, MapSearchService, nearbyPlaces } from '#services/map_search_service'
 import { MapRouteService, RouteError } from '#services/map_route_service'
 import { DockerService } from '#services/docker_service'
 import { ROUTE_MODES, type RouteMode } from '../utils/map_route.js'
@@ -106,6 +106,17 @@ export default class MapsController {
     } catch (error) {
       logger.warn({ err: error }, '[MapsController] here failed')
       return { address: null, nearby: [], district: null, settlement: null, region: null, regionTitle: null }
+    }
+  }
+
+  /** «Рядом»: ближайшие аптеки, больницы, продукты, вода, заправки… — из скачанных указателей. */
+  async nearby({ request }: HttpContext) {
+    const { lat, lon } = await searchPointValidator.validate(request.qs())
+    try {
+      return { groups: await nearbyPlaces(lat, lon) }
+    } catch (error) {
+      logger.warn({ err: error }, '[MapsController] nearby failed')
+      return { groups: [] }
     }
   }
 

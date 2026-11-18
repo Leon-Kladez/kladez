@@ -265,6 +265,10 @@ router
       summary: 'Search places, streets and addresses in downloaded maps (offline)',
       tags: ['maps'],
     })
+    documented(router.get('/nearby', [MapsController, 'nearby']), {
+      summary: 'Nearest pharmacies, hospitals, food, water, fuel, ATMs, police and fire stations (offline)',
+      tags: ['maps'],
+    })
     documented(router.get('/here', [MapsController, 'here']), {
       summary: 'What is here: address, nearby places, district, city, region (offline)',
       tags: ['maps'],

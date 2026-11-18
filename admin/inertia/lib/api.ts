@@ -24,6 +24,7 @@ import { getLocale, t } from '../../constants/i18n/index.js'
 import { errorText } from './error_text.js'
 import type { MapSearchResult } from '../../types/maps'
 import type { RouteResult } from '../../app/utils/map_route.js'
+import type { NearbyPlace } from '../../constants/nearby.js'
 
 export type PhonesInfo = {
   device: { isComputer: boolean; canChange: boolean }
@@ -194,6 +195,18 @@ class API {
     try {
       const response = await this.client.get('/maps/here', { params: { lat, lon } })
       return response.data
+    } catch {
+      return null
+    }
+  }
+
+  /** «Кладезъ»: «Рядом» — ближайшие аптеки, больницы, продукты, вода… по группам. */
+  async mapNearby(lat: number, lon: number): Promise<{ id: string; places: NearbyPlace[] }[] | null> {
+    try {
+      const response = await this.client.get<{ groups: { id: string; places: NearbyPlace[] }[] }>('/maps/nearby', {
+        params: { lat, lon },
+      })
+      return response.data.groups
     } catch {
       return null
     }
