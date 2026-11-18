@@ -33,6 +33,8 @@ export const commonRu: Record<keyof typeof commonEn, string> = {
   'common.edit': 'Изменить',
   'common.saving': 'Сохраняем…',
   'common.internalError': 'Произошла внутренняя ошибка. Попробуйте ещё раз.',
+  'updated.banner': 'Кладезъ обновился до версии {version}. Обновите страницу, чтобы увидеть новое.',
+  'updated.reload': 'Обновить страницу',
   'common.remove': 'Убрать',
   'common.open': 'Открыть',
   'common.updating': 'Обновляется…',

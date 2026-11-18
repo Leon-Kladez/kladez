@@ -14,6 +14,7 @@ import NotificationsProvider from '~/providers/NotificationProvider'
 import { ThemeProvider } from '~/providers/ThemeProvider'
 import { UsePageProps } from '../../types/system'
 import { getLocale, setLocale } from '../../constants/i18n'
+import UpdatedBanner from '~/components/UpdatedBanner'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Кладезъ'
 const queryClient = new QueryClient()
@@ -54,6 +55,7 @@ createInertiaApp({
             <NotificationsProvider>
               <ModalsProvider>
                 <App {...props} />
+                <UpdatedBanner pageVersion={pageProps.appVersion} />
                 {showDevtools && <ReactQueryDevtools initialIsOpen={false} buttonPosition='bottom-left' />}
               </ModalsProvider>
             </NotificationsProvider>

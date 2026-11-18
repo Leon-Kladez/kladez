@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { IconCircleCheck, IconCircleX } from '@tabler/icons-react'
 import classNames from '~/lib/classNames'
 import { t } from '../../constants/i18n'
+import { activityTime, friendlyMessage, friendlyServiceName } from '~/lib/install_activity'
 
 export type InstallActivityFeedProps = {
   activity: Array<{
@@ -59,7 +60,7 @@ const InstallActivityFeed: React.FC<InstallActivityFeedProps> = ({ activity, cla
       {withHeader && <h2 className="text-lg font-semibold text-text-primary">{t('install.activityTitle')}</h2>}
       <ul ref={listRef} role="list" className={classNames("space-y-6 text-desert-green max-h-[400px] overflow-y-auto scroll-smooth", withHeader ? 'mt-6' : '')}>
         {activity.map((activityItem, activityItemIdx) => (
-          <li key={activityItem.timestamp} className="relative flex gap-x-4">
+          <li key={`${activityItem.timestamp}-${activityItemIdx}`} className="relative flex gap-x-4">
             <div
               className={classNames(
                 activityItemIdx === activity.length - 1 ? 'h-6' : '-bottom-6',
@@ -79,14 +80,14 @@ const InstallActivityFeed: React.FC<InstallActivityFeedProps> = ({ activity, cla
                 )}
               </div>
               <p className="flex-auto py-0.5 text-xs/5 text-text-muted">
-                <span className="font-semibold text-text-primary">{activityItem.service_name}</span> -{' '}
-                {activityItem.message || activityItem.type.charAt(0).toUpperCase() + activityItem.type.slice(1)}
+                <span className="font-semibold text-text-primary">{friendlyServiceName(activityItem.service_name)}</span> —{' '}
+                {friendlyMessage(activityItem.message, activityItem.service_name) || t('install.noMessage')}
               </p>
               <time
                 dateTime={activityItem.timestamp}
                 className="flex-none py-0.5 text-xs/5 text-text-muted"
               >
-                {activityItem.timestamp}
+                {activityTime(activityItem.timestamp)}
               </time>
             </>
           </li>

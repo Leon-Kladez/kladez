@@ -353,8 +353,9 @@ router
   .prefix('/api/downloads')
 
 documented(
-  router.get('/api/health', () => {
-    return { status: 'ok' }
+  router.get('/api/health', async () => {
+    const { SystemService } = await import('#services/system_service')
+    return { status: 'ok', version: SystemService.getAppVersion() }
   }),
   { summary: 'Health check', tags: ['meta'], responses: { 200: healthResponse } }
 )

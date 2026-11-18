@@ -2,6 +2,13 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.34" %}
+
+- **“Kladez has been updated: reload the page”:** if a page was open while Kladez updated, a bar with a “Reload page” button appears at the bottom. Before, the old page silently kept showing old things, such as the previous list of AI models.
+- **A readable install progress:** app names (“AI Assistant”) instead of technical ones like “nomad_ollama”, and the time as hours and minutes instead of “2026-11-18T08:13:44Z”.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.33" %}
 
 - **English materials in Russian:** the Translated Library now translates into Russian by default. Install it in the App Store and the articles in the “In English” section (survival, water, field medicine, gardening) can be read in Russian offline. Machine translation; speech in videos is not translated.

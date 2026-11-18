@@ -18,6 +18,8 @@ import vine from '@vinejs/vine'
 export const healthResponse = vine.compile(
   vine.object({
     status: vine.string(),
+    // «Кладезъ»: открытая страница сверяет версию — плашка «Кладезъ обновился».
+    version: vine.string().optional(),
   })
 )
 

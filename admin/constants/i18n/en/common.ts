@@ -32,6 +32,8 @@ export const commonEn = {
   'common.edit': 'Edit',
   'common.saving': 'Saving...',
   'common.internalError': 'An internal error occurred. Please try again or check the console for details.',
+  'updated.banner': 'Kladez has been updated to version {version}. Reload the page to see what is new.',
+  'updated.reload': 'Reload page',
   'common.remove': 'Remove',
   'common.open': 'Open',
   'common.updating': 'Updating...',
