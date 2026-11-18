@@ -92,6 +92,7 @@ export const chatEn = {
   'chat.waitAnswer': 'The assistant is still finishing its answer — you can send when it is done.',
   'chat.replyToSelection': 'Reply',
   'chat.stopAnswer': 'Stop the answer',
+  'chat.stopped': 'Answer stopped',
   'chat.thinkingLabel': 'Thinking:',
   'chat.thinkingHint': 'When on, this model works through its reasoning before answering. Slower, but often better on tricky questions. Your choice is remembered for this model; the default for other models is set in AI Assistant settings.',
   'chat.close': 'Close chat',

@@ -280,14 +280,15 @@ export default class OllamaController {
         }
         // «Кладезъ»: кнопка «Стоп» (квадратик) — останавливаем модель, написанное сохраняем.
         let stoppedByUser = false
+        let pendingEntry: ReturnType<typeof startPending> | null = null
         if (sessionId) {
-          startPending(sessionId, () => {
+          pendingEntry = startPending(sessionId, () => {
             if (stoppedByUser) return
             stoppedByUser = true
             abortController.abort()
             // Пока модель грузится, Ollama оборвать нельзя — оборвём, как только отзовётся.
             // А чат отпускаем сразу: «Стоп» — значит стоп.
-            send(`data: ${JSON.stringify({ message: { content: '', thinking: '' }, done: true, done_reason: 'stop' })}
+            send(`data: ${JSON.stringify({ message: { content: '', thinking: '' }, done: true, done_reason: 'stopped' })}
 
 `)
             if (!clientGone) {
@@ -322,7 +323,7 @@ export default class OllamaController {
             if (chunk.message?.content) {
               fullContent += chunk.message.content
             }
-            if (sessionId) appendPending(sessionId, chunk.message?.content ?? '', chunk.message?.thinking ?? '')
+            appendPending(pendingEntry, chunk.message?.content ?? '', chunk.message?.thinking ?? '')
             if (chunk.usage) {
               completionTokens = chunk.usage.completionTokens
               this._recordUsage(reqData.model, trace, chunk.usage)
@@ -333,9 +334,9 @@ export default class OllamaController {
         } catch (err) {
           if (stoppedByUser) {
             // Остановили кнопкой — это не ошибка: дописанное сохраняем, как обычный ответ.
-            doneReason = 'stop'
+            doneReason = 'stopped'
           } else {
-          if (sessionId) finishPending(sessionId)
+          if (sessionId) finishPending(sessionId, pendingEntry)
           if (abortController.signal.aborted) {
             logger.debug('[OllamaController] Client disconnected; aborted upstream Ollama generation')
             return
@@ -354,7 +355,7 @@ export default class OllamaController {
         if (doneReason === 'length') {
           this._logLengthStop(reqData.model, numCtx, numPredict, completionTokens)
         }
-        if (sessionId && !fullContent) finishPending(sessionId)
+        if (sessionId && !fullContent) finishPending(sessionId, pendingEntry)
         // Trailing citation event, written before end(). It carries no `message`
         // key, which is how the client tells it apart from Ollama's own chunks.
         if (sources.length > 0) {
@@ -370,11 +371,11 @@ export default class OllamaController {
             await this.chatService.addMessage(sessionId, 'assistant', fullContent, sources)
           } catch (err) {
             // Разговор успели удалить, пока модель дописывала, — сохранять некуда.
-            finishPending(sessionId)
+            finishPending(sessionId, pendingEntry)
             logger.warn(`[OllamaController] Answer not saved: ${err instanceof Error ? err.message : err}`)
             return
           }
-          finishPending(sessionId)
+          finishPending(sessionId, pendingEntry)
           const messageCount = await this.chatService.getMessageCount(sessionId)
           if (messageCount <= 2 && userContent) {
             this.chatService.generateTitle(sessionId, userContent, fullContent, reqData.model).catch((err) => {

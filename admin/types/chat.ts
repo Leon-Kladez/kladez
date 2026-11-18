@@ -19,6 +19,8 @@ export interface ChatMessage {
   thinking?: string
   isThinking?: boolean
   thinkingDuration?: number
+  /** «Кладезъ»: ответ остановили кнопкой «Стоп». */
+  stopped?: boolean
   sources?: ChatSource[]
   // Generation stopped at the length limit, so the answer ends mid-thought.
   truncated?: boolean

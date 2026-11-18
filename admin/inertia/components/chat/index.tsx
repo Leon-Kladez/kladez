@@ -607,7 +607,7 @@ export default function Chat({
         // раньше первого слова, пустую реплику помощника не показывать.
         setMessages((prev) =>
           prev
-            .filter((m) => !(m.id === assistantMsgId && !m.content.trim() && !m.thinking?.trim()))
+            .filter((m) => !(m.id === assistantMsgId && !m.stopped && !m.content.trim() && !m.thinking?.trim()))
             .map((m) => (m.id === assistantMsgId ? { ...m, isStreaming: false, isThinking: false } : m))
         )
         if (fullContent && sessionId) {
@@ -816,9 +816,16 @@ export default function Chat({
               if (activeSessionId) api.stopChat(activeSessionId)
               setPendingSessionId(null)
               setIsStreamingResponse(false)
-              setMessages((prev) =>
-                prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false, isThinking: false } : m))
-              )
+              setMessages((prev) => {
+                const writing = prev.some((m) => m.role === 'assistant' && m.isStreaming)
+                const marked = prev.map((m) =>
+                  m.isStreaming ? { ...m, isStreaming: false, isThinking: false, stopped: m.role === 'assistant' } : m
+                )
+                // Остановили, пока модель ещё «думала», — показать хотя бы «Ответ остановлен».
+                return writing
+                  ? marked
+                  : [...marked, { id: `stopped-${Date.now()}`, role: 'assistant', content: '', timestamp: new Date(), stopped: true }]
+              })
             }}
             chatSuggestions={chatSuggestions}
             chatSuggestionsEnabled={suggestionsEnabled}

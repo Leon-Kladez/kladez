@@ -171,6 +171,12 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
           <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
         )}
       </div>
+      {message.role === 'assistant' && message.stopped && (
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-text-muted" aria-hidden="true" />
+          {t('chat.stopped')}
+        </div>
+      )}
       {message.role === 'assistant' && message.truncated && !message.isStreaming && (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border-subtle pt-2 text-xs text-text-secondary">
           <span>{t('chat.cutOff')}</span>
