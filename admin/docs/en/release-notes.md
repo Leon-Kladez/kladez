@@ -4,6 +4,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.37" %}
 
+- **“Reply” to a selection, like in Claude:** select part of the assistant’s answer with the mouse or a finger and a Reply button appears above it. Click it and the selection goes into the input box as a quote, with room below for your question, such as “tell me more about this”. In the sent question the quote shows as an inset.
 - **You can type while the assistant answers:** when you come back to a conversation where the assistant is still finishing its answer, the input box no longer freezes, so you can type or dictate the next question right away. Only the Send button waits until the answer is done.
 
 {% /release %}

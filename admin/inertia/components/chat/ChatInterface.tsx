@@ -5,6 +5,8 @@ import classNames from '~/lib/classNames'
 import { ChatImageAttachment, ChatMessage } from '../../../types/chat'
 import type { ModelVisionCapability } from '../../../types/ollama'
 import ChatMessageBubble from './ChatMessageBubble'
+import QuoteReplyButton from './QuoteReplyButton'
+import { addQuote } from '../../lib/quote'
 import ChatAssistantAvatar from './ChatAssistantAvatar'
 import BouncingDots from '../BouncingDots'
 import { usePage } from '@inertiajs/react'
@@ -115,6 +117,19 @@ export default function ChatInterface({
     if (el) el.scrollTop = el.scrollHeight
     else messagesEndRef.current?.scrollIntoView()
   }, [messages])
+
+  // «Кладезъ»: «Ответить» на выделенный кусок ответа — цитата встаёт в поле ввода.
+  const quoteIntoInput = (selected: string) => {
+    setInput((prev) => addQuote(prev, selected))
+    window.setTimeout(() => {
+      const el = textareaRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`
+      el.focus()
+      el.setSelectionRange(el.value.length, el.value.length)
+    }, 0)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -248,6 +263,7 @@ export default function ChatInterface({
             {messages.map((message, idx) => (
               <div
                 key={message.id}
+                data-chat-role={message.role}
                 className={classNames(
                   'flex gap-4',
                   message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -275,6 +291,7 @@ export default function ChatInterface({
             )}
 
             <div ref={messagesEndRef} />
+            <QuoteReplyButton containerRef={scrollBoxRef} onQuote={quoteIntoInput} />
           </>
         )}
       </div>

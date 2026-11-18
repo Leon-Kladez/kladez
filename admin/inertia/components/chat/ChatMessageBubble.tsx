@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 import { ChatMessage } from '../../../types/chat'
 import { t } from '../../../constants/i18n'
 import AnswerExport from './AnswerExport'
+import { splitQuotes } from '../../lib/quote'
 
 export interface ChatMessageBubbleProps {
   message: ChatMessage
@@ -155,7 +156,16 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
             {message.content}
           </ReactMarkdown>
         ) : (
-          message.content
+          // «Кладезъ»: вопрос с цитатой из ответа («Ответить» на выделенное) — цитата врезкой.
+          splitQuotes(message.content).map((part, i) =>
+            part.quote ? (
+              <div key={i} className="mb-2 border-l-2 border-white/60 pl-2 text-sm italic text-white/80 line-clamp-6">
+                {part.text}
+              </div>
+            ) : (
+              <div key={i}>{part.text}</div>
+            )
+          )
         )}
         {message.isStreaming && (
           <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
