@@ -2,6 +2,12 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.32" %}
+
+- **The chat microphone works:** in 0.1.31 a recording ended with “The recording did not arrive”: the button sent the audio the wrong way. Now what you say appears in the input box within a few seconds.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.31" %}
 
 - **Microphone in the chat: talk instead of typing.** Install the new Speech to Text app in the App Store (about 600 MB, once). A microphone button appears next to the input box: press, speak, press: the text is in the box. Speech is recognised on this computer, without internet; your voice goes nowhere; on an ordinary computer a phrase takes 5–10 seconds. Details: [AI assistant](/docs/ai).

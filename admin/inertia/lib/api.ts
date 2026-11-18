@@ -1472,7 +1472,11 @@ class API {
       const form = new FormData()
       const ext = audio.type.includes('ogg') ? 'ogg' : 'webm'
       form.append('audio', audio, `speech.${ext}`)
-      const response = await this.client.post<{ text: string }>('/speech/transcribe', form, { timeout: 200_000 })
+      // Заголовок обязателен: у клиента по умолчанию JSON, и axios превращал запись в пустой JSON (0.1.31).
+      const response = await this.client.post<{ text: string }>('/speech/transcribe', form, {
+        timeout: 200_000,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return { text: response.data.text ?? '' }
     } catch (error: any) {
       return { message: error?.response?.data?.message ?? t('speech.failed') }
