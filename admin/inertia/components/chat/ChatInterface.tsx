@@ -300,7 +300,7 @@ export default function ChatInterface({
                   onClick={() => removeImage(image)}
                   className="absolute right-1 top-1 rounded-full bg-surface-primary/90 p-1 text-text-primary hover:bg-surface-primary"
                   aria-label={t('countryPicker.remove', { name: image.name })}
-                  disabled={isLoading || locked}
+                  disabled={noModels}
                 >
                   <IconX className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
@@ -322,14 +322,12 @@ export default function ChatInterface({
               type="button"
               onClick={() => imageInputRef.current?.click()}
               disabled={
-                isLoading || locked ||
                 images.length >= MAX_VISION_IMAGES ||
                 visionCapability === 'unsupported'
               }
               className={classNames(
                 'p-2 sm:p-3 rounded-lg transition-colors flex-shrink-0',
-                isLoading || locked ||
-                  images.length >= MAX_VISION_IMAGES ||
+                images.length >= MAX_VISION_IMAGES ||
                   visionCapability === 'unsupported'
                   ? 'bg-border-default text-text-muted cursor-not-allowed'
                   : 'border border-border-default text-text-secondary hover:bg-surface-secondary'
@@ -357,12 +355,13 @@ export default function ChatInterface({
               placeholder={t('chat.inputPlaceholder', { name: aiAssistantName })}
               className="w-full resize-none rounded-lg border border-border-default px-3 py-2.5 sm:px-4 sm:py-3 sm:pr-12 focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent disabled:bg-surface-secondary disabled:text-text-muted"
               rows={1}
-              disabled={isLoading || locked || noModels}
+              // «Кладезъ»: печатать можно и пока помощник отвечает — ждёт только отправка.
+              disabled={noModels}
               style={{ maxHeight: '200px' }}
             />
           </div>
           <SpeechButton
-            disabled={isLoading || locked || noModels}
+            disabled={noModels}
             onText={(text) => {
               setInput((prev) => (prev.trim() ? `${prev.trimEnd()} ${text}` : text))
               // Высота поля — под новый текст, и курсор в конец: можно поправить и отправить.
@@ -378,10 +377,11 @@ export default function ChatInterface({
           />
           <button
             type="submit"
-            disabled={(!input.trim() && images.length === 0) || isLoading || noModels}
+            disabled={(!input.trim() && images.length === 0) || isLoading || locked || noModels}
+            title={locked ? t('chat.waitAnswer') : undefined}
             className={classNames(
               'p-2 sm:p-3 rounded-lg transition-all duration-200 flex-shrink-0 mb-2',
-              (!input.trim() && images.length === 0) || isLoading
+              (!input.trim() && images.length === 0) || isLoading || locked
                 ? 'bg-border-default text-text-muted cursor-not-allowed'
                 : 'bg-desert-green text-white hover:bg-desert-green/90 hover:scale-105'
             )}

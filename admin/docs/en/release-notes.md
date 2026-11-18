@@ -2,6 +2,12 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.37" %}
+
+- **You can type while the assistant answers:** when you come back to a conversation where the assistant is still finishing its answer, the input box no longer freezes, so you can type or dictate the next question right away. Only the Send button waits until the answer is done.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.36" %}
 
 - **The answer survives leaving the chat:** ask a question and go to the home page or another conversation, and the assistant finishes the answer and saves it. Come back and you see it is still writing, with the text appearing as it goes. Before, the answer was cut off and only the question remained.
