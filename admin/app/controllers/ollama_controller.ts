@@ -28,6 +28,7 @@ import {
 } from '../utils/chat_images.js'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { RU_THINK_PREFIX, canSteerThinking } from '../utils/russian_thinking.js'
+import { appendPending, finishPending, startPending } from '../utils/chat_pending.js'
 
 const unknownVisionCompatibilityMessage = (model: string) =>
   `NOMAD cannot confirm that "${model}" accepts images, and this image request failed. Choose a model marked "Supports images", or remove the image and try again.`
@@ -249,8 +250,26 @@ export default class OllamaController {
         // Abort the upstream generation if the client disconnects — otherwise an abandoned
         // request keeps decoding server-side and, with Ollama's default OLLAMA_NUM_PARALLEL=1,
         // blocks every later chat/RAG request until the model is manually stopped (#1065).
+        //
+        // «Кладезъ»: но в разговоре (sessionId) ушедшая страница — не повод бросать ответ: человек
+        // перешёл на главную или в другой разговор и вернётся. Модель дописывает, ответ
+        // сохраняется, а пока она пишет, чат показывает написанное (utils/chat_pending.ts).
+        // Без разговора (запросы через API) — обрываем, как раньше.
         const abortController = new AbortController()
-        response.response.on('close', () => abortController.abort())
+        let clientGone = false
+        response.response.on('close', () => {
+          clientGone = true
+          if (!sessionId) abortController.abort()
+        })
+        const send = (data: string) => {
+          if (clientGone) return
+          try {
+            response.response.write(data)
+          } catch {
+            clientGone = true
+          }
+        }
+        if (sessionId) startPending(sessionId)
         let fullContent = ''
         let doneReason: string | undefined
         let completionTokens: number | undefined
@@ -275,16 +294,24 @@ export default class OllamaController {
             if (chunk.message?.content) {
               fullContent += chunk.message.content
             }
+            if (sessionId) appendPending(sessionId, chunk.message?.content ?? '', chunk.message?.thinking ?? '')
             if (chunk.usage) {
               completionTokens = chunk.usage.completionTokens
               this._recordUsage(reqData.model, trace, chunk.usage)
             }
             if (chunk.done_reason) doneReason = chunk.done_reason
-            response.response.write(`data: ${JSON.stringify(chunk)}\n\n`)
+            send(`data: ${JSON.stringify(chunk)}\n\n`)
           }
         } catch (err) {
+          if (sessionId) finishPending(sessionId)
           if (abortController.signal.aborted) {
             logger.debug('[OllamaController] Client disconnected; aborted upstream Ollama generation')
+            return
+          }
+          if (clientGone) {
+            logger.error(
+              `[OllamaController] Chat failed after the page was left: ${err instanceof Error ? err.message : err}`
+            )
             return
           }
           unknownVisionUpstreamRejected =
@@ -294,18 +321,27 @@ export default class OllamaController {
         if (doneReason === 'length') {
           this._logLengthStop(reqData.model, numCtx, numPredict, completionTokens)
         }
+        if (sessionId && !fullContent) finishPending(sessionId)
         // Trailing citation event, written before end(). It carries no `message`
         // key, which is how the client tells it apart from Ollama's own chunks.
         if (sources.length > 0) {
-          response.response.write(`data: ${JSON.stringify({ sources })}
+          send(`data: ${JSON.stringify({ sources })}
 
 `)
         }
-        response.response.end()
+        if (!clientGone) response.response.end()
 
         // Save assistant message and optionally generate title
         if (sessionId && fullContent) {
-          await this.chatService.addMessage(sessionId, 'assistant', fullContent, sources)
+          try {
+            await this.chatService.addMessage(sessionId, 'assistant', fullContent, sources)
+          } catch (err) {
+            // Разговор успели удалить, пока модель дописывала, — сохранять некуда.
+            finishPending(sessionId)
+            logger.warn(`[OllamaController] Answer not saved: ${err instanceof Error ? err.message : err}`)
+            return
+          }
+          finishPending(sessionId)
           const messageCount = await this.chatService.getMessageCount(sessionId)
           if (messageCount <= 2 && userContent) {
             this.chatService.generateTitle(sessionId, userContent, fullContent, reqData.model).catch((err) => {

@@ -2,6 +2,17 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="18 November 2026" versions="0.1.36" %}
+
+- **The answer survives leaving the chat:** ask a question and go to the home page or another conversation, and the assistant finishes the answer and saves it. Come back and you see it is still writing, with the text appearing as it goes. Before, the answer was cut off and only the question remained.
+- **Thinking as plain text:** instead of a yellow box with its own scrollbar, the reasoning runs right in the answer, in grey italics. Click the Thinking heading to fold it.
+- **The chat no longer drags you down:** while the assistant writes you can scroll up and read; the chat no longer jumps back to the bottom. Scroll back down and it follows the answer again.
+- **No false “An internal error occurred”:** it popped up when leaving the chat or opening a conversation, even though nothing was wrong.
+- **Tables without “<br>”:** line breaks inside table cells show as line breaks, not as the text “<br>”.
+- **Thinking in Russian, more reliably:** if the AI assistant was busy loading a model, Kladez no longer mistakes it for a “foreign” server, after which the reasoning went back to English.
+
+{% /release %}
+
 {% release date="18 November 2026" versions="0.1.35" %}
 
 - **Map on a phone:** the map tools (route, Nearby, markers, layers…) live in a slide-out panel at the right edge: tap the tab and it slides out, tap again and it hides. Zoom and full-screen buttons are gone on phones, since fingers zoom the map anyway.

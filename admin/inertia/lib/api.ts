@@ -654,7 +654,10 @@ class API {
           role: 'system' | 'user' | 'assistant'
           content: string
           timestamp: string
+          sources?: Array<{ title: string; date?: string }>
         }>
+        // «Кладезъ»: ответ, который модель ещё пишет в этот разговор.
+        pending?: { content: string; thinking: string; startedAt: number } | null
       }>(`/chat/sessions/${sessionId}`)
       return response.data
     })()

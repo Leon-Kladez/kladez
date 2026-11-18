@@ -26,6 +26,33 @@ interface ChatProps {
   streamingEnabled?: boolean
 }
 
+type LoadedSession = Awaited<ReturnType<typeof api.getChatSession>>
+
+/** Сообщения разговора с сервера, плюс ответ, который модель ещё пишет. */
+function sessionMessages(data: LoadedSession, sessionId: string): ChatMessage[] {
+  const saved: ChatMessage[] = (data?.messages ?? []).map((m) => ({
+    id: m.id,
+    role: m.role,
+    content: m.content,
+    timestamp: new Date(m.timestamp),
+    sources: (m as { sources?: ChatMessage['sources'] }).sources,
+  }))
+  const p = data?.pending
+  if (!p) return saved
+  return [
+    ...saved,
+    {
+      id: `pending-${sessionId}`,
+      role: 'assistant',
+      content: p.content,
+      thinking: p.thinking || undefined,
+      timestamp: new Date(p.startedAt),
+      isStreaming: true,
+      isThinking: !p.content && !!p.thinking,
+    },
+  ]
+}
+
 export default function Chat({
   enabled,
   isInModal,
@@ -44,6 +71,8 @@ export default function Chat({
   const [isStreamingResponse, setIsStreamingResponse] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const streamAbortRef = useRef<AbortController | null>(null)
+  // «Кладезъ»: разговор, в который модель ещё дописывает ответ (ушли из чата и вернулись).
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null)
 
   const abortCurrentStream = useCallback(() => {
     abortActiveStream(streamAbortRef)
@@ -66,6 +95,27 @@ export default function Chat({
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [isMobileSidebarOpen])
+
+  // «Кладезъ»: модель дописывает ответ, начатый до ухода из чата, — подтягиваем написанное,
+  // пока не закончит; потом показываем сохранённый ответ.
+  useEffect(() => {
+    if (!pendingSessionId || pendingSessionId !== activeSessionId) return
+    let stopped = false
+    const tick = async () => {
+      const data = await api.getChatSession(pendingSessionId)
+      if (stopped) return
+      setMessages(sessionMessages(data, pendingSessionId))
+      if (!data?.pending) {
+        setPendingSessionId(null)
+        queryClient.invalidateQueries({ queryKey: ['chatSessions'] })
+      }
+    }
+    const id = window.setInterval(tick, 2000)
+    return () => {
+      stopped = true
+      window.clearInterval(id)
+    }
+  }, [pendingSessionId, activeSessionId, queryClient])
 
   // Fetch all sessions
   const { data: sessions = [] } = useQuery({
@@ -363,19 +413,8 @@ export default function Chat({
       setActiveSessionId(sessionId)
       // Load messages for this session
       const sessionData = await api.getChatSession(sessionId)
-      if (sessionData?.messages) {
-        setMessages(
-          sessionData.messages.map((m) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-            timestamp: new Date(m.timestamp),
-            sources: m.sources,
-          }))
-        )
-      } else {
-        setMessages([])
-      }
+      setMessages(sessionMessages(sessionData, sessionId))
+      setPendingSessionId(sessionData?.pending ? sessionId : null)
 
       // Set the model to match the session's model if it exists and is available
       if (sessionData?.model) {
@@ -763,6 +802,7 @@ export default function Chat({
             onSendMessage={handleSendMessage}
             visionCapability={selectedModelVisionCapability}
             isLoading={isStreamingResponse || chatMutation.isPending}
+            locked={pendingSessionId !== null && pendingSessionId === activeSessionId}
             chatSuggestions={chatSuggestions}
             chatSuggestionsEnabled={suggestionsEnabled}
             chatSuggestionsLoading={chatSuggestionsLoading}

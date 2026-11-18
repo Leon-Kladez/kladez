@@ -285,7 +285,7 @@ export class OllamaService {
           // LM Studio answers 200 on unknown paths with an incompatible body — validate the shape.
           this.isOllamaNative = Array.isArray(response.data?.models)
         } catch (err) {
-          if (axios.isAxiosError(err) && err.response === undefined) {
+          if (axios.isAxiosError(err) && (err.response === undefined || err.response.status >= 500)) {
             // No HTTP response at all: the backend is unreachable (down, starting, or busy
             // past the timeout), which proves nothing about its identity. A busy Ollama
             // times out exactly like a non-Ollama server here, and memoizing `false` for
@@ -1419,7 +1419,11 @@ export class OllamaService {
       // nothing, and marking it non-Ollama here made every model download fail with
       // "pulling is only supported for Ollama backends" on stock installs (#1349).
       const backendAnswered = axios.isAxiosError(tagsErr) ? tagsErr.response !== undefined : true
-      if (backendAnswered) {
+      // «Кладезъ»: занятая Ollama (грузит модель) отвечает 5xx — это не «чужой сервер». Иначе
+      // до перезапуска чат шёл в обход родного /api/chat: без окна контекста и без русского
+      // начала рассуждения.
+      const busyOllama = axios.isAxiosError(tagsErr) && (tagsErr.response?.status ?? 0) >= 500
+      if (backendAnswered && !busyOllama) {
         this.isOllamaNative = false
         this.nativeProbe = Promise.resolve(false)
       }

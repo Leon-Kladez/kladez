@@ -1,3 +1,4 @@
+import { getPending } from '../utils/chat_pending.js'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import { ChatService } from '#services/chat_service'
@@ -39,7 +40,8 @@ export default class ChatsController {
       return response.status(404).json({ error: t('server.chatsController.sessionNotFound') })
     }
 
-    return session
+    // «Кладезъ»: модель ещё пишет ответ в этот разговор — отдать написанное (utils/chat_pending.ts).
+    return { ...session, pending: getPending(sessionId) }
   }
 
   async store({ request, response }: HttpContext) {

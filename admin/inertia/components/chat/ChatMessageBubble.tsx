@@ -1,3 +1,4 @@
+import { Children, Fragment, type ReactNode } from 'react'
 import classNames from '~/lib/classNames'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -9,6 +10,34 @@ export interface ChatMessageBubbleProps {
   message: ChatMessage
   // Offered on the latest answer when it was cut off at the length limit.
   onContinue?: () => void
+}
+
+/**
+ * «Кладезъ»: модели переносят строку внутри ячейки таблицы тегом «<br>» — в таблице Markdown
+ * по-другому нельзя. Без этого он показывался как текст «<br>»; здесь становится переносом.
+ */
+function withBreaks(children: ReactNode): ReactNode {
+  return Children.map(children, (child) => {
+    if (typeof child !== 'string' || !/<br\s*\/?>/i.test(child)) return child
+    const parts = child.split(/<br\s*\/?>/i)
+    return parts.map((part, i) => (
+      <Fragment key={i}>
+        {i > 0 && <br />}
+        {part}
+      </Fragment>
+    ))
+  })
+}
+
+/** Размышление — тем же текстом, что ответ, только приглушённым цветом. */
+const thinkingComponents = {
+  p: ({ children }: any) => <p className="mb-2 last:mb-0">{withBreaks(children)}</p>,
+  ul: ({ children }: any) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
+  li: ({ children }: any) => <li className="mb-1">{withBreaks(children)}</li>,
+  h1: ({ children }: any) => <p className="mb-1 font-semibold">{children}</p>,
+  h2: ({ children }: any) => <p className="mb-1 font-semibold">{children}</p>,
+  h3: ({ children }: any) => <p className="mb-1 font-semibold">{children}</p>,
 }
 
 export default function ChatMessageBubble({ message, onContinue }: ChatMessageBubbleProps) {
@@ -31,26 +60,26 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
           ))}
         </div>
       )}
-      {message.isThinking && message.thinking && (
-        <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs">
-          <div className="mb-1 flex items-center gap-1.5 font-medium text-amber-700">
-            <span>{t('chat.reasoning')}</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
-          </div>
-          <div className="prose prose-xs max-w-none text-amber-900/80 max-h-32 overflow-y-auto">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.thinking}</ReactMarkdown>
-          </div>
-        </div>
-      )}
-      {!message.isThinking && message.thinking && (
-        <details className="mb-3 rounded border border-border-subtle bg-surface-secondary text-xs">
-          <summary className="cursor-pointer px-3 py-2 font-medium text-text-muted hover:text-text-primary select-none">
-            {message.thinkingDuration !== undefined
-              ? t('chat.thoughtFor', { s: message.thinkingDuration })
-              : t('chat.reasoning')}
+      {/* «Кладезъ»: размышление — обычным текстом прямо в ответе, приглушённым цветом, без
+          жёлтого окошка с прокруткой. Заголовок «Размышление» можно нажать — свернуть. */}
+      {message.thinking && (
+        <details open className="mb-3">
+          <summary className="cursor-pointer select-none text-xs font-medium text-text-muted hover:text-text-primary">
+            {message.isThinking ? (
+              <span className="inline-flex items-center gap-1.5">
+                {t('chat.reasoning')}
+                <span className="h-1.5 w-1.5 rounded-full bg-text-muted animate-pulse inline-block" />
+              </span>
+            ) : message.thinkingDuration !== undefined ? (
+              t('chat.thoughtFor', { s: message.thinkingDuration })
+            ) : (
+              t('chat.reasoning')
+            )}
           </summary>
-          <div className="px-3 pb-3 prose prose-xs max-w-none text-text-secondary max-h-48 overflow-y-auto border-t border-border-subtle pt-2">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.thinking}</ReactMarkdown>
+          <div className="mt-1 break-words border-l-2 border-border-default pl-3 text-sm italic text-text-muted">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={thinkingComponents}>
+              {message.thinking}
+            </ReactMarkdown>
           </div>
         </details>
       )}
@@ -85,10 +114,10 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
                   </code>
                 )
               },
-              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+              p: ({ children }) => <p className="mb-2 last:mb-0">{withBreaks(children)}</p>,
               ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
               ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
-              li: ({ children }) => <li className="mb-1">{children}</li>,
+              li: ({ children }) => <li className="mb-1">{withBreaks(children)}</li>,
               h1: ({ children }) => <h1 className="text-xl font-bold mb-2">{children}</h1>,
               h2: ({ children }) => <h2 className="text-lg font-bold mb-2">{children}</h2>,
               h3: ({ children }) => <h3 className="text-base font-bold mb-2">{children}</h3>,
@@ -100,10 +129,12 @@ export default function ChatMessageBubble({ message, onContinue }: ChatMessageBu
               ),
               th: ({ children }) => (
                 <th className="border border-border-default bg-surface-primary px-2 py-1 text-left font-semibold align-top">
-                  {children}
+                  {withBreaks(children)}
                 </th>
               ),
-              td: ({ children }) => <td className="border border-border-default px-2 py-1 align-top">{children}</td>,
+              td: ({ children }) => (
+                <td className="border border-border-default px-2 py-1 align-top">{withBreaks(children)}</td>
+              ),
               blockquote: ({ children }) => (
                 <blockquote className="border-l-4 border-border-default pl-4 italic my-2">
                   {children}

@@ -105,11 +105,19 @@ export function notificationId(): string {
   return `n-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+function isCancelled(error: unknown): boolean {
+  const e = error as { name?: string; code?: string } | null
+  return e?.name === 'CanceledError' || e?.name === 'AbortError' || e?.code === 'ERR_CANCELED'
+}
+
 export function catchInternal<Fn extends (...args: any[]) => any>(fn: Fn): (...args: Parameters<Fn>) => Promise<ReturnType<Fn> | undefined> {
   return async (...args: any[]) => {
     try {
       return await fn(...args)
     } catch (error) {
+      // «Кладезъ»: запрос отменили мы сами (ушли со страницы, открыли другой разговор) — это не
+      // ошибка. Раньше на такую отмену выскакивало «Произошла внутренняя ошибка».
+      if (isCancelled(error)) return undefined
       console.error('Internal error caught:', error)
 
       if (globalNotificationCallback) {

@@ -17,6 +17,8 @@ interface ChatInterfaceProps {
   onSendMessage: (message: string, images: ChatImageAttachment[]) => void
   visionCapability: ModelVisionCapability
   isLoading?: boolean
+  /** «Кладезъ»: помощник ещё дописывает ответ в этом разговоре — новый вопрос подождёт. */
+  locked?: boolean
   chatSuggestions?: string[]
   chatSuggestionsEnabled?: boolean
   chatSuggestionsLoading?: boolean
@@ -58,6 +60,7 @@ export default function ChatInterface({
   onSendMessage,
   visionCapability,
   isLoading = false,
+  locked = false,
   chatSuggestions = [],
   chatSuggestionsEnabled = false,
   chatSuggestionsLoading = false,
@@ -90,17 +93,32 @@ export default function ChatInterface({
     })
   }, [visionCapability])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  // «Кладезъ»: вниз за ответом прокручиваем, только пока человек сам внизу. Прокрутил вверх
+  // почитать — чат его больше не утаскивает; вернулся вниз — снова следует за ответом.
+  const scrollBoxRef = useRef<HTMLDivElement>(null)
+  const followRef = useRef(true)
+  const lastCountRef = useRef(0)
+  const onScrollBox = () => {
+    const el = scrollBoxRef.current
+    if (!el) return
+    followRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
   }
 
   useEffect(() => {
-    scrollToBottom()
+    const added = messages.length > lastCountRef.current
+    const lastIsUser = messages[messages.length - 1]?.role === 'user'
+    lastCountRef.current = messages.length
+    // Свой новый вопрос — всегда показать внизу.
+    if (added && lastIsUser) followRef.current = true
+    if (!followRef.current) return
+    const el = scrollBoxRef.current
+    if (el) el.scrollTop = el.scrollHeight
+    else messagesEndRef.current?.scrollIntoView()
   }, [messages])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if ((input.trim() || images.length > 0) && !isLoading) {
+    if ((input.trim() || images.length > 0) && !isLoading && !locked) {
       onSendMessage(input.trim() || t('chat.describeImage'), images)
       setInput('')
       setImages([])
@@ -180,7 +198,7 @@ export default function ChatInterface({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-surface-primary shadow-sm">
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+      <div ref={scrollBoxRef} onScroll={onScrollBox} className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center max-w-md">
@@ -282,7 +300,7 @@ export default function ChatInterface({
                   onClick={() => removeImage(image)}
                   className="absolute right-1 top-1 rounded-full bg-surface-primary/90 p-1 text-text-primary hover:bg-surface-primary"
                   aria-label={t('countryPicker.remove', { name: image.name })}
-                  disabled={isLoading}
+                  disabled={isLoading || locked}
                 >
                   <IconX className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
@@ -304,13 +322,13 @@ export default function ChatInterface({
               type="button"
               onClick={() => imageInputRef.current?.click()}
               disabled={
-                isLoading ||
+                isLoading || locked ||
                 images.length >= MAX_VISION_IMAGES ||
                 visionCapability === 'unsupported'
               }
               className={classNames(
                 'p-2 sm:p-3 rounded-lg transition-colors flex-shrink-0',
-                isLoading ||
+                isLoading || locked ||
                   images.length >= MAX_VISION_IMAGES ||
                   visionCapability === 'unsupported'
                   ? 'bg-border-default text-text-muted cursor-not-allowed'
@@ -339,12 +357,12 @@ export default function ChatInterface({
               placeholder={t('chat.inputPlaceholder', { name: aiAssistantName })}
               className="w-full resize-none rounded-lg border border-border-default px-3 py-2.5 sm:px-4 sm:py-3 sm:pr-12 focus:outline-none focus:ring-2 focus:ring-desert-green focus:border-transparent disabled:bg-surface-secondary disabled:text-text-muted"
               rows={1}
-              disabled={isLoading || noModels}
+              disabled={isLoading || locked || noModels}
               style={{ maxHeight: '200px' }}
             />
           </div>
           <SpeechButton
-            disabled={isLoading || noModels}
+            disabled={isLoading || locked || noModels}
             onText={(text) => {
               setInput((prev) => (prev.trim() ? `${prev.trimEnd()} ${text}` : text))
               // Высота поля — под новый текст, и курсор в конец: можно поправить и отправить.
