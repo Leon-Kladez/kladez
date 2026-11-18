@@ -222,7 +222,7 @@ export default function Maps(props: {
               ? `absolute right-0 top-[9.5rem] z-40 flex items-start transition-transform duration-200 ${
                   toolsOpen ? 'translate-x-0' : 'translate-x-[calc(100%-2.75rem)]'
                 }`
-              : 'absolute right-[46px] top-[17rem] z-40'
+              : 'absolute right-[46px] top-[290px] z-40'
           }
         >
           {narrow && (

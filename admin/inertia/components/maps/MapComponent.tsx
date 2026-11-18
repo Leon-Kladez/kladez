@@ -604,8 +604,10 @@ export default function MapComponent({
         >
           {/* «Кладезъ»: на телефоне кнопки приближения и «во весь экран» не нужны — пальцы и так
               приближают и вращают карту, а кнопки закрывали полэкрана. */}
-          {!compact && <NavigationControl style={{ marginTop: '110px', marginRight: '36px' }} />}
-          {!compact && <FullscreenControl style={{ marginTop: '30px', marginRight: '36px' }} />}
+          {/* Отступ справа тот же, что у меню карты (right-[46px] в maps.tsx), ширина кнопок — тоже
+              (app.css): всё справа стоит одним ровным столбиком. */}
+          {!compact && <NavigationControl style={{ marginTop: '110px', marginRight: '46px' }} />}
+          {!compact && <FullscreenControl style={{ marginTop: '8px', marginRight: '46px' }} />}
           <ScaleControl position="bottom-left" maxWidth={150} unit={scaleUnit} />
 
           {!mapReady && (

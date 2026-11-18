@@ -250,3 +250,19 @@ body {
 .themed-scrollbar:focus::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-text-muted);
 }
+
+/* «Кладезъ»: кнопки MapLibre справа («+ / −», компас, «во весь экран») — такие же, как меню
+   карты под ними: 40 px, рамка и скругление, чтобы всё стояло одним столбиком. */
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group {
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button {
+  width: 40px;
+  height: 40px;
+}
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-border-default);
+}
