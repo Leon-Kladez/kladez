@@ -405,6 +405,8 @@ router
       tags: ['ollama'],
       request: chatSchema,
     })
+    // «Кладезъ»: кнопка «Стоп» — остановить ответ в разговоре.
+    router.post('/chat/stop', [OllamaController, 'stopChat'])
     documented(router.get('/models', [OllamaController, 'availableModels']), {
       summary: 'List available models',
       tags: ['ollama'],

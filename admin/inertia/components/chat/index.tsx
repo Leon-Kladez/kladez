@@ -530,8 +530,8 @@ export default function Chat({
                     content: chunkContent,
                     thinking: chunkThinking,
                     timestamp: new Date(),
-                    isStreaming: true,
-                    isThinking: chunkThinking.length > 0 && chunkContent.length === 0,
+                    isStreaming: !done,
+                    isThinking: !done && chunkThinking.length > 0 && chunkContent.length === 0,
                     thinkingDuration: undefined,
                   },
                 ])
@@ -603,11 +603,14 @@ export default function Chat({
           }
         }
 
+        // «Кладезъ»: поток закончился — курсор убрать всегда; если ответ остановили «Стопом»
+        // раньше первого слова, пустую реплику помощника не показывать.
+        setMessages((prev) =>
+          prev
+            .filter((m) => !(m.id === assistantMsgId && !m.content.trim() && !m.thinking?.trim()))
+            .map((m) => (m.id === assistantMsgId ? { ...m, isStreaming: false, isThinking: false } : m))
+        )
         if (fullContent && sessionId) {
-          // Ensure the streaming cursor is removed
-          setMessages((prev) =>
-            prev.map((m) => (m.id === assistantMsgId ? { ...m, isStreaming: false } : m))
-          )
 
           // Refresh sessions to pick up backend-persisted messages and title
           queryClient.invalidateQueries({ queryKey: ['chatSessions'] })
@@ -803,6 +806,20 @@ export default function Chat({
             visionCapability={selectedModelVisionCapability}
             isLoading={isStreamingResponse || chatMutation.isPending}
             locked={pendingSessionId !== null && pendingSessionId === activeSessionId}
+            answering={
+              isStreamingResponse ||
+              messages.some((m) => m.isStreaming) ||
+              (pendingSessionId !== null && pendingSessionId === activeSessionId)
+            }
+            onStop={() => {
+              // «Кладезъ»: квадратик «Стоп» — сервер останавливает модель и сохраняет написанное.
+              if (activeSessionId) api.stopChat(activeSessionId)
+              setPendingSessionId(null)
+              setIsStreamingResponse(false)
+              setMessages((prev) =>
+                prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false, isThinking: false } : m))
+              )
+            }}
             chatSuggestions={chatSuggestions}
             chatSuggestionsEnabled={suggestionsEnabled}
             chatSuggestionsLoading={chatSuggestionsLoading}

@@ -4,7 +4,7 @@ import type { ChatCompletionChunk, ChatCompletionMessageParam } from 'openai/res
 import type { Stream } from 'openai/streaming.js'
 import { Ollama } from 'ollama'
 import { ThinkTagSplitter, normalizeNonStreamed } from '../utils/think_stream.js'
-import { renderQwenPrompt } from '../utils/russian_thinking.js'
+import { SteeredThinkSplitter, renderSteeredPrompt, thinkingDialect } from '../utils/russian_thinking.js'
 import { readContextLength, readModelfileNumCtx } from '../utils/context_window.js'
 import { compatSamplerParams, nativeSamplerOptions, readModelfileSamplers } from '../utils/sampler.js'
 import { NomadOllamaModel, SamplerProfile } from '../../types/ollama.js'
@@ -832,16 +832,18 @@ export class OllamaService {
 
   /**
    * «Кладезъ»: тот же поток, что _chatStreamNative, но рассуждение начинаем за модель
-   * (`prefix`), чтобы она рассуждала по-русски. Разговор собирается в формат Qwen вручную и
-   * уходит в /api/generate с raw: true; ответ делится на «рассуждение» и «ответ» по </think>.
+   * (`prefix`), чтобы она рассуждала по-русски. Разговор собирается в разметку модели вручную
+   * (Qwen, DeepSeek-R1, Gemma 4 — utils/russian_thinking.ts) и уходит в /api/generate с
+   * raw: true; ответ делится на «рассуждение» и «ответ» по метке конца рассуждения.
    */
   private async _chatStreamSteeredThinking(
     chatRequest: ChatInput,
     prefix: string
   ): Promise<AsyncIterable<NomadChatStreamChunk>> {
+    const dialect = thinkingDialect(chatRequest.model)!
     const iterator = await this.ollama!.generate({
       model: chatRequest.model,
-      prompt: renderQwenPrompt(chatRequest.messages as any, prefix),
+      prompt: renderSteeredPrompt(chatRequest.model, chatRequest.messages as any, prefix),
       raw: true,
       stream: true,
       ...(chatRequest.keepAlive !== undefined ? { keep_alive: chatRequest.keepAlive } : {}),
@@ -855,18 +857,9 @@ export class OllamaService {
     }
 
     async function* normalize(): AsyncGenerator<NomadChatStreamChunk> {
-      const splitter = new ThinkTagSplitter()
-      // Открытый <think> и начало рассуждения — сразу в окно «Размышление».
-      const first = splitter.push(`<think>${prefix}`)
-      yield { message: { content: '', thinking: first.thinking }, done: false }
-      // После </think> модель ставит пустые строки — в ответ они не нужны.
-      let answerStarted = false
-      const trimStart = (text: string) => {
-        if (answerStarted || !text) return text
-        const trimmed = text.replace(/^\s+/, '')
-        if (trimmed) answerStarted = true
-        return trimmed
-      }
+      const splitter = new SteeredThinkSplitter(dialect)
+      // Начало рассуждения — сразу в окно «Размышление».
+      yield { message: { content: '', thinking: prefix }, done: false }
       try {
         for await (const chunk of iterator) {
           const raw = chunk.response ?? ''
@@ -874,7 +867,7 @@ export class OllamaService {
           // Если Ollama сама отделила рассуждение — берём и его.
           const nativeThinking = (chunk as { thinking?: string }).thinking ?? ''
           yield {
-            message: { content: trimStart(split.content), thinking: nativeThinking + split.thinking },
+            message: { content: split.content, thinking: nativeThinking + split.thinking },
             done: chunk.done === true,
             ...(chunk.done
               ? {
@@ -890,7 +883,7 @@ export class OllamaService {
         }
         const tail = splitter.flush()
         if (tail.content || tail.thinking) {
-          yield { message: { content: trimStart(tail.content), thinking: tail.thinking }, done: true }
+          yield { message: { content: tail.content, thinking: tail.thinking }, done: true }
         }
       } finally {
         chatRequest.signal?.removeEventListener('abort', onAbort)

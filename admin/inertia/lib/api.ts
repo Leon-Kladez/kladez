@@ -642,6 +642,16 @@ class API {
     })()
   }
 
+  /** «Кладезъ»: кнопка «Стоп» — остановить ответ в разговоре. Без всплывающих ошибок. */
+  async stopChat(sessionId: string | number) {
+    try {
+      const response = await this.client.post<{ stopped: boolean }>('/ollama/chat/stop', { sessionId: Number(sessionId) })
+      return response.data.stopped
+    } catch {
+      return false
+    }
+  }
+
   async getChatSession(sessionId: string) {
     return catchInternal(async () => {
       const response = await this.client.get<{

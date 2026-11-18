@@ -1,4 +1,4 @@
-import { IconPhoto, IconSend, IconWand, IconX } from '@tabler/icons-react'
+import { IconPhoto, IconPlayerStopFilled, IconSend, IconWand, IconX } from '@tabler/icons-react'
 import SpeechButton from './SpeechButton'
 import { useState, useRef, useEffect } from 'react'
 import classNames from '~/lib/classNames'
@@ -21,6 +21,9 @@ interface ChatInterfaceProps {
   isLoading?: boolean
   /** «Кладезъ»: помощник ещё дописывает ответ в этом разговоре — новый вопрос подождёт. */
   locked?: boolean
+  /** «Кладезъ»: помощник сейчас отвечает — вместо «Отправить» квадратик «Стоп». */
+  answering?: boolean
+  onStop?: () => void
   chatSuggestions?: string[]
   chatSuggestionsEnabled?: boolean
   chatSuggestionsLoading?: boolean
@@ -63,6 +66,8 @@ export default function ChatInterface({
   visionCapability,
   isLoading = false,
   locked = false,
+  answering = false,
+  onStop,
   chatSuggestions = [],
   chatSuggestionsEnabled = false,
   chatSuggestionsLoading = false,
@@ -133,7 +138,7 @@ export default function ChatInterface({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if ((input.trim() || images.length > 0) && !isLoading && !locked) {
+    if ((input.trim() || images.length > 0) && !isLoading && !locked && !answering) {
       onSendMessage(input.trim() || t('chat.describeImage'), images)
       setInput('')
       setImages([])
@@ -392,6 +397,17 @@ export default function ChatInterface({
               }, 0)
             }}
           />
+          {answering && onStop ? (
+            <button
+              type="button"
+              onClick={onStop}
+              title={t('chat.stopAnswer')}
+              aria-label={t('chat.stopAnswer')}
+              className="mb-2 flex-shrink-0 rounded-lg border-2 border-text-primary bg-surface-primary p-2 text-text-primary transition-colors hover:bg-surface-secondary sm:p-3"
+            >
+              <IconPlayerStopFilled className="h-6 w-6" aria-hidden="true" />
+            </button>
+          ) : (
           <button
             type="submit"
             disabled={(!input.trim() && images.length === 0) || isLoading || locked || noModels}
@@ -409,6 +425,7 @@ export default function ChatInterface({
               <IconSend className="h-6 w-6" />
             )}
           </button>
+          )}
         </form>
         <p className="mt-2 text-xs text-text-muted" aria-live="polite">
           {visionAttachmentGuidance(visionCapability)}

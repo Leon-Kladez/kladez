@@ -4,6 +4,8 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 {% release date="18 November 2026" versions="0.1.37" %}
 
+- **A Stop button:** while the assistant answers, the Send button becomes a square. Click it and the model stops at once, with what it already wrote kept in the conversation. Handy if the answer goes the wrong way or the model gets stuck in a loop.
+- **Thinking in Russian for Gemma 4 and DeepSeek-R1 too:** as with Qwen, Kladez starts their reasoning in Russian and they carry on that way. Checked on gemma4:e4b and deepseek-r1:1.5b.
 - **“Reply” to a selection, like in Claude:** select part of the assistant’s answer with the mouse or a finger and a Reply button appears above it. Click it and the selection goes into the input box as a quote, with room below for your question, such as “tell me more about this”. In the sent question the quote shows as an inset.
 - **You can type while the assistant answers:** when you come back to a conversation where the assistant is still finishing its answer, the input box no longer freezes, so you can type or dictate the next question right away. Only the Send button waits until the answer is done.
 

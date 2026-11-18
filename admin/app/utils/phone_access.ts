@@ -74,6 +74,8 @@ const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 const PHONE_WRITE_ALLOWLIST: ReadonlyArray<{ method: string; path: RegExp }> = [
   { method: 'POST', path: /^\/__transmit\/(subscribe|unsubscribe)$/ },
   { method: 'POST', path: /^\/api\/ollama\/chat$/ },
+  // «Кладезъ»: кнопка «Стоп» в чате — телефону можно, как и сам чат.
+  { method: 'POST', path: /^\/api\/ollama\/chat\/stop$/ },
   { method: 'POST', path: /^\/api\/speech\/transcribe$/ },
   { method: 'POST', path: /^\/api\/ollama\/unload-chat-models$/ },
   { method: 'POST', path: /^\/api\/chat\/sessions$/ },

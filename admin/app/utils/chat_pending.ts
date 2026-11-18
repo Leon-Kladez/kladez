@@ -8,12 +8,20 @@
  * Хранится в памяти процесса: после перезапуска Кладезя недописанного ответа нет, и это честно —
  * модель тоже остановилась.
  */
-export type PendingAnswer = { content: string; thinking: string; startedAt: number }
+export type PendingAnswer = { content: string; thinking: string; startedAt: number; stop?: () => void }
 
 const pending = new Map<number, PendingAnswer>()
 
-export function startPending(sessionId: number): void {
-  pending.set(sessionId, { content: '', thinking: '', startedAt: Date.now() })
+export function startPending(sessionId: number, stop?: () => void): void {
+  pending.set(sessionId, { content: '', thinking: '', startedAt: Date.now(), stop })
+}
+
+/** Кнопка «Стоп»: остановить модель, которая пишет в этот разговор. */
+export function stopPending(sessionId: number): boolean {
+  const entry = pending.get(sessionId)
+  if (!entry?.stop) return false
+  entry.stop()
+  return true
 }
 
 export function appendPending(sessionId: number, content: string, thinking: string): void {
@@ -23,8 +31,11 @@ export function appendPending(sessionId: number, content: string, thinking: stri
   entry.thinking += thinking
 }
 
-export function getPending(sessionId: number): PendingAnswer | null {
-  return pending.get(sessionId) ?? null
+export function getPending(sessionId: number): Omit<PendingAnswer, 'stop'> | null {
+  const entry = pending.get(sessionId)
+  if (!entry) return null
+  const { stop: _stop, ...rest } = entry
+  return rest
 }
 
 export function finishPending(sessionId: number): void {

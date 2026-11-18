@@ -28,7 +28,7 @@ import {
 } from '../utils/chat_images.js'
 import { getLocale, t } from '../../constants/i18n/index.js'
 import { RU_THINK_PREFIX, canSteerThinking } from '../utils/russian_thinking.js'
-import { appendPending, finishPending, startPending } from '../utils/chat_pending.js'
+import { appendPending, finishPending, startPending, stopPending } from '../utils/chat_pending.js'
 
 const unknownVisionCompatibilityMessage = (model: string) =>
   `NOMAD cannot confirm that "${model}" accepts images, and this image request failed. Choose a model marked "Supports images", or remove the image and try again.`
@@ -50,6 +50,15 @@ export default class OllamaController {
     const set = await KVStore.getValue('ai.keepAlive')
     if (set) return String(set)
     return (await this.contextWindowService?.isSlowHost()) ? SLOW_HOST_KEEP_ALIVE : DEFAULT_KEEP_ALIVE
+  }
+
+  /** «Кладезъ»: кнопка «Стоп» в чате — остановить ответ, который модель пишет в разговор. */
+  async stopChat({ request, response }: HttpContext) {
+    const sessionId = Number(request.input('sessionId'))
+    if (!Number.isInteger(sessionId) || sessionId <= 0) {
+      return response.status(400).json({ stopped: false })
+    }
+    return { stopped: stopPending(sessionId) }
   }
 
   async availableModels({ request }: HttpContext) {
@@ -269,7 +278,26 @@ export default class OllamaController {
             clientGone = true
           }
         }
-        if (sessionId) startPending(sessionId)
+        // «Кладезъ»: кнопка «Стоп» (квадратик) — останавливаем модель, написанное сохраняем.
+        let stoppedByUser = false
+        if (sessionId) {
+          startPending(sessionId, () => {
+            if (stoppedByUser) return
+            stoppedByUser = true
+            abortController.abort()
+            // Пока модель грузится, Ollama оборвать нельзя — оборвём, как только отзовётся.
+            // А чат отпускаем сразу: «Стоп» — значит стоп.
+            send(`data: ${JSON.stringify({ message: { content: '', thinking: '' }, done: true, done_reason: 'stop' })}
+
+`)
+            if (!clientGone) {
+              clientGone = true
+              try {
+                response.response.end()
+              } catch {}
+            }
+          })
+        }
         let fullContent = ''
         let doneReason: string | undefined
         let completionTokens: number | undefined
@@ -303,6 +331,10 @@ export default class OllamaController {
             send(`data: ${JSON.stringify(chunk)}\n\n`)
           }
         } catch (err) {
+          if (stoppedByUser) {
+            // Остановили кнопкой — это не ошибка: дописанное сохраняем, как обычный ответ.
+            doneReason = 'stop'
+          } else {
           if (sessionId) finishPending(sessionId)
           if (abortController.signal.aborted) {
             logger.debug('[OllamaController] Client disconnected; aborted upstream Ollama generation')
@@ -317,6 +349,7 @@ export default class OllamaController {
           unknownVisionUpstreamRejected =
             normalizedImages.length > 0 && modelCapabilities.vision === 'unknown'
           throw err
+          }
         }
         if (doneReason === 'length') {
           this._logLengthStop(reqData.model, numCtx, numPredict, completionTokens)

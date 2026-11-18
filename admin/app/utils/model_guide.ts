@@ -60,7 +60,7 @@ export const MODEL_GUIDE: Record<GuidePurpose, Entry[]> = {
       description: 'Ответы почти как у больших онлайн-помощников. 32 ГБ памяти и видеокарта.',
       description_en: 'Answers close to large online assistants. 32 GB of memory and a graphics card.' },
     { name: 'deepseek-r1:32b', bytes: 19.85 * GB, label: 'DeepSeek: думает перед ответом', label_en: 'DeepSeek: thinks first', ru: 'fair', thinks: true,
-      description: 'Сначала рассуждает, потом отвечает: сильна в задачах и логике, но ответа ждать дольше. Рассуждает по-английски. 32 ГБ памяти и видеокарта.',
+      description: 'Сначала рассуждает, потом отвечает: сильна в задачах и логике, но ответа ждать дольше. Рассуждает всегда, даже с выключенным «Размышлением». 32 ГБ памяти и видеокарта.',
       description_en: 'Reasons first, then answers: strong at puzzles and logic, but answers take longer. 32 GB of memory and a graphics card.' },
     { ...G4_31B, label: 'Очень сильная, от Google', label_en: 'Very strong, by Google', ru: 'good',
       description: 'Самая сильная Gemma 4: длинные тексты, документы, картинки. 32–64 ГБ памяти и видеокарта.',
