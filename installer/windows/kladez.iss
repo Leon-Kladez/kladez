@@ -94,6 +94,7 @@ Name: "{autoprograms}\Кладезъ\Как пройти предупрежде�
 Name: "{autoprograms}\Кладезъ\Как включить виртуализацию в BIOS"; Filename: "{app}\docs\bios\index.html"
 Name: "{autoprograms}\Кладезъ\Собрать сведения для помощи"; Filename: "{app}\Kladez.exe"; Parameters: "--collect-logs"
 Name: "{autoprograms}\Кладезъ\Копия на флешку"; Filename: "{app}\Kladez.exe"; Parameters: "--copy-to-usb"
+Name: "{autoprograms}\Кладезъ\Удалить Кладезъ"; Filename: "{uninstallexe}"
 
 [Run]
 Filename: "{app}\Kladez.exe"; Description: "Открыть «Кладезъ» сейчас"; Flags: postinstall nowait runasoriginaluser skipifsilent; Check: SetupFinished

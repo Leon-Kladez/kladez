@@ -6,6 +6,7 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 
 - **Stop always works:** if you stopped a question while the model was still loading and asked the next one right away, Stop did nothing on the second one and the assistant wrote to the end. Now any answer in the conversation stops.
 - **“Answer stopped”:** after Stop, the answer shows that it was stopped, even if the model had not written a word yet.
+- **“Uninstall Kladez” in the Start menu:** the Kladez folder now has an uninstall shortcut. Before, it could only be removed through Settings → Apps.
 
 {% /release %}
 
