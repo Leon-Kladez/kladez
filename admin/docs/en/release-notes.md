@@ -2,7 +2,7 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
-{% release date="18 November 2026" versions="0.1.38" %}
+{% release date="27 November 2026" versions="0.1.38" %}
 
 - **Stop always works:** if you stopped a question while the model was still loading and asked the next one right away, Stop did nothing on the second one and the assistant wrote to the end. Now any answer in the conversation stops.
 - **“Answer stopped”:** after Stop, the answer shows that it was stopped, even if the model had not written a word yet.
