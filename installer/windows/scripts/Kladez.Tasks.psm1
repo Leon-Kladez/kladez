@@ -61,6 +61,9 @@ function Start-KladezTasks {
         $notes.Add("network task ERROR: $($_.Exception.Message)")
     }
     try {
+        # Задачу автозапуска держим включённой: запускать ли Кладезъ при входе, решает переключатель
+        # в окошке / в Настройки → Телефоны (файл .kladez-autostart-off), а не состояние задачи.
+        Enable-ScheduledTask -TaskName $script:AutostartTask -ErrorAction SilentlyContinue | Out-Null
         Start-ScheduledTask -TaskName $script:AutostartTask -ErrorAction Stop
         $notes.Add('autostart task started')
     } catch {

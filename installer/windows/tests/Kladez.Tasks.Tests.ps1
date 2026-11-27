@@ -37,6 +37,7 @@ Describe 'Start-KladezTasks (right after install/upgrade, not only at next logon
         New-Item -ItemType Directory -Force $script:lib | Out-Null
         $script:netFile = Join-Path $script:lib '.kladez-network.json'
         Mock -ModuleName Kladez.Tasks Start-ScheduledTask { $script:started.Add($TaskName) }
+        Mock -ModuleName Kladez.Tasks Enable-ScheduledTask { }
         # The network task writes the addresses file a moment after it is started.
         Mock -ModuleName Kladez.Tasks Start-Sleep { $script:sleeps++; if ($script:sleeps -eq 2) { Set-Content $script:netFile '{}' } }
     }
@@ -57,6 +58,7 @@ Describe 'Start-KladezTasks (right after install/upgrade, not only at next logon
     }
     It 'a failing network task neither stops autostart nor fails the installer' {
         Mock -ModuleName Kladez.Tasks Start-ScheduledTask { if ($TaskName -eq 'Кладезъ — сеть') { throw 'task missing' }; $script:started.Add($TaskName) }
+        Mock -ModuleName Kladez.Tasks Enable-ScheduledTask { }
         $r = Start-KladezTasks -LibraryDir $script:lib -TimeoutSec 3
         $script:started | Should -Be @('Кладезъ')
         $r | Should -Match 'network task ERROR'

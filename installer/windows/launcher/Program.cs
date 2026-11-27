@@ -50,20 +50,18 @@ namespace Kladez.Launcher
                             return 0;
                         }
                         if (!StartAndWait(config)) return 1;
-                        // Ярлык должен уметь снова поднять Кладезъ, пока висит окошко, — отпускаем замок.
-                        mutex.ReleaseMutex();
-                        mutex.Dispose();
-                        ShowNotice(config);
+                        StayInTray(config, mutex, created, true);
                         return 0;
                     default:
                         Application.EnableVisualStyles();
                         var plan = LauncherCore.PlanInteractive(created, IsRunning(config));
-                        if (plan == InteractivePlan.OpenNow)
-                        {
-                            OpenBrowser(config);
-                            return 0;
-                        }
-                        return Interactive(config, plan == InteractivePlan.StartAndWait);
+                        int result = 0;
+                        if (plan == InteractivePlan.OpenNow) OpenBrowser(config);
+                        else result = Interactive(config, plan == InteractivePlan.StartAndWait);
+                        // «Кладезъ»: и после ярлыка остаёмся значком возле часов (без окошка) — чтобы
+                        // выключить Кладезъ и освободить память можно было в любой момент.
+                        if (result == 0) StayInTray(config, mutex, created, false);
+                        return result;
                 }
             }
         }
@@ -144,8 +142,26 @@ namespace Kladez.Launcher
             }
         }
 
-        /// <summary>Окошко в углу после автозапуска: переключатель «Кладезъ включён / выключен».</summary>
-        private static void ShowNotice(KladezConfig config)
+        /// <summary>
+        /// Значок возле часов — один на сеанс Windows (замок KladezTray). Замок запуска отпускаем:
+        /// пока висит значок, ярлык должен уметь снова поднять Кладезъ.
+        /// </summary>
+        private static void StayInTray(KladezConfig config, Mutex launcher, bool ownsLauncher, bool showNotice)
+        {
+            if (ownsLauncher)
+                try { launcher.ReleaseMutex(); } catch (ApplicationException) { }
+            launcher.Dispose();
+            bool owns;
+            using (var tray = new Mutex(true, "Local\\KladezTray", out owns))
+            {
+                if (!owns) return; // значок уже есть
+                ShowNotice(config, showNotice);
+                try { tray.ReleaseMutex(); } catch (ApplicationException) { }
+            }
+        }
+
+        /// <summary>Окошко в углу (или только значок возле часов): «Кладезъ включён / выключен».</summary>
+        private static void ShowNotice(KladezConfig config, bool showNotice)
         {
             Application.EnableVisualStyles();
             var form = new NoticeForm(
@@ -171,8 +187,17 @@ namespace Kladez.Launcher
                 {
                     try { Process.Start(new ProcessStartInfo(Application.ExecutablePath) { UseShellExecute = false }); }
                     catch (Exception ex) { Log("open from tray: " + ex.Message); }
-                });
-            Application.Run(form);
+                },
+                () => IsHealthy(config));
+            if (showNotice) Application.Run(form);
+            else
+            {
+                // Только значок: окно создаём, но не показываем — откроется по нажатию на значок.
+                // ApplicationContext без главного окна: с ним WinForms само показало бы окошко.
+                // Выход — «Убрать значок» (ExitTray → Application.ExitThread).
+                var unused = form.Handle;
+                Application.Run(new ApplicationContext());
+            }
         }
 
         /// <summary>wsl -l --running -q пуст: ни один дистрибутив не запущен. Ошибка — считаем, что запущены.</summary>

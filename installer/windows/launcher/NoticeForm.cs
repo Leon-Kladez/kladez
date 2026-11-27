@@ -97,6 +97,8 @@ namespace Kladez.Launcher
         private readonly Func<bool> start;
         private readonly Action stop;
         private readonly Action open;
+        private readonly Func<bool> isRunning;
+        private readonly System.Windows.Forms.Timer poll;
         private readonly NotifyIcon tray;
         private readonly ToolStripMenuItem trayToggle;
         private bool busy;
@@ -106,11 +108,13 @@ namespace Kladez.Launcher
         /// <param name="start">Включить Кладезъ и дождаться, пока он ответит (в фоновом потоке).</param>
         /// <param name="stop">Остановить Кладезъ и освободить память (в фоновом потоке).</param>
         /// <param name="open">Открыть Кладезъ в браузере (сам запустит, если выключен). Может быть null.</param>
-        public NoticeForm(Func<bool> start, Action stop, Action open = null)
+        /// <param name="isRunning">Работает ли Кладезъ сейчас (раз в 15 с, в фоне). Может быть null.</param>
+        public NoticeForm(Func<bool> start, Action stop, Action open = null, Func<bool> isRunning = null)
         {
             this.start = start;
             this.stop = stop;
             this.open = open;
+            this.isRunning = isRunning;
 
             Text = "Кладезъ";
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
@@ -171,6 +175,27 @@ namespace Kladez.Launcher
             };
             tray.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) Reveal(); };
             ShowOn();
+
+            // Кладезъ включили ярлыком, пока значок показывал «выключен», — показать «включён».
+            poll = new System.Windows.Forms.Timer { Interval = 15000 };
+            poll.Tick += (s, e) => CheckRunning();
+            if (isRunning != null) poll.Start();
+        }
+
+        private void CheckRunning()
+        {
+            if (busy || toggle.On || isRunning == null) return;
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                bool running = false;
+                try { running = isRunning(); } catch (Exception) { }
+                if (!running) return;
+                try
+                {
+                    BeginInvoke(new Action(() => { if (!busy && !toggle.On) ShowOn(); }));
+                }
+                catch (InvalidOperationException) { }
+            });
         }
 
         /// <summary>Крестик — спрятать в значок возле часов, а не закрыть.</summary>
@@ -193,6 +218,7 @@ namespace Kladez.Launcher
 
         protected override void Dispose(bool disposing)
         {
+            if (disposing && poll != null) poll.Dispose();
             if (disposing && tray != null)
             {
                 tray.Visible = false;
@@ -214,6 +240,7 @@ namespace Kladez.Launcher
             exiting = true;
             tray.Visible = false;
             Close();
+            Application.ExitThread();
         }
 
         protected override bool ShowWithoutActivation { get { return true; } }
@@ -275,8 +302,8 @@ namespace Kladez.Launcher
         private void ShowOn()
         {
             title.Text = "Кладезъ готов к работе без интернета";
-            text.Text = "Он запускается вместе с Windows, чтобы открываться сразу, и занимает около 2 ГБ памяти. " +
-                        "Не нужен сейчас — выключите: память освободится, а открыть Кладезъ можно ярлыком на рабочем столе.";
+            text.Text = "Пока он включён, он открывается сразу и занимает около 2 ГБ памяти. " +
+                        "Не нужен сейчас — выключите: память освободится, а открыть Кладезъ снова можно ярлыком на рабочем столе.";
             state.Text = "Кладезъ включён";
             toggle.On = true;
             if (trayToggle != null) trayToggle.Text = "Выключить Кладезъ";

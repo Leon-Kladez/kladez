@@ -2,6 +2,14 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="27 November 2026" versions="0.1.40" %}
+
+- **The Kladez icon by the clock is always there:** before, it appeared only when Kladez started by itself at sign-in. Now it stays after the desktop shortcut and after installation too, so you can switch Kladez off and free the memory at any time. The notice does not pop up: click the icon to open it.
+- **The icon notices that Kladez was switched on:** if Kladez was switched off and then opened from the shortcut, the icon switches to “Kladez is on” by itself.
+- **Installing no longer breaks autostart:** if the autostart task was ever disabled in Task Scheduler, the installer enables it again. Whether Kladez starts with Windows is now decided only by the Kladez switch.
+
+{% /release %}
+
 {% release date="27 November 2026" versions="0.1.39" %}
 
 - **Memory is freed at once:** after “Kladez is switched off” in the notice, Windows kept the empty Linux part for about a minute, so Vmmem stayed in Task Manager. Now, if no other Linux programs are running, it is shut down at once and the memory comes back within seconds.
