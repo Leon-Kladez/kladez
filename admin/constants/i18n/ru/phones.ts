@@ -26,6 +26,9 @@ export const phonesRu: Record<keyof typeof phonesEn, string> = {
   'phones.settings.allowLabel': 'Разрешить телефонам изменять',
   'phones.settings.allowDescription':
     'Выключено (так лучше): с телефонов можно только читать и смотреть. Включено: с любого телефона в вашем Wi-Fi можно ставить и удалять программы, скачивать и менять настройки. Включайте, только если доверяете всем, кто подключён к вашему Wi-Fi.',
+  'phones.settings.autostartTitle': 'Запуск вместе с Windows',
+  'phones.settings.autostartLabel': 'Запускать Кладезъ вместе с Windows',
+  'phones.settings.autostartDescription': 'Включено: Кладезъ поднимается при входе в Windows — открывается сразу, и телефоны могут открыть его в любой момент; занимает около 2 ГБ памяти. Выключено: память свободна, а Кладезъ запускается ярлыком на рабочем столе — первое открытие займёт около минуты.',
   'phones.settings.saved': 'Сохранено',
   'phones.settings.saveFailed': 'Не удалось сохранить',
   'phones.settings.computerOnly': 'Этот переключатель можно менять только на компьютере.',

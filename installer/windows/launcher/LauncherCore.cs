@@ -93,6 +93,18 @@ namespace Kladez.Launcher
             return Path.Combine(programData, "Kladez");
         }
 
+        /// <summary>
+        /// «Не запускать Кладезъ вместе с Windows». Лежит в библиотеке, чтобы и Kladez.exe, и сам
+        /// Кладезъ (Настройки → Телефоны, там библиотека — это /app/storage) видели один и тот же
+        /// выбор. Без библиотеки в kladez.ini — в папке данных Кладезя.
+        /// </summary>
+        public static string AutostartOffFile(KladezConfig config, string programData)
+        {
+            return string.IsNullOrEmpty(config.LibraryDir)
+                ? Path.Combine(KladezDataDir(programData), "autostart-off")
+                : Path.Combine(config.LibraryDir, ".kladez-autostart-off");
+        }
+
         /// <summary>Only our own logs go into the help zip — never anything from the library.</summary>
         public static string[] LogFilesToCollect(string programData)
         {

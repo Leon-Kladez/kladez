@@ -1,6 +1,8 @@
 // «Кладезъ»: Kladez.exe — starts the program hidden and opens the browser (spec Б7, plan Task 8).
 //   Kladez.exe                 shortcut: start if needed, show progress, open the browser
-//   Kladez.exe --background    autostart at logon: same, no windows, no browser
+//   Kladez.exe --background    autostart at logon: start, no browser; then the corner notice with the
+//                              on/off switch (NoticeForm), hidden by × into a tray icon by the clock.
+//                              Switched off earlier → does nothing.
 //   Kladez.exe --stop          stop the programs inside Kladez
 //   Kladez.exe --collect-logs  save a zip with our logs to the desktop (for asking for help)
 //   Kladez.exe --copy-to-usb   «Копия на флешку»: installer + library + route/AI images to a USB drive
@@ -41,7 +43,18 @@ namespace Kladez.Launcher
                         return 0;
                     case LaunchMode.Background:
                         if (!created) return 0;
-                        return StartAndWait(config) ? 0 : 1;
+                        // «Кладезъ»: человек выключил запуск вместе с Windows — ничего не поднимаем.
+                        if (AutostartOff(config))
+                        {
+                            Log("autostart is off");
+                            return 0;
+                        }
+                        if (!StartAndWait(config)) return 1;
+                        // Ярлык должен уметь снова поднять Кладезъ, пока висит окошко, — отпускаем замок.
+                        mutex.ReleaseMutex();
+                        mutex.Dispose();
+                        ShowNotice(config);
+                        return 0;
                     default:
                         Application.EnableVisualStyles();
                         var plan = LauncherCore.PlanInteractive(created, IsRunning(config));
@@ -90,6 +103,72 @@ namespace Kladez.Launcher
             RunWsl(LauncherCore.WslArgs("keepalive"), true);
             RunHidden("schtasks.exe", new[] { "/run", "/tn", LauncherCore.NetworkTaskName }, false);
             return WaitHealthy(config);
+        }
+
+        private static string[] AutostartOffFiles(KladezConfig config)
+        {
+            return new[]
+            {
+                LauncherCore.AutostartOffFile(config, ProgramData),
+                LauncherCore.AutostartOffFile(KladezConfig.Parse(""), ProgramData),
+            };
+        }
+
+        private static bool AutostartOff(KladezConfig config)
+        {
+            foreach (var f in AutostartOffFiles(config))
+                if (File.Exists(f)) return true;
+            return false;
+        }
+
+        /// <summary>Запомнить «не запускать вместе с Windows»: в библиотеке, а если туда не пишется — в папке данных.</summary>
+        private static void SetAutostartOff(KladezConfig config, bool off)
+        {
+            var files = AutostartOffFiles(config);
+            if (!off)
+            {
+                foreach (var f in files)
+                    try { if (File.Exists(f)) File.Delete(f); } catch (Exception ex) { Log("autostart flag: " + ex.Message); }
+                return;
+            }
+            const string note = "Кладезъ не запускается вместе с Windows. Вернуть: Кладезъ → Настройки → Телефоны, или удалите этот файл.\r\n";
+            foreach (var f in files)
+            {
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(f));
+                    File.WriteAllText(f, note);
+                    return;
+                }
+                catch (Exception ex) { Log("autostart flag: " + ex.Message); }
+            }
+        }
+
+        /// <summary>Окошко в углу после автозапуска: переключатель «Кладезъ включён / выключен».</summary>
+        private static void ShowNotice(KladezConfig config)
+        {
+            Application.EnableVisualStyles();
+            var form = new NoticeForm(
+                () =>
+                {
+                    SetAutostartOff(config, false);
+                    return StartAndWait(config);
+                },
+                () =>
+                {
+                    Log("switched off from the notice");
+                    SetAutostartOff(config, true);
+                    RunWsl(LauncherCore.WslArgs("stop"), false);
+                    // Остановить и саму Linux-часть, иначе Windows не получит память обратно.
+                    RunHidden("wsl.exe", new[] { "--terminate", LauncherCore.DistroName }, false);
+                },
+                // «Открыть Кладезъ» в меню значка: как ярлык — запустит, если выключен, и откроет браузер.
+                () =>
+                {
+                    try { Process.Start(new ProcessStartInfo(Application.ExecutablePath) { UseShellExecute = false }); }
+                    catch (Exception ex) { Log("open from tray: " + ex.Message); }
+                });
+            Application.Run(form);
         }
 
         private static bool WaitHealthy(KladezConfig config)

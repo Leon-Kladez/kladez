@@ -25,6 +25,9 @@ export const phonesEn = {
   'phones.settings.allowLabel': 'Let phones make changes',
   'phones.settings.allowDescription':
     'Off (recommended): phones can only read and look. On: from any phone on your Wi-Fi you can install and remove apps, download and change settings. Turn it on only if you trust everyone connected to your Wi-Fi.',
+  'phones.settings.autostartTitle': 'Start with Windows',
+  'phones.settings.autostartLabel': 'Start Kladez with Windows',
+  'phones.settings.autostartDescription': 'On: Kladez starts when you sign in to Windows, so it opens at once and phones can open it any time; it uses about 2 GB of memory. Off: the memory stays free and Kladez starts from the desktop shortcut; the first opening takes about a minute.',
   'phones.settings.saved': 'Saved',
   'phones.settings.saveFailed': 'Could not save',
   'phones.settings.computerOnly': 'This switch can only be changed on the computer.',

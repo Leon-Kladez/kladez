@@ -1,3 +1,4 @@
+import { isAutostartOn, setAutostart } from '../utils/autostart.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import KVStore from '#models/kv_store'
 import { phoneUrl, qrPath, readLanAddresses } from '../utils/lan_addresses.js'
@@ -12,7 +13,20 @@ export default class PhonesController {
   async settings({ inertia }: HttpContext) {
     return inertia.render('settings/phones', {
       allowChanges: (await KVStore.getValue('phones.allowChanges')) === true,
+      autostart: isAutostartOn(),
     })
+  }
+
+  /** «Кладезъ»: запускать вместе с Windows — с компьютера (телефонам запись сюда закрыта). */
+  async setAutostart({ request, response }: HttpContext) {
+    const on = request.input('on')
+    if (typeof on !== 'boolean') return response.status(400).json({ success: false })
+    try {
+      setAutostart(on)
+      return { success: true, autostart: isAutostartOn() }
+    } catch {
+      return response.status(500).json({ success: false })
+    }
   }
 
   async info(ctx: HttpContext) {

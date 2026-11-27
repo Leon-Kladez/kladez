@@ -642,6 +642,16 @@ class API {
     })()
   }
 
+  /** «Кладезъ»: запускать Кладезъ вместе с Windows (Настройки → Телефоны). */
+  async setAutostart(on: boolean) {
+    try {
+      const response = await this.client.put<{ success: boolean; autostart: boolean }>('/phones/autostart', { on })
+      return response.data
+    } catch {
+      return { success: false, autostart: !on }
+    }
+  }
+
   /** «Кладезъ»: кнопка «Стоп» — остановить ответ в разговоре. Без всплывающих ошибок. */
   async stopChat(sessionId: string | number) {
     try {

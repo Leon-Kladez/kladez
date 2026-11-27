@@ -11,11 +11,25 @@ import { useDevice } from '~/hooks/useDevice'
 import { t } from '../../../constants/i18n'
 
 /** «Кладезъ»: Настройки → Телефоны. QR-код и разрешение телефонам что-то менять. */
-export default function PhonesSettingsPage(props: { allowChanges: boolean }) {
+export default function PhonesSettingsPage(props: { allowChanges: boolean; autostart?: boolean }) {
   const { addNotification } = useNotifications()
   const { isComputer } = useDevice()
   const [allowChanges, setAllowChanges] = useState(props.allowChanges)
   const [saving, setSaving] = useState(false)
+  const [autostart, setAutostartState] = useState(props.autostart !== false)
+  const [savingAutostart, setSavingAutostart] = useState(false)
+
+  async function toggleAutostart(next: boolean) {
+    setSavingAutostart(true)
+    const result = await api.setAutostart(next)
+    setSavingAutostart(false)
+    if (result.success) {
+      setAutostartState(result.autostart)
+      addNotification({ type: 'success', message: t('phones.settings.saved') })
+    } else {
+      addNotification({ type: 'error', message: t('phones.settings.saveFailed') })
+    }
+  }
 
   async function toggle(next: boolean) {
     setSaving(true)
@@ -50,6 +64,22 @@ export default function PhonesSettingsPage(props: { allowChanges: boolean }) {
               disabled={saving || !isComputer}
               label={t('phones.settings.allowLabel')}
               description={t('phones.settings.allowDescription')}
+            />
+            {!isComputer && (
+              <p className="text-sm font-semibold mt-2">{t('phones.settings.computerOnly')}</p>
+            )}
+          </div>
+
+          {/* «Кладезъ»: запуск вместе с Windows — то же, что переключатель в окошке в углу экрана. */}
+          <StyledSectionHeader title={t('phones.settings.autostartTitle')} className="mt-8 mb-4" />
+          <div className="bg-surface-primary rounded-lg border-2 border-border-subtle p-4 sm:p-6">
+            <Switch
+              id="kladez-autostart"
+              checked={autostart}
+              onChange={toggleAutostart}
+              disabled={savingAutostart || !isComputer}
+              label={t('phones.settings.autostartLabel')}
+              description={t('phones.settings.autostartDescription')}
             />
             {!isComputer && (
               <p className="text-sm font-semibold mt-2">{t('phones.settings.computerOnly')}</p>

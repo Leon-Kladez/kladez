@@ -34,6 +34,12 @@ namespace Kladez.Launcher.Tests
                 "-d", "Kladez", "-u", "root", "--", "/usr/local/bin/kladez-start", "--keepalive" }), "WslArgs(keepalive)");
             Check(LauncherCore.WslArgs("status").Last() == "--status", "WslArgs(status)");
 
+            // «Не запускать вместе с Windows»: в библиотеке, а без неё — в папке данных.
+            Check(LauncherCore.AutostartOffFile(KladezConfig.Parse("LibraryDir=D:\\Kladez\\library"), "C:\\ProgramData")
+                == "D:\\Kladez\\library\\.kladez-autostart-off", "AutostartOffFile in the library");
+            Check(LauncherCore.AutostartOffFile(KladezConfig.Parse(""), "C:\\ProgramData")
+                == "C:\\ProgramData\\Kladez\\autostart-off", "AutostartOffFile without a library");
+
             // Panel address and health.
             Check(LauncherCore.PanelUrl(KladezConfig.Parse("AdminPort=8180")) == "http://localhost:8180/", "PanelUrl uses AdminPort");
             Check(LauncherCore.HealthUrl(KladezConfig.Parse("")) == "http://localhost:8080/api/health", "HealthUrl");

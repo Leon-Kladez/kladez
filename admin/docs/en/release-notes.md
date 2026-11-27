@@ -7,6 +7,9 @@ What appeared in Kladez, day by day. Newest first. How to update — see [Update
 - **Stop always works:** if you stopped a question while the model was still loading and asked the next one right away, Stop did nothing on the second one and the assistant wrote to the end. Now any answer in the conversation stops.
 - **“Answer stopped”:** after Stop, the answer shows that it was stopped, even if the model had not written a word yet.
 - **“Uninstall Kladez” in the Start menu:** the Kladez folder now has an uninstall shortcut. Before, it could only be removed through Settings → Apps.
+- **A “Kladez is ready” notice with a switch:** Kladez still starts with Windows so it opens at once, but now a small notice appears in the bottom-right corner: it uses about 2 GB of memory and can be switched off. Switch it off and the memory is freed, and Kladez will not start by itself at the next sign-in. You can open it any time from the desktop shortcut.
+- **A Kladez icon by the clock:** the close button hides the notice into an icon by the clock. Click the icon to bring the switch back; right-click for “Open Kladez”, “Switch off / on” and “Remove the icon”.
+- **“Start with Windows” in the settings:** Settings → Phones has the same choice as the notice.
 
 {% /release %}
 

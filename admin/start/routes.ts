@@ -381,6 +381,8 @@ documented(router.post('/api/phones/travel-maps/download', [PhonesController, 't
   tags: ['system'],
 })
 router.get('/phone-apps/organic-maps.apk', [PhonesController, 'travelMapsApk'])
+// «Кладезъ»: запускать вместе с Windows (только с компьютера — телефонам запись закрыта).
+router.put('/api/phones/autostart', [PhonesController, 'setAutostart'])
 // «Кладезъ»: микрофон в чате — речь в текст на этом компьютере (whisper.cpp).
 documented(router.get('/api/speech/status', [SpeechController, 'status']), {
   summary: 'Whether offline speech recognition (Speech to Text app) is installed',
