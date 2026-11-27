@@ -161,6 +161,10 @@ namespace Kladez.Launcher
                     RunWsl(LauncherCore.WslArgs("stop"), false);
                     // Остановить и саму Linux-часть, иначе Windows не получит память обратно.
                     RunHidden("wsl.exe", new[] { "--terminate", LauncherCore.DistroName }, false);
+                    // Пустую виртуальную машину WSL Windows держит ещё около минуты (Vmmem в Диспетчере
+                    // задач). Если других Linux-программ не запущено — гасим её сразу, чтобы память
+                    // вернулась немедленно. Чужие запущенные дистрибутивы не трогаем.
+                    if (NoDistrosRunning()) RunHidden("wsl.exe", new[] { "--shutdown" }, false);
                 },
                 // «Открыть Кладезъ» в меню значка: как ярлык — запустит, если выключен, и откроет браузер.
                 () =>
@@ -169,6 +173,32 @@ namespace Kladez.Launcher
                     catch (Exception ex) { Log("open from tray: " + ex.Message); }
                 });
             Application.Run(form);
+        }
+
+        /// <summary>wsl -l --running -q пуст: ни один дистрибутив не запущен. Ошибка — считаем, что запущены.</summary>
+        private static bool NoDistrosRunning()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo("wsl.exe", "-l --running -q")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    StandardOutputEncoding = System.Text.Encoding.Unicode,
+                };
+                using (var p = Process.Start(psi))
+                {
+                    string output = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit(15000);
+                    return LauncherCore.NoDistrosListed(output);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log("wsl -l --running: " + ex.Message);
+                return false;
+            }
         }
 
         private static bool WaitHealthy(KladezConfig config)

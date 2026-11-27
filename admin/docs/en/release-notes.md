@@ -2,6 +2,12 @@
 
 What appeared in Kladez, day by day. Newest first. How to update — see [Updates](/docs/updates).
 
+{% release date="27 November 2026" versions="0.1.39" %}
+
+- **Memory is freed at once:** after “Kladez is switched off” in the notice, Windows kept the empty Linux part for about a minute, so Vmmem stayed in Task Manager. Now, if no other Linux programs are running, it is shut down at once and the memory comes back within seconds.
+
+{% /release %}
+
 {% release date="27 November 2026" versions="0.1.38" %}
 
 - **Stop always works:** if you stopped a question while the model was still loading and asked the next one right away, Stop did nothing on the second one and the assistant wrote to the end. Now any answer in the conversation stops.

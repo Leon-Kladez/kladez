@@ -40,6 +40,12 @@ namespace Kladez.Launcher.Tests
             Check(LauncherCore.AutostartOffFile(KladezConfig.Parse(""), "C:\\ProgramData")
                 == "C:\\ProgramData\\Kladez\\autostart-off", "AutostartOffFile without a library");
 
+            // Гасить пустую WSL можно, только если ничего не запущено.
+            Check(LauncherCore.NoDistrosListed(""), "NoDistrosListed: empty");
+            Check(LauncherCore.NoDistrosListed("\r\n \r\n"), "NoDistrosListed: blank lines");
+            Check(!LauncherCore.NoDistrosListed("Ubuntu\r\n"), "NoDistrosListed: another distro is running");
+            Check(!LauncherCore.NoDistrosListed("Kladez\r\nUbuntu\r\n"), "NoDistrosListed: two distros");
+
             // Panel address and health.
             Check(LauncherCore.PanelUrl(KladezConfig.Parse("AdminPort=8180")) == "http://localhost:8180/", "PanelUrl uses AdminPort");
             Check(LauncherCore.HealthUrl(KladezConfig.Parse("")) == "http://localhost:8080/api/health", "HealthUrl");

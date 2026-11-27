@@ -113,6 +113,18 @@ namespace Kladez.Launcher
         }
 
         /// <summary>
+        /// Вывод «wsl -l --running -q»: имена запущенных дистрибутивов по строке. Пусто (или только
+        /// пробелы и нули UTF-16) — ничего не запущено.
+        /// </summary>
+        public static bool NoDistrosListed(string output)
+        {
+            if (output == null) return true;
+            foreach (var line in output.Replace("\0", "").Split('\n'))
+                if (line.Trim().Length > 0) return false;
+            return true;
+        }
+
+        /// <summary>
         /// Shortcut click. ownsMutex = no other Kladez.exe (e.g. autostart) is running.
         /// If autostart is still starting the program, wait with it instead of opening a dead page.
         /// </summary>
